@@ -1,1 +1,1 @@
-# Lovoh17-Lovoh17-Fronted-Gestion_Procesos_Taller_Mecanizado
+# Fronted-Gestion_Procesos_Taller_Mecanizado
