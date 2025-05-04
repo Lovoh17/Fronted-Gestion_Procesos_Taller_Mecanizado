@@ -1,0 +1,170 @@
+<template>
+    <div class="stats-grid">
+      <div 
+        v-for="(stat, index) in stats" 
+        :key="index" 
+        class="stat-card"
+        @mouseenter="hoverCard(index)"
+        @mouseleave="resetCard(index)"
+        :style="{ transform: hoveredCard === index ? 'translateY(-5px)' : 'translateY(0)' }"
+      >
+        <div class="stat-header">
+          <div>
+            <div class="stat-title">{{ stat.title }}</div>
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-change" :class="{ positive: stat.isPositive, negative: !stat.isPositive }">
+              <span class="material-icons">
+                {{ stat.isPositive ? 'trending_up' : 'trending_down' }}
+              </span>
+              {{ stat.change }} desde ayer
+            </div>
+          </div>
+          <div class="stat-icon">
+            <span class="material-icons">{{ stat.icon }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <script>
+  import { ref } from 'vue'
+  
+  export default {
+    props: {
+      stats: {
+        type: Array,
+        required: true
+      }
+    },
+    setup() {
+      const hoveredCard = ref(null)
+      
+      const hoverCard = (index) => {
+        hoveredCard.value = index
+      }
+      
+      const resetCard = () => {
+        hoveredCard.value = null
+      }
+      
+      return {
+        hoveredCard,
+        hoverCard,
+        resetCard
+      }
+    }
+  }
+  </script>
+  
+  <style scoped>
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.stat-title {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.stat-change.positive {
+  color: #10b981;
+}
+
+.stat-change.negative {
+  color: #ef4444;
+}
+
+.stat-change .material-icons {
+  font-size: 16px;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0fdf4;
+  color: #10b981;
+}
+
+/* Colores diferentes para cada icono (opcional) */
+.stat-card:nth-child(1) .stat-icon {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.stat-card:nth-child(2) .stat-icon {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.stat-card:nth-child(3) .stat-icon {
+  background-color: #f0fdf4;
+  color: #10b981;
+}
+
+.stat-card:nth-child(4) .stat-icon {
+  background-color: #fefce8;
+  color: #f59e0b;
+}
+
+/* Efecto de hover más pronunciado */
+.stat-card:hover .stat-value {
+  color: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

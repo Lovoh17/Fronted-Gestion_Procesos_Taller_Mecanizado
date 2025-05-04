@@ -1,0 +1,141 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--gray-lighter); /* Actualizado a nueva variable */
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 1.5rem;
+  transition: var(--transition);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--gray-light); /* Actualizado */
+}
+
+.page-title h1 {
+  font-size: 1.75rem;
+  color: var(--gray-dark); /* Actualizado */
+}
+
+.page-title p {
+  color: var(--gray-medium); /* Actualizado */
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--danger); /* Usando variable de peligro */
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: bold;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gray-light); /* Actualizado */
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--gray-dark); /* Añadido para consistencia */
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Efecto hover para elementos interactivos */
+.user-profile:hover .user-name {
+  color: var(--univo-primary); /* Nuevo efecto hover */
+}
+
+.notification-icon:hover {
+  transform: translateY(-2px);
+  transition: var(--transition);
+}
+
+/* Media Queries */
+@media (max-width: 1200px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .main-content {
+    margin-left: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .user-name {
+    display: none;
+  }
+  
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .user-menu {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Clase adicional para destacar elementos activos */
+.active-indicator {
+  position: relative;
+}
+
+.active-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--industrial-yellow); /* Usando el nuevo amarillo */
+  border-radius: 3px;
+}

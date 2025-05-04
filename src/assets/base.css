@@ -1,0 +1,13 @@
+/* src/assets/base.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos base personalizados */
+body {
+  @apply font-sans antialiased text-gray-800;
+}
+
+#app {
+  @apply min-h-screen flex flex-col;
+}
