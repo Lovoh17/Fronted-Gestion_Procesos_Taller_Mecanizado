@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+/**********************Rutas de Administrador**************************************/
   {
     path: '/',
     name: 'welcome',
@@ -37,13 +38,21 @@ const routes = [
   {
     path: '/usuarios',
     name: 'usuarios',
-    component: () => import('@/components/VistasAdmin/usuarios.vue')
+    component: () => import('@/components/VistasAdmin/Usuarios.vue')
   },
   {
     path: '/ordenes-trabajos',
     name: 'ordenes-trabajos',
     component: () => import('@/components/VistasAdmin/Ordenes.vue')
+  },
+
+/***************************Rutas de Coordinador ****************************/
+  {
+    path: '/Dashboard-Coordinador',
+    name: 'dashboard-coordinador',
+    component: () => import('@/components/VistasCoordinador/CoordinadorView.vue')
   }
+
 ]
 
 const router = createRouter({

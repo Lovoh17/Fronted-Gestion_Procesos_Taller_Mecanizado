@@ -523,12 +523,12 @@
 </template>
 
 <script>
-import Sidebar from '@/components/VistasAdmin/ComponentesAdmin/Sidebar.vue'
-import TopBar from '@/components/VistasAdmin/ComponentesAdmin/TopBar.vue'
+import Sidebar from '@/components/GlobalComponents/Sidebar.vue'
+import TopBar from '@/components/GlobalComponents/TopBar.vue'
 import ReportDetailModal from '@/components/VistasAdmin/ComponentesAdmin/ReportDetailModal.vue'
 import NewReportModal from '@/components/VistasAdmin/ComponentesAdmin/NewReportModal.vue'
 import ReportsTrendChart from '@/components/VistasAdmin/ComponentesAdmin/ReportsTrendChart.vue'
-import ToastNotification from '@/components/VistasAdmin/ComponentesAdmin/ToastNotification.vue'
+import ToastNotification from '@/components/GlobalComponents/ToastNotification.vue'
 import DateRangePicker from '@/components/VistasAdmin/ComponentesAdmin/DateRangePicker.vue'
 
 export default {

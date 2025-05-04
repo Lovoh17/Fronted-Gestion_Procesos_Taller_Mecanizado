@@ -4,26 +4,59 @@
       <div class="inventory-content">
         <!-- Filtros -->
         <div class="inventory-filters">
-          <div class="filter-group">
-            <label>Categoría:</label>
-            <select v-model="categoryFilter" @change="filterProducts">
-              <option value="">Todas</option>
-              <option v-for="category in categories" :key="category" :value="category">
-                {{ category }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label>Estado:</label>
-            <select v-model="statusFilter" @change="filterProducts">
-              <option value="">Todos</option>
-              <option value="in_stock">En Stock</option>
-              <option value="low_stock">Stock Bajo</option>
-              <option value="out_of_stock">Agotado</option>
-            </select>
-          </div>
-        </div>
+  <!-- Filtro por Categoría -->
+  <div class="filter-group">
+    <label for="category-filter">Categoría:</label>
+    <select 
+      id="category-filter"
+      v-model="categoryFilter" 
+      @change="filterProducts"
+      class="filter-select"
+    >
+      <option value="">Todas</option>
+      <option 
+        v-for="category in categories" 
+        :key="category" 
+        :value="category"
+      >
+        {{ category }}
+      </option>
+    </select>
+  </div>
+  
+  <!-- Filtro por Estado -->
+  <div class="filter-group">
+    <label for="status-filter">Estado:</label>
+    <select 
+      id="status-filter"
+      v-model="statusFilter" 
+      @change="filterProducts"
+      class="filter-select"
+    >
+      <option value="">Todos</option>
+      <option value="in_stock">En Stock</option>
+      <option value="low_stock">Stock Bajo</option>
+      <option value="out_of_stock">Agotado</option>
+    </select>
+  </div>
+
+  <!-- Nuevo Filtro por Tipo de Inventario -->
+  <div class="filter-group">
+    <label for="inventory-type-filter">Tipo de Inventario:</label>
+    <select 
+      id="inventory-type-filter"
+      v-model="inventoryTypeFilter" 
+      @change="filterProducts"
+      class="filter-select"
+    >
+      <option value="">Todos</option>
+      <option value="general">General</option>
+      <option value="interno">Trabajos Internos</option>
+      <option value="externo">Trabajos Externos</option>
+      <option value="practicas">Prácticas</option>
+    </select>
+  </div>
+</div>
         
         <!-- Tabla de productos -->
         <div class="table-responsive">
@@ -225,8 +258,8 @@
 </template>
 
 <script>
-import Sidebar from '@/components/VistasAdmin/ComponentesAdmin/Sidebar.vue'
-import TopBar from '@/components/VistasAdmin/ComponentesAdmin/TopBar.vue'
+import Sidebar from '@/components/GlobalComponents/Sidebar.vue'
+import TopBar from '@/components/GlobalComponents/TopBar.vue'
 
 export default {
   name: 'InventoryView',

@@ -27,8 +27,8 @@
 </template>
 
 <script>
-import Sidebar from '@/components/VistasAdmin/ComponentesAdmin/Sidebar.vue'
-import TopBar from '@/components/VistasAdmin/ComponentesAdmin/TopBar.vue'
+import Sidebar from '@/components/GlobalComponents/Sidebar.vue'
+import TopBar from '@/components/GlobalComponents/TopBar.vue'
 import StatsCards from '@/components/VistasAdmin/ComponentesAdmin/StatsCards.vue'
 import DashboardSalesChart from '@/components/VistasAdmin/ComponentesAdmin/DashboardSalesChart.vue'
 import RecentOrders from '@/components/VistasAdmin/ComponentesAdmin//RecentOrders.vue'

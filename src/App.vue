@@ -13,8 +13,8 @@
 </template>
 
 <script setup>
-import TopBar from '@/components/VistasAdmin/ComponentesAdmin/TopBar.vue';
-import SideBar from '@/components/VistasAdmin/ComponentesAdmin/Sidebar.vue';
+import TopBar from '@/components/GlobalComponents/TopBar.vue';
+import SideBar from '@/components/GlobalComponents/Sidebar.vue';
 </script>
 
 <style scoped>

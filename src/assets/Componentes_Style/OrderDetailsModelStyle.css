@@ -1,0 +1,162 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #2c3e50;
+  }
+  
+  .order-details {
+    padding: 20px;
+  }
+  
+  .detail-row {
+    display: flex;
+    margin-bottom: 15px;
+  }
+  
+  .detail-label {
+    font-weight: 500;
+    width: 120px;
+    color: #6c757d;
+  }
+  
+  .detail-value {
+    flex: 1;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .status-pending {
+    background: #fff3cd;
+    color: #d39e00;
+  }
+  
+  .status-in-progress {
+    background: #cce5ff;
+    color: #0062cc;
+  }
+  
+  .status-completed {
+    background: #e6f7ee;
+    color: #28a745;
+  }
+  
+  .status-cancelled {
+    background: #f8d7da;
+    color: #dc3545;
+  }
+  
+  .products-section {
+    margin-top: 25px;
+  }
+  
+  .products-section h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+  
+  .products-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .products-table th,
+  .products-table td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .products-table th {
+    background: #f8f9fa;
+    font-weight: 500;
+  }
+  
+  .products-table tfoot {
+    border-top: 2px solid #eee;
+  }
+  
+  .total-label {
+    text-align: right;
+    font-weight: 500;
+  }
+  
+  .total-value {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .notes-section {
+    margin-top: 25px;
+  }
+  
+  .notes-section h4 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+  }
+  
+  .notes-section p {
+    white-space: pre-line;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .btn-primary {
+    background: #3498db;
+    color: white;
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background: #2980b9;
+  }
