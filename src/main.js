@@ -1,15 +1,25 @@
 import './assets/main.css'
+import '@fortawesome/fontawesome-free/css/all.css'
 
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { createPinia } from 'pinia'
 import { Chart, registerables } from 'chart.js'
 
-//createApp(App).mount('#app')
-const app = createApp(App)
-app.use(router)
-app.mount('#app')
+// Configura Chart.js
 Chart.register(...registerables)
+
+// Crea y configura la aplicación
+const app = createApp(App)
+const pinia = createPinia()
+
+// Instala los plugins en el orden correcto
+app.use(pinia) // Pinia debe instalarse primero
+app.use(router)
+
+// Monta la aplicación
+app.mount('#app')
 
 
 import '@fortawesome/fontawesome-free/css/all.css'

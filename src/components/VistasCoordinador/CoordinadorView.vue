@@ -1,7 +1,6 @@
 <template>
 <div class="">
     <Sidebar :role="'coordinator'" />
-    
     <main class="">
       <div class="top-bar">
         <div class="page-title">
@@ -81,7 +80,7 @@
 import { ref, computed, onMounted } from 'vue'
 
 // Componentes
-import Sidebar from '@/components/GlobalComponents/Sidebar.vue'
+import Sidebar from '@/components/GlobalComponents/SidebarCoordinador.vue'
 import LiveProductionStats from '@/components/VistasCoordinador/ComponentesCoordinador/LiveProductionStats.vue'
 import OrderGanttChart from '@/components/VistasCoordinador/ComponentesCoordinador/OrderGanttChart.vue'
 import MachineStatusGrid from '@/components/VistasCoordinador/ComponentesCoordinador/MachineStatusGrid.vue'

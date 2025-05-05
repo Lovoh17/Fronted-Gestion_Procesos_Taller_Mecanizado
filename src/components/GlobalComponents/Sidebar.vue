@@ -49,31 +49,31 @@ export default {
       { 
         icon: 'dashboard', 
         text: 'Panel Principal', 
-        path: '/Dashboard_admin',
+        path: '/admin-dashboard',
         badge: null 
       },
       { 
         icon: 'inventory_2',  
         text: 'Gestión Inventario', 
-        path: '/inventory',
+        path: '/admin/inventory',
         badge: 3
       },
       { 
         icon: 'local_shipping', 
         text: 'Ordenes', 
-        path: '/ordenes-trabajos',
+        path: '/admin/orders',
         badge: null 
       },
       { 
         icon: 'groups', 
         text: 'Usuarios', 
-        path: '/usuarios',
+        path: '/admin/users',
         badge: null 
       },
       { 
         icon: 'precision_manufacturing',
         text: 'Reportes', 
-        path: '/workshop',
+        path: '/admin/reports',
         badge: 5 
       },
       { 

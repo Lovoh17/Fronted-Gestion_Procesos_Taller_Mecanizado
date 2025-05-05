@@ -3,7 +3,7 @@
     <TopBar />
 
     <div class="content-wrapper">
-      <SideBar />
+      <component :is="currentSidebar" />
 
       <main class="main-content">
         <router-view />
@@ -13,8 +13,17 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 import TopBar from '@/components/GlobalComponents/TopBar.vue';
 import SideBar from '@/components/GlobalComponents/Sidebar.vue';
+import SidebarCoordinator from '@/components/GlobalComponents/SidebarCoordinador.vue';
+
+const authStore = useAuthStore();
+
+const currentSidebar = computed(() => {
+  return authStore.user?.role === 'coordinator' ? SidebarCoordinator : SideBar;
+});
 </script>
 
 <style scoped>
