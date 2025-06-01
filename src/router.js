@@ -42,10 +42,9 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/admin/inventory',
+    path: '/inventory',
     name: 'admin-inventory',
     component: () => import('@/components/VistasAdmin/ProductInventory.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/reports',
@@ -86,7 +85,11 @@ const routes = [
     component: () => import('@/components/VistasCoordinador/ProductionPlanning.vue'),
     meta: { requiresAuth: true, requiresCoordinator: true }
   },
-  
+  {
+    path: '/inventory',
+    name: 'admin-inventory',
+    component: () => import('@/components/VistasAdmin/ProductInventory.vue'),
+  },
   {
     path: '/coordinator/orders',
     name: 'coordinator-orders',

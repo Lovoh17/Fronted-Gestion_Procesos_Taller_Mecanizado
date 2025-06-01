@@ -55,7 +55,7 @@ export default {
       { 
         icon: 'inventory_2',  
         text: 'Gestión Inventario', 
-        path: '/admin/inventory',
+        path: '/inventory',
         badge: 3
       },
       { 

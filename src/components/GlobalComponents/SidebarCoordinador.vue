@@ -71,7 +71,7 @@
         { 
           icon: 'inventory_2',  
           text: 'Gestión de Inventario', 
-          path: '/inventario',
+          path: '/inventory',
           badge: 3,
           badgeType: 'danger'
         },
