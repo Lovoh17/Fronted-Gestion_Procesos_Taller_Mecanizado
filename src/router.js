@@ -73,6 +73,12 @@ const routes = [
     component: () => import('@/components/VistasCoordinador/CoordinadorView.vue'),
     meta: { requiresAuth: true, requiresCoordinator: true }
   },
+  {
+    path: '/control-calidad',
+    name: 'control-calidad',
+    component: () => import('@/components/VistasCoordinador/ControlCalidad.vue'),
+    meta: { requiresAuth: true, requiresCoordinator: true }
+  },
   
   {
     path: '/coordinator/planning',

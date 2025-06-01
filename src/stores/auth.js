@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
     },
     {
       username: 'admin',
-      password: 'admin123',
+      password: 'admin',
       userData: {
         id: 2,
         name: 'Administrador',

@@ -226,38 +226,21 @@
         currentDate: new Date(),
         hours: Array.from({ length: 12 }, (_, i) => i + 7), // 7am to 6pm
         resources: [
-          { id: 1, name: 'Máquina CNC', icon: 'precision_manufacturing', capacity: 40, unit: 'horas' },
-          { id: 2, name: 'Equipo Soldadura', icon: 'handyman', capacity: 35, unit: 'horas' },
-          { id: 3, name: 'Pintura', icon: 'format_paint', capacity: 30, unit: 'horas' },
-          { id: 4, name: 'Montaje', icon: 'build', capacity: 45, unit: 'horas' },
-          { id: 5, name: 'Operario 1', icon: 'engineering', capacity: 40, unit: 'horas' },
-          { id: 6, name: 'Operario 2', icon: 'engineering', capacity: 40, unit: 'horas' }
+          { id: 1, name: '', icon: '', capacity: 0, unit: '' },
         ],
         tasks: [
           {
             id: 1,
-            title: 'Fabricación piezas A',
+            title: '',
             date: this.formatDate(new Date()),
-            startTime: '8:00',
-            endTime: '12:00',
+            startTime: '',
+            endTime: '',
             resourceId: 1,
             quantity: 4,
-            priority: 'high',
-            notes: 'Usar molde #123',
+            priority: '',
+            notes: '',
             color: '#4CAF50'
           },
-          {
-            id: 2,
-            title: 'Ensamblaje B',
-            date: this.formatDate(new Date()),
-            startTime: '9:00',
-            endTime: '11:30',
-            resourceId: 4,
-            quantity: 2.5,
-            priority: 'medium',
-            notes: 'Verificar componentes primero',
-            color: '#2196F3'
-          }
         ],
         showTaskModal: false,
         editingTask: false,

@@ -373,60 +373,7 @@ export default {
   methods: {
     async loadTrabajos() {
   try {
-    // Datos de prueba para taller de mecanizado y soldadura
     this.trabajos = [
-      {
-        id: 1,
-        orden: 'MEC-2023-001',
-        cliente: 'Industrias Metalúrgicas S.A.',
-        proyecto: 'Fabricación de soporte estructural',
-        tipo: 'Mecanizado CNC y soldadura',
-        tecnico: 'Luis Torres',
-        tecnico_id: 1,
-        fecha_inicio: '2023-05-10',
-        fecha_fin: '2023-05-15',
-        estado: 'completado',
-        detalles: 'Mecanizado de piezas en acero A36 y soldadura MIG para ensamblaje final.'
-      },
-      {
-        id: 2,
-        orden: 'SOL-2023-002',
-        cliente: 'Constructora Andina',
-        proyecto: 'Reparación de vigas de puente',
-        tipo: 'Soldadura de reparación',
-        tecnico: 'María Gómez',
-        tecnico_id: 2,
-        fecha_inicio: '2023-05-12',
-        fecha_fin: '',
-        estado: 'en_proceso',
-        detalles: 'Reparación por fatiga de material en uniones soldadas, proceso SMAW.'
-      },
-      {
-        id: 3,
-        orden: 'MEC-2023-003',
-        cliente: 'Fábrica de Maquinaria Pesada',
-        proyecto: 'Prototipo de componente hidráulico',
-        tipo: 'Mecanizado de precisión',
-        tecnico: 'Carlos Rodríguez',
-        tecnico_id: 3,
-        fecha_inicio: '2023-05-15',
-        fecha_fin: '',
-        estado: 'pendiente',
-        detalles: 'Torneado y fresado de componentes en acero inoxidable 304 con tolerancias ±0.01mm.'
-      },
-      {
-        id: 4,
-        orden: 'SOL-2023-004',
-        cliente: 'Astilleros del Pacífico',
-        proyecto: 'Estructura de cubierta naval',
-        tipo: 'Soldadura TIG en aluminio',
-        tecnico: 'Juan Pérez',
-        tecnico_id: 1,
-        fecha_inicio: '2023-05-08',
-        fecha_fin: '2023-05-18',
-        estado: 'entregado',
-        detalles: 'Soldadura de paneles de aluminio 5083 para aplicación marina, certificación AWS D1.2.'
-      }
     ];
     
   } catch (error) {
@@ -494,7 +441,6 @@ export default {
           estado: 'pendiente'
         };
         
-        this.trabajos.unshift(trabajo);
         
         // Llamada API real (descomentar cuando esté lista)
         // await this.$http.post('/api/trabajos', nuevoTrabajo);
@@ -555,9 +501,7 @@ export default {
     },
     
     showToast(message, type = 'success') {
-      // Implementación básica - puedes usar un plugin de notificaciones
       alert(`${type.toUpperCase()}: ${message}`);
-      // this.$toast(message, { type }); // Si usas un plugin de toasts
     }
   },
   

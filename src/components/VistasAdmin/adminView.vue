@@ -18,8 +18,8 @@
             
             <div class="user-profile">
               <img src="https://randomuser.me/api/portraits/men/56.jpg" alt="User" class="user-avatar">
-              <span class="user-name">John Doe</span>
-              <span class="material-icons">arrow_drop_down</span>
+              <span class="user-name"></span>
+              <span class="material-icons"></span>
             </div>
           </div>
         </div>

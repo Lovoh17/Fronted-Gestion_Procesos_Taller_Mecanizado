@@ -1,8 +1,10 @@
 <template>
   <div class="univo-login-container">
     <div class="univo-login-box">
-      <h1 class="univo-title">Taller de mecanizado y soldadura</h1>
-      
+      <!-- Logo añadido aquí -->
+      <div class="univo-logo-container">
+        <img src="/src/assets/login.svg" alt="Logo del taller" class="univo-logo">
+      </div>
       <form class="univo-form" @submit.prevent="handleLogin">
         <div class="univo-input-group">
           <label class="univo-input-label">Nombre de usuario</label>

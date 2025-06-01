@@ -169,25 +169,24 @@
       return {
         orders: [
           {
-            id: 'OT-2023-001',
-            client: { id: 1, name: 'Industrias ACME' },
-            description: 'Fabricación de 100 piezas metálicas para ensamblaje',
-            priority: 'high',
-            status: 'in-progress',
-            startDate: '2023-06-01',
-            endDate: '2023-06-15',
+            id: '',
+            client: { id: 1, name: '' },
+            description: '',
+            priority: '',
+            status: '',
+            startDate: '',
+            endDate: '',
             assignedTo: [
-              { id: 1, name: 'Máquina CNC' },
-              { id: 3, name: 'Operario 1' }
+              { id: 1, name: '' },
+              { id: 3, name: '' }
             ],
             materials: [
-              { id: 1, name: 'Acero inoxidable', quantity: 50, unit: 'kg' },
-              { id: 2, name: 'Tornillos', quantity: 200, unit: 'unidades' }
+              { id: 1, name: '', quantity: 0, unit: '' },
+              { id: 2, name: '', quantity: 0, unit: '' }
             ],
-            notes: 'Precisa control de calidad riguroso',
+            notes: '',
             progress: 65
           },
-          // Más órdenes de ejemplo...
         ],
         filters: {
           status: 'all',

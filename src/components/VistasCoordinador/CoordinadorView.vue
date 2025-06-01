@@ -92,9 +92,9 @@ const criticalAlerts = computed(() => productionStore.alerts.filter(a => a.level
 
 const productionStatusLabel = computed(() => {
   const statusMap = {
-    normal: 'Operación normal',
-    delayed: 'Retrasos detectados',
-    stopped: 'Producción detenida'
+    normal: '',
+    delayed: '',
+    stopped: ''
   }
   return statusMap[productionStatus.value] || 'Estado desconocido'
 })

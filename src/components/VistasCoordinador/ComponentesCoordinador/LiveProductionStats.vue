@@ -83,20 +83,7 @@
       })
     }
   })
-  
-  const overallOEE = computed(() => props.stats.oee.toFixed(1))
-  const oeeTrend = computed(() => props.stats.oeeChange >= 0 ? 'positive' : 'negative')
-  const oeeChange = computed(() => Math.abs(props.stats.oeeChange).toFixed(1))
-  const trendIcon = computed(() => oeeTrend.value === 'positive' ? 'fas fa-arrow-up' : 'fas fa-arrow-down')
-  
-  const completionRate = computed(() => 
-  Math.round((props.stats.completedOrders / props.stats.totalOrders) * 100 || 0))
-  
-  const onTimeRate = computed(() => (
-  props.stats.completedOrders > 0 
-    ? Math.round((props.stats.onTimeOrders / props.stats.completedOrders) * 100)
-    : 0
-))
+
 
 </script>
   

@@ -48,7 +48,48 @@
           </div>
         </div>
         
-        <!-- Sección de asignación de trabajadores (corregida) -->
+        <!-- Sección de planos -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <span class="material-icons">architecture</span> Planos y Documentos
+          </h3>
+          
+          <div class="blueprints-section">
+            <div class="file-upload-area" @dragover.prevent @drop.prevent="handleDrop">
+              <input type="file" id="blueprint-upload" ref="fileInput" 
+                     accept=".pdf" multiple @change="handleFileChange" hidden>
+              <label for="blueprint-upload" class="upload-label">
+                <span class="material-icons large-icon">cloud_upload</span>
+                <p>Arrastra archivos PDF aquí o haz clic para seleccionarlos</p>
+                <p class="small-text">Solo se aceptan archivos PDF (máx. 10MB cada uno)</p>
+              </label>
+            </div>
+            
+            <div class="uploaded-files" v-if="order.blueprints && order.blueprints.length > 0">
+              <div class="file-list-header">
+                <span>Archivos adjuntos</span>
+                <span>{{ order.blueprints.length }} archivo(s)</span>
+              </div>
+              
+              <div class="file-list">
+                <div v-for="(file, index) in order.blueprints" :key="index" class="file-item">
+                  <div class="file-info">
+                    <span class="material-icons">picture_as_pdf</span>
+                    <div>
+                      <div class="file-name">{{ file.name }}</div>
+                      <div class="file-meta">{{ formatFileSize(file.size) }} • {{ file.uploaded }}</div>
+                    </div>
+                  </div>
+                  <button class="icon-btn small" @click="removeBlueprint(index)">
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sección de asignación de trabajadores -->
         <div class="form-section">
           <h3 class="section-title">
             <span class="material-icons">engineering</span> Asignación de Trabajadores
@@ -194,9 +235,10 @@ export default {
         description: '',
         startDate: '',
         endDate: '',
-        assignedWorkers: [], // Inicializado correctamente
+        assignedWorkers: [],
         assignedEquipment: [],
         materials: [],
+        blueprints: [],
         notes: '',
         status: 'pending'
       })
@@ -229,7 +271,8 @@ export default {
         { id: 1, name: 'Acero inoxidable', stock: 150, unit: 'kg' },
         { id: 2, name: 'Tornillos', stock: 500, unit: 'unidades' },
         { id: 3, name: 'Pintura azul', stock: 25, unit: 'litros' }
-      ]
+      ],
+      newFiles: []
     }
   },
   methods: {
@@ -238,6 +281,10 @@ export default {
     },
     save() {
       if (this.validateForm()) {
+        // Procesar archivos nuevos antes de guardar
+        if (this.newFiles.length > 0) {
+          this.processNewFiles();
+        }
         this.$emit('save', this.order)
       }
     },
@@ -275,6 +322,76 @@ export default {
       }
       return true
     },
+    
+    // Métodos para archivos PDF
+    handleDrop(e) {
+      const files = e.dataTransfer.files;
+      this.handleFiles(files);
+    },
+    handleFileChange(e) {
+      const files = e.target.files;
+      this.handleFiles(files);
+    },
+    handleFiles(files) {
+      const validFiles = Array.from(files).filter(file => 
+        file.type === 'application/pdf' && file.size <= 10 * 1024 * 1024
+      );
+      
+      if (validFiles.length !== files.length) {
+        alert('Algunos archivos no son PDF o exceden el tamaño máximo de 10MB');
+      }
+      
+      this.newFiles = [...this.newFiles, ...validFiles];
+      this.previewNewFiles();
+    },
+    previewNewFiles() {
+      this.newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (!this.order.blueprints) {
+            this.$set(this.order, 'blueprints', []);
+          }
+          
+          this.order.blueprints.push({
+            name: file.name,
+            size: file.size,
+            uploaded: new Date().toLocaleDateString(),
+            url: e.target.result,
+            file: file // Mantener referencia al archivo para subir
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      this.newFiles = [];
+    },
+    removeBlueprint(index) {
+      this.order.blueprints.splice(index, 1);
+    },
+    processNewFiles() {
+      // Aquí iría la lógica para subir los archivos al servidor
+      // Por ahora solo simulamos la subida
+      this.order.blueprints = this.order.blueprints.map(blueprint => {
+        if (blueprint.file) {
+          // Simular URL de servidor
+          return {
+            name: blueprint.name,
+            size: blueprint.size,
+            uploaded: new Date().toLocaleDateString(),
+            url: `/documents/${Date.now()}_${blueprint.name}`
+          };
+        }
+        return blueprint;
+      });
+    },
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+    
     // Métodos para trabajadores
     getWorkerName(workerId) {
       const worker = this.workers.find(w => w.id === workerId)
@@ -316,7 +433,6 @@ export default {
     
     // Métodos para equipos
     isResourceDisabled(resource) {
-      // Lógica para verificar disponibilidad de equipos
       return false
     }
   }
@@ -324,7 +440,91 @@ export default {
 </script>
 
 <style scoped>
-/* Estilos del modal */
+.blueprints-section {
+  margin-top: 1rem;
+}
+
+.file-upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.file-upload-area:hover {
+  border-color: #2c3e50;
+  background-color: #f8f9fa;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.large-icon {
+  font-size: 3rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.small-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+.uploaded-files {
+  margin-top: 1rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.file-list-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-weight: 500;
+}
+
+.file-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.file-name {
+  font-weight: 500;
+}
+
+.file-meta {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
 .modal-overlay {
   position: fixed;
   top: 0;

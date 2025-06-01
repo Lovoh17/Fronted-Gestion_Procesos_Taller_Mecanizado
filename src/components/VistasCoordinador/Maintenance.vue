@@ -224,24 +224,19 @@
         activeTab: 'pending',
         maintenanceList: [
           {
-            id: 'MT-2023-001',
+            id: '',
             equipmentId: 1,
-            type: 'preventive',
-            description: 'Mantenimiento preventivo mensual CNC',
-            priority: 'high',
-            status: 'pending',
-            scheduledDate: '2023-06-15',
+            type: '',
+            description: '',
+            priority: '',
+            status: '',
+            scheduledDate: '',
             completionDate: null,
             assignedTechnician: 1,
-            duration: 4,
-            checklist: [
-              { id: 1, task: 'Lubricación de ejes', completed: false },
-              { id: 2, task: 'Revisión de rodamientos', completed: false },
-              { id: 3, task: 'Calibración de precisión', completed: false }
-            ],
-            notes: 'Requiere parada completa de 4 horas',
+            duration: 1,
+            notes: '',
             partsUsed: [
-              { id: 1, name: 'Aceite lubricante', quantity: 2, unit: 'litros' }
+              { id: 1, name: '', quantity: 2, unit: '' }
             ]
           },
           // Más registros de ejemplo...
@@ -251,17 +246,6 @@
           { value: 'corrective', label: 'Correctivo' },
           { value: 'predictive', label: 'Predictivo' },
           { value: 'calibration', label: 'Calibración' }
-        ],
-        equipmentList: [
-          { id: 1, name: 'Máquina CNC', type: 'machine', icon: 'precision_manufacturing' },
-          { id: 2, name: 'Equipo Soldadura', type: 'equipment', icon: 'handyman' },
-          { id: 3, name: 'Horno Industrial', type: 'furnace', icon: 'thermostat' },
-          { id: 4, name: 'Compresor de Aire', type: 'equipment', icon: 'air' }
-        ],
-        technicians: [
-          { id: 1, name: 'Juan Pérez', specialization: 'Mecánica' },
-          { id: 2, name: 'María Gómez', specialization: 'Electrónica' },
-          { id: 3, name: 'Carlos Ruiz', specialization: 'Sistemas' }
         ],
         filters: {
           type: 'all',

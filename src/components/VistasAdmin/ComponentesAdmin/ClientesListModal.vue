@@ -116,45 +116,6 @@
     methods: {
       async loadClients() {
         try {
-          // Datos de prueba - reemplazar con API real
-          this.clientes = [
-            {
-              id: 1,
-              nombre: 'Juan Pérez',
-              telefono: '555-123-4567',
-              email: 'juan@example.com',
-              direccion: 'Calle Principal 123',
-              ultima_visita: '2023-05-15',
-              vehiculos: [
-                { marca: 'Toyota', modelo: 'Corolla', ano: 2020, placa: 'ABC123' }
-              ]
-            },
-            {
-              id: 2,
-              nombre: 'María Gómez',
-              telefono: '555-234-5678',
-              email: 'maria@example.com',
-              direccion: 'Avenida Central 456',
-              ultima_visita: '2023-05-10',
-              vehiculos: [
-                { marca: 'Honda', modelo: 'Civic', ano: 2018, placa: 'DEF456' },
-                { marca: 'Ford', modelo: 'F-150', ano: 2019, placa: 'GHI789' }
-              ]
-            },
-            {
-              id: 3,
-              nombre: 'Carlos Rodríguez',
-              telefono: '555-345-6789',
-              email: 'carlos@example.com',
-              direccion: 'Boulevard Norte 789',
-              ultima_visita: '2023-04-28',
-              vehiculos: [
-                { marca: 'Volkswagen', modelo: 'Golf', ano: 2021, placa: 'JKL012' }
-              ]
-            }
-          ];
-          this.filteredClients = [...this.clientes];
-          
           // Llamada API real (descomentar cuando esté lista)
           // const response = await this.$http.get('/api/clientes');
           // this.clientes = response.data;

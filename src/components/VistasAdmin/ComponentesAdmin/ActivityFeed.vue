@@ -57,36 +57,7 @@
     name: 'ActivityFeed',
     setup() {
       const activities = ref([
-        {
-          type: 'system',
-          message: 'Actualización del sistema completada (v2.4.1)',
-          timestamp: new Date(Date.now() - 3600000),
-          user: null
-        },
-        {
-          type: 'user',
-          message: 'Nuevo pedido creado #ORD-4582',
-          timestamp: new Date(Date.now() - 7200000),
-          user: 'Juan Pérez'
-        },
-        {
-          type: 'alert',
-          message: 'Alerta: Temperatura crítica en máquina CNC-04',
-          timestamp: new Date(Date.now() - 10800000),
-          user: 'Sistema de monitoreo'
-        },
-        {
-          type: 'user',
-          message: 'Reporte mensual generado',
-          timestamp: new Date(Date.now() - 14400000),
-          user: 'María Gómez'
-        },
-        {
-          type: 'system',
-          message: 'Copia de seguridad realizada',
-          timestamp: new Date(Date.now() - 18000000),
-          user: null
-        }
+        
       ])
   
       const filterType = ref('all')

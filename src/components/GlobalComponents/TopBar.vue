@@ -40,7 +40,7 @@
         
         <div class="user-profile" @click="toggleUserMenu">
           <img :src="user.avatar" :alt="user.name" class="user-avatar">
-          <span class="user-name">{{ user.name }}</span>
+          <span class="user-name">{{  }}</span>
           <span class="material-icons">arrow_drop_down</span>
           <div v-if="showUserMenu" class="user-menu-dropdown">
             <div class="user-info">
@@ -86,9 +86,6 @@
       user: {
         type: Object,
         default: () => ({
-          name: 'John Doe',
-          email: 'john.doe@example.com',
-          avatar: 'https://randomuser.me/api/portraits/men/56.jpg'
         })
       },
       notifications: {

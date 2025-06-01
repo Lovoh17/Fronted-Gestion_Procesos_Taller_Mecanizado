@@ -270,22 +270,13 @@
           this.users = [
             {
               id: 1,
-              name: 'Admin Ejemplo',
-              email: 'admin@example.com',
-              type: 'coordinator',
-              status: 'active',
+              name: '',
+              email: 'example@example.com',
+              type: '',
+              status: '',
               last_login: new Date().toISOString(),
               avatar: null
             },
-            {
-              id: 2,
-              name: 'Empleado Ejemplo',
-              email: 'empleado@example.com',
-              type: 'employee',
-              status: 'active',
-              last_login: new Date(Date.now() - 86400000).toISOString(), // Ayer
-              avatar: null
-            }
           ];
           
           console.log("Usuarios cargados:", this.users);

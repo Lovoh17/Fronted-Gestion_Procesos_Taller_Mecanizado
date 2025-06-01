@@ -256,7 +256,3 @@
     }
   }
   </script>
-  
-  <style scoped>
- 
-  </style>

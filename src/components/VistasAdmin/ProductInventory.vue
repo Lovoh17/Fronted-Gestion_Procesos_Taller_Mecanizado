@@ -272,66 +272,19 @@ export default {
       products: [
         {
           id: 1,
-          code: 'PT-001',
-          name: 'Tornillo hexagonal 1/2"',
-          category: 'Tornillería',
-          stock: 150,
-          min_stock: 50,
+          code: '',
+          name: '"',
+          category: '',
+          stock: 0,
+          min_stock: 0,
           unit: 'unidades',
-          price: 0.25,
-          supplier: 'Tornillos S.A.',
-          description: 'Tornillo grado 5, zincado'
+          price: 0,
+          supplier: '',
+          description: ''
         },
-        {
-          id: 2,
-          code: 'PT-002',
-          name: 'Tuerca 1/2"',
-          category: 'Tornillería',
-          stock: 200,
-          min_stock: 100,
-          unit: 'unidades',
-          price: 0.15,
-          supplier: 'Tornillos S.A.',
-          description: 'Tuerca hexagonal'
-        },
-        {
-          id: 3,
-          code: 'PT-003',
-          name: 'Varilla roscada 1/2" x 1m',
-          category: 'Tornillería',
-          stock: 25,
-          min_stock: 10,
-          unit: 'metros',
-          price: 3.50,
-          supplier: 'Aceros del Norte',
-          description: 'Varilla grado 5'
-        },
-        {
-          id: 4,
-          code: 'PM-001',
-          name: 'Plancha acero 1/4"',
-          category: 'Materiales',
-          stock: 8,
-          min_stock: 5,
-          unit: 'unidades',
-          price: 45.00,
-          supplier: 'Aceros del Norte',
-          description: 'Plancha de acero A36'
-        },
-        {
-          id: 5,
-          code: 'PH-001',
-          name: 'Disco de corte 4.5"',
-          category: 'Herramientas',
-          stock: 12,
-          min_stock: 15,
-          unit: 'unidades',
-          price: 5.75,
-          supplier: 'Herramental Industrial',
-          description: 'Disco para metal'
-        }
+      
       ],
-      categories: ['Tornillería', 'Materiales', 'Herramientas', 'Equipos', 'Consumibles'],
+      categories: [''],
       searchQuery: '',
       categoryFilter: '',
       statusFilter: '',
