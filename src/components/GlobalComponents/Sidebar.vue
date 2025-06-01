@@ -1,36 +1,43 @@
 <template>
   <aside class="sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-header">
-      <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
-        <span class="material-icons sidebar-logo-icon">factory</span>
+      <a href="#" class="sidebar-logo">
+        <span class="material-icons sidebar-logo-icon sidebar-collapse-control" @click="toggleSidebar">factory</span>
         <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial</span></span>
       </a>
+      <div class="sidebar-collapse-control" @click="toggleSidebar">
+        <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
+      </div>
     </div>
     
-    <nav class="sidebar-nav">
-      <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
-      <router-link 
-        v-for="(item, index) in navItems" 
-        :key="index" 
-        :to="item.path" 
-        class="nav-item" 
-        :class="{ active: isRouteActive(item.path) }"
-        @click="setActiveItem(index)"
-      >
-        <span class="material-icons icon-wrapper">{{ item.icon }}</span>
-        <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-        <span 
-          v-if="!isCollapsed && item.badge !== null" 
-          class="nav-badge"
-          :class="{ 'badge-danger': item.badge > 0 }"
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.path" 
+          class="nav-item" 
+          :class="{ active: isRouteActive(item.path) }"
+          @click="setActiveItem(index)"
+          :title="isCollapsed ? item.text : ''"
         >
-          {{ item.badge > 0 ? item.badge : '' }}
-        </span>
-      </router-link>
-    </nav>
-    
-    <div class="sidebar-footer" v-if="!isCollapsed">
-      <div class="company-brand">UNIVO INDUSTRIAL</div>
+          <span class="material-icons icon-wrapper">{{ item.icon }}</span>
+          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
+          <span 
+            v-if="!isCollapsed && item.badge !== null" 
+            class="nav-badge"
+            :class="{ 'badge-danger': item.badge > 0 }"
+          >
+            {{ item.badge > 0 ? item.badge : '' }}
+          </span>
+          <span v-if="isCollapsed && item.badge !== null" class="collapsed-badge">{{ item.badge }}</span>
+        </router-link>
+      </nav>
+      
+      <div class="sidebar-footer" v-if="!isCollapsed">
+        <div class="company-brand">UNIVO INDUSTRIAL</div>
+      </div>
     </div>
   </aside>
 </template>
@@ -96,14 +103,24 @@ export default {
     
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
+      // Opcional: Guardar preferencia en localStorage
+      localStorage.setItem('sidebarCollapsed', isCollapsed.value)
     }
     
     const setActiveItem = (index) => {
       activeItem.value = index
     }
     
-    // Logo que se mostrará cuando esté colapsado
-    const collapsedLogo = ref('logo-mini.png') // Ajusta la ruta de tu logo
+    // Cargar estado inicial del sidebar
+    const loadSidebarState = () => {
+      const savedState = localStorage.getItem('sidebarCollapsed')
+      if (savedState !== null) {
+        isCollapsed.value = savedState === 'true'
+      }
+    }
+    
+    // Cargar estado al iniciar
+    loadSidebarState()
     
     return {
       isCollapsed,
@@ -111,13 +128,8 @@ export default {
       navItems,
       isRouteActive,
       toggleSidebar,
-      setActiveItem,
-      collapsedLogo
+      setActiveItem
     }
   }
 }
 </script>
-
-<style scoped>
-
-</style>

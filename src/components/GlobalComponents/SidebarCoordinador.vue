@@ -1,42 +1,39 @@
 <template>
-    <aside class="sidebar" :class="{ collapsed: isCollapsed }">
-      <div class="sidebar-header">
-        <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
-          <span class="material-icons sidebar-logo-icon">precision_manufacturing</span>
-          <span v-if="!isCollapsed" class="logo-text">Taller<span>Mecánico</span></span>
-        </a>
-      </div>
-      
-      <nav class="sidebar-nav">
-        <div class="nav-title" v-if="!isCollapsed">MENÚ COORDINADOR</div>
-        <router-link 
-          v-for="(item, index) in navItems" 
-          :key="index" 
-          :to="item.path" 
-          class="nav-item" 
-          :class="{ active: isRouteActive(item.path) }"
-          @click="setActiveItem(index)"
+  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
+        <span class="material-icons sidebar-logo-icon">factory</span>
+        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial</span></span>
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
+      <router-link 
+        v-for="(item, index) in navItems" 
+        :key="index" 
+        :to="item.path" 
+        class="nav-item" 
+        :class="{ active: isRouteActive(item.path) }"
+        @click="setActiveItem(index)"
+      >
+        <span class="material-icons icon-wrapper">{{ item.icon }}</span>
+        <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
+        <span 
+          v-if="!isCollapsed && item.badge !== null" 
+          class="nav-badge"
+          :class="{ 'badge-danger': item.badge > 0 }"
         >
-          <span class="material-icons icon-wrapper">{{ item.icon }}</span>
-          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-          <span 
-            v-if="!isCollapsed && item.badge !== null && item.badge > 0" 
-            class="nav-badge"
-            :class="{ 
-              'badge-danger': item.badgeType === 'danger',
-              'badge-warning': item.badgeType === 'warning'
-            }"
-          >
-            {{ item.badge }}
-          </span>
-        </router-link>
-      </nav>
-      
-      <div class="sidebar-footer" v-if="!isCollapsed">
-        <div class="company-brand">COORDINACIÓN DE PRODUCCIÓN</div>
-      </div>
-    </aside>
-  </template>
+          {{ item.badge > 0 ? item.badge : '' }}
+        </span>
+      </router-link>
+    </nav>
+    
+    <div class="sidebar-footer" v-if="!isCollapsed">
+      <div class="company-brand">UNIVO INDUSTRIAL</div>
+    </div>
+  </aside>
+</template>
   
   <script>
   import { ref, computed } from 'vue'

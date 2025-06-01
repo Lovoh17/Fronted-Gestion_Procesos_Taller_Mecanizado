@@ -109,6 +109,12 @@ const routes = [
     name: 'not-found',
     component: () => import('@/components/NotFound.vue'),
     meta: { public: true }
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/components/settings.vue'),
+    meta: { public: true }
   }
 ]
 
