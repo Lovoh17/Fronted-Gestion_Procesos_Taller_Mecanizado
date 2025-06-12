@@ -13,7 +13,7 @@ export const mockUsers = [
     },
     {
       username: 'admin',
-      password: 'admin123',
+      password: '1234',
       user: {
         id: 2,
         name: 'Administrador',

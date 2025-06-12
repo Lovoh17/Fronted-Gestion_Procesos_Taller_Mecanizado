@@ -84,12 +84,6 @@ export default {
         badge: 5 
       },
       { 
-        icon: 'assessment', 
-        text: 'Analíticos', 
-        path: '/reports',
-        badge: null 
-      },
-      { 
         icon: 'tune', 
         text: 'Configuración', 
         path: '/settings',

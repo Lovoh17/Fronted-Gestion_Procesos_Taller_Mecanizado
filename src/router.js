@@ -50,7 +50,6 @@ const routes = [
     path: '/admin/reports',
     name: 'admin-reports',
     component: () => import('@/components/VistasAdmin/Reports.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
     path: '/admin/users',

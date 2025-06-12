@@ -50,7 +50,6 @@
       class="filter-select"
     >
       <option value="">Todos</option>
-      <option value="general">General</option>
       <option value="interno">Trabajos Internos</option>
       <option value="externo">Trabajos Externos</option>
       <option value="practicas">Prácticas</option>

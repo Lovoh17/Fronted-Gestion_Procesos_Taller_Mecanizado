@@ -343,21 +343,21 @@ export default {
           id: 1,
           name: 'Google Calendar',
           description: 'Sincroniza tus tareas y eventos con Google Calendar',
-          logo: 'google-calendar.png',
+          logo: 'https://bootflare.com/wp-content/uploads/2023/03/Google-Calendar-Logo.png',
           enabled: true
         },
         {
           id: 2,
           name: 'Slack',
           description: 'Recibe notificaciones en tus canales de Slack',
-          logo: 'slack.png',
+          logo: 'https://th.bing.com/th/id/OIP.wm3r8I6tFttVkUPo-qjkwwHaEK?rs=1&pid=ImgDetMain',
           enabled: false
         },
         {
           id: 3,
           name: 'Microsoft Teams',
           description: 'Integración con Microsoft Teams para notificaciones',
-          logo: 'teams.png',
+          logo: 'https://www.knowledgewave.com/hs-fs/hubfs/kisspng-microsoft-teams-microsoft-office-365-sharepoint-co-5af6c8647a8f16.976515281526122596502.png?width=512&name=kisspng-microsoft-teams-microsoft-office-365-sharepoint-co-5af6c8647a8f16.976515281526122596502.png',
           enabled: true
         }
       ],

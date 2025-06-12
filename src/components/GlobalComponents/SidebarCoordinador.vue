@@ -87,7 +87,7 @@
         { 
           icon: 'assessment', 
           text: 'Reportes', 
-          path: '/reportes',
+          path: '/admin/reports',
           badge: null
         },
         { 
