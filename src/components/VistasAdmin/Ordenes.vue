@@ -12,8 +12,15 @@
         </div>
       </div>
   
+      <!-- Loading Spinner -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
+  
       <!-- Pestañas -->
-      <div class="tabs-container">
+      <div class="tabs-container" v-if="!loading">
         <ul class="nav nav-tabs">
           <li class="nav-item">
             <a class="nav-link" :class="{ active: activeTab === 'produccion' }" 
@@ -31,7 +38,7 @@
       </div>
   
       <!-- Filtros -->
-      <div class="filters-panel">
+      <div class="filters-panel" v-if="!loading">
         <div class="panel-header" @click="toggleFilters">
           <div class="panel-title">
             <i class="fas fa-filter"></i>
@@ -101,7 +108,7 @@
       </div>
   
       <!-- Contenido de pestañas -->
-      <div class="tab-content">
+      <div class="tab-content" v-if="!loading">
         <!-- Pestaña Producción -->
         <div v-if="activeTab === 'produccion'" class="tab-pane active">
           <div class="card">
@@ -139,6 +146,13 @@
                         </button>
                         <button class="btn btn-sm btn-icon" @click="editarTrabajo(trabajo)">
                           <i class="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          class="btn btn-sm btn-icon btn-danger" 
+                          @click="eliminarTrabajo(trabajo.id)"
+                          :disabled="loadingDelete === trabajo.id"
+                        >
+                          <i class="fas fa-trash"></i>
                         </button>
                       </td>
                     </tr>
@@ -249,6 +263,7 @@
   </template>
 
 <script>
+import axios from 'axios'
 import TrabajoModal from '@/components/VistasAdmin/ComponentesAdmin/TrabajoModal.vue'
 import NuevoTrabajoModal from '@/components/VistasAdmin/ComponentesAdmin/NuevoTrabajoModal.vue'
 
@@ -262,6 +277,8 @@ export default {
     return {
       activeTab: 'produccion',
       trabajos: [],
+      loading: false,
+      loadingDelete: null,
       searchQuery: '',
       estadoFilter: 'todos',
       tecnicoFilter: 'todos',
@@ -279,7 +296,8 @@ export default {
       showFilters: true,
       showTrabajoModal: false,
       showNuevoTrabajoModal: false,
-      selectedTrabajo: null
+      selectedTrabajo: null,
+
     }
   },
   
@@ -371,17 +389,64 @@ export default {
   },
   
   methods: {
+    // Métodos de API
     async loadTrabajos() {
-  try {
-    this.trabajos = [
-    ];
+      try {
+        this.loading = true;
+        const response = await axios.get('/api/Pedido');
+        this.trabajos = response.data;
+      } catch (error) {
+        console.error("Error cargando trabajos:", error);
+        this.showToast('Error al cargar trabajos', 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async obtenerTrabajoPorId(id) {
+      try {
+        const response = await axios.get(`/api/Pedido/${id}`);
+        return response.data;
+      } catch (error) {
+        console.error("Error obteniendo trabajo:", error);
+        this.showToast('Error al obtener trabajo', 'error');
+        throw error;
+      }
+    },
+
+    async crearTrabajo(trabajoData) {
+      try {
+        const response = await axios.post('/api/Pedido', trabajoData);
+        return response.data;
+      } catch (error) {
+        console.error("Error creando trabajo:", error);
+        this.showToast('Error al crear trabajo', 'error');
+        throw error;
+      }
+    },
+
+    async actualizarTrabajo(id, trabajoData) {
+      try {
+        const response = await axios.put(`/api/Pedido/${id}`, trabajoData);
+        return response.data;
+      } catch (error) {
+        console.error("Error actualizando trabajo:", error);
+        this.showToast('Error al actualizar trabajo', 'error');
+        throw error;
+      }
+    },
+
+    async eliminarTrabajoAPI(id) {
+      try {
+        await axios.delete(`/api/Pedido/${id}`);
+      } catch (error) {
+        console.error("Error eliminando trabajo:", error);
+        this.showToast('Error al eliminar trabajo', 'error');
+        throw error;
+      }
+    },
     
-  } catch (error) {
-    console.error("Error cargando trabajos:", error);
-    this.showToast('Error al cargar trabajos', 'error');
-  }
-},
-    
+    // Métodos de UI
     applyFilters() {
       this.currentPage = 1;
     },
@@ -395,9 +460,17 @@ export default {
       this.currentPage = 1;
     },
     
-    verDetalles(trabajo) {
-      this.selectedTrabajo = { ...trabajo };
-      this.showTrabajoModal = true;
+    async verDetalles(trabajo) {
+      try {
+        // Obtener datos actualizados del trabajo
+        const trabajoActualizado = await this.obtenerTrabajoPorId(trabajo.id);
+        this.selectedTrabajo = { ...trabajoActualizado };
+        this.showTrabajoModal = true;
+      } catch (error) {
+        // Si falla, usar los datos locales
+        this.selectedTrabajo = { ...trabajo };
+        this.showTrabajoModal = true;
+      }
     },
     
     editarTrabajo(trabajo) {
@@ -405,52 +478,65 @@ export default {
       this.showTrabajoModal = true;
     },
     
+    async eliminarTrabajo(id) {
+      if (!confirm('¿Estás seguro de que deseas eliminar este trabajo?')) {
+        return;
+      }
+
+      try {
+        this.loadingDelete = id;
+        await this.eliminarTrabajoAPI(id);
+        
+        // Remover del array local
+        this.trabajos = this.trabajos.filter(t => t.id !== id);
+        
+        this.showToast('Trabajo eliminado correctamente', 'success');
+      } catch (error) {
+        // Error ya manejado en eliminarTrabajoAPI
+      } finally {
+        this.loadingDelete = null;
+      }
+    },
+    
     async saveTrabajo(trabajoData) {
       try {
         if (trabajoData.id) {
           // Actualizar trabajo existente
+          const trabajoActualizado = await this.actualizarTrabajo(trabajoData.id, trabajoData);
+          
+          // Actualizar en el array local
           const index = this.trabajos.findIndex(t => t.id === trabajoData.id);
           if (index !== -1) {
-            this.trabajos[index] = trabajoData;
+            this.trabajos[index] = trabajoActualizado;
           }
           
-          // Llamada API real (descomentar cuando esté lista)
-          // await this.$http.put(`/api/trabajos/${trabajoData.id}`, trabajoData);
-          
-          this.showToast('Trabajo actualizado', 'success');
+          this.showToast('Trabajo actualizado correctamente', 'success');
         }
         this.closeTrabajoModal();
       } catch (error) {
-        console.error("Error guardando trabajo:", error);
-        this.showToast('Error al guardar trabajo', 'error');
+        // Error ya manejado en actualizarTrabajo
       }
     },
     
     async addTrabajo(nuevoTrabajo) {
       try {
-        // Generar ID y orden (en producción esto lo haría el backend)
-        const newId = Math.max(...this.trabajos.map(t => t.id), 0) + 1;
-        const newOrden = `T-${new Date().getFullYear()}-${String(newId).padStart(3, '0')}`;
-        
-        const trabajo = {
-          id: newId,
-          orden: newOrden,
+        // Preparar datos del trabajo
+        const trabajoData = {
           ...nuevoTrabajo,
           fecha_inicio: new Date().toISOString().split('T')[0],
           fecha_fin: '',
           estado: 'pendiente'
         };
         
+        const trabajoCreado = await this.crearTrabajo(trabajoData);
         
-        // Llamada API real (descomentar cuando esté lista)
-        // await this.$http.post('/api/trabajos', nuevoTrabajo);
-        // this.loadTrabajos(); // Recargar datos
+        // Agregar al array local
+        this.trabajos.unshift(trabajoCreado);
         
         this.showNuevoTrabajoModal = false;
-        this.showToast('Nuevo trabajo creado', 'success');
+        this.showToast('Nuevo trabajo creado correctamente', 'success');
       } catch (error) {
-        console.error("Error creando trabajo:", error);
-        this.showToast('Error al crear trabajo', 'error');
+        // Error ya manejado en crearTrabajo
       }
     },
     
@@ -501,7 +587,9 @@ export default {
     },
     
     showToast(message, type = 'success') {
-      alert(`${type.toUpperCase()}: ${message}`);
+      // Implementar un sistema de notificaciones más sofisticado si es necesario
+      const alertType = type === 'success' ? 'Éxito' : 'Error';
+      alert(`${alertType}: ${message}`);
     }
   },
   
@@ -510,3 +598,102 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Resto de estilos específicos del componente */
+.produccion-container {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filters-panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  padding: 15px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  padding: 20px;
+}
+
+.filter-actions {
+  padding: 0 20px 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.badge-pendiente { background-color: #ffc107; }
+.badge-en_proceso { background-color: #17a2b8; }
+.badge-completado { background-color: #28a745; }
+.badge-entregado { background-color: #6c757d; }
+
+.pagination-container {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-pagination {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+}
+
+.btn-pagination.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+</style>
