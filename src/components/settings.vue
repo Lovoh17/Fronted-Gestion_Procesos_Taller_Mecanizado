@@ -1,979 +1,642 @@
 <template>
-  <div class="settings-container">
-    <div class="settings-sidebar">
-      <div class="user-profile-card">
-        <div class="avatar-container">
-          <img :src="user.avatar || 'default-avatar.png'" alt="Avatar" class="user-avatar">
-          <button class="avatar-edit-btn" @click="triggerAvatarUpload">
-            <i class="material-icons">edit</i>
-          </button>
-          <input type="file" ref="avatarInput" accept="image/*" @change="handleAvatarChange" hidden>
-        </div>
-        <h3 class="user-name">{{ user.name }}</h3>
-        <p class="user-role">{{ user.role }}</p>
-        <div class="user-stats">
-          <div class="stat-item">
-            <i class="material-icons">work</i>
-            <span>{{ user.stats.projects }} proyectos</span>
-          </div>
-          <div class="stat-item">
-            <i class="material-icons">event</i>
-            <span>Miembro desde {{ formatDate(user.joinDate) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <nav class="settings-nav">
-        <ul>
-          <li v-for="tab in tabs" :key="tab.id" 
-              :class="{ active: activeTab === tab.id }"
-              @click="activeTab = tab.id">
-            <i class="material-icons">{{ tab.icon }}</i>
-            {{ tab.label }}
-          </li>
-        </ul>
-      </nav>
+  <div class="configuracion-container">
+    <h1>Configuración del Sistema</h1>
+    
+    <div class="config-tabs">
+      <button 
+        v-for="tab in tabs" 
+        :key="tab.key"
+        @click="activeTab = tab.key"
+        :class="{active: activeTab === tab.key}"
+      >
+        {{ tab.label }}
+      </button>
     </div>
+    
+    <div class="config-content">
+      <!-- Sección de Tipos -->
+      <div v-if="activeTab === 'tipos'" class="config-section">
+        <div class="sub-tabs">
+          <button
+            v-for="subTab in tipoSubtabs"
+            :key="subTab.key"
+            @click="activeTipoTab = subTab.key"
+            :class="{active: activeTipoTab === subTab.key}"
+          >
+            {{ subTab.label }}
+          </button>
+        </div>
 
-    <div class="settings-content">
-      <!-- Información Personal -->
-      <div v-if="activeTab === 'personal'" class="tab-content">
-        <h2 class="tab-title">Información Personal</h2>
-        <form @submit.prevent="savePersonalInfo" class="settings-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Nombre completo</label>
-              <input type="text" v-model="user.name" required>
-            </div>
-            <div class="form-group">
-              <label>Correo electrónico</label>
-              <input type="email" v-model="user.email" required>
-            </div>
-          </div>
+        <!-- Tipos de Herramientas -->
+        <div v-if="activeTipoTab === 'herramientas'" class="type-section">
+          <h3>Tipos de Herramientas</h3>
+          <ConfigTable
+            :columns="columnsTipos"
+            :data="tiposHerramientas"
+            :loading="loading"
+            @create="handleCreateTipo('herramientas', $event)"
+            @update="handleUpdateTipo('herramientas', $event)"
+            @delete="handleDeleteTipo('herramientas', $event)"
+          />
+        </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>Teléfono</label>
-              <input type="tel" v-model="user.phone">
-            </div>
-            <div class="form-group">
-              <label>Departamento</label>
-              <select v-model="user.department">
-                <option value="produccion">Producción</option>
-                <option value="calidad">Control de Calidad</option>
-                <option value="diseno">Diseño</option>
-                <option value="administracion">Administración</option>
-              </select>
-            </div>
-          </div>
+        <!-- Tipos de Mantenimiento -->
+        <div v-if="activeTipoTab === 'mantenimiento'" class="type-section">
+          <h3>Tipos de Mantenimiento</h3>
+          <ConfigTable
+            :columns="columnsTipos"
+            :data="tiposMantenimiento"
+            :loading="loading"
+            @create="handleCreateTipo('mantenimiento', $event)"
+            @update="handleUpdateTipo('mantenimiento', $event)"
+            @delete="handleDeleteTipo('mantenimiento', $event)"
+          />
+        </div>
 
-          <div class="form-group">
-            <label>Biografía</label>
-            <textarea v-model="user.bio" rows="3"></textarea>
-          </div>
+        <!-- Tipos de Transacción -->
+        <div v-if="activeTipoTab === 'transaccion'" class="type-section">
+          <h3>Tipos de Transacción</h3>
+          <ConfigTable
+            :columns="columnsTipos"
+            :data="tiposTransaccion"
+            :loading="loading"
+            @create="handleCreateTipo('transaccion', $event)"
+            @update="handleUpdateTipo('transaccion', $event)"
+            @delete="handleDeleteTipo('transaccion', $event)"
+          />
+        </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn secondary" @click="resetPersonalInfo">Cancelar</button>
-            <button type="submit" class="btn primary">Guardar cambios</button>
-          </div>
-        </form>
-      </div>
+        <!-- Tipos de Teléfono -->
+        <div v-if="activeTipoTab === 'telefono'" class="type-section">
+          <h3>Tipos de Teléfono</h3>
+          <ConfigTable
+            :columns="columnsTipos"
+            :data="tiposTelefono"
+            :loading="loading"
+            @create="handleCreateTipo('telefono', $event)"
+            @update="handleUpdateTipo('telefono', $event)"
+            @delete="handleDeleteTipo('telefono', $event)"
+          />
+        </div>
 
-      <!-- Seguridad -->
-      <div v-if="activeTab === 'security'" class="tab-content">
-        <h2 class="tab-title">Seguridad y Acceso</h2>
-        <form @submit.prevent="updatePassword" class="settings-form">
-          <div class="form-group">
-            <label>Contraseña actual</label>
-            <input type="password" v-model="password.current" required>
-          </div>
+        <!-- Unidades de Medida -->
+        <div v-if="activeTipoTab === 'unidad-medida'" class="type-section">
+          <h3>Unidades de Medida</h3>
+          <ConfigTable
+            :columns="columnsUnidadMedida"
+            :data="unidadesMedida"
+            :loading="loading"
+            @create="handleCreateTipo('unidad-medida', $event)"
+            @update="handleUpdateTipo('unidad-medida', $event)"
+            @delete="handleDeleteTipo('unidad-medida', $event)"
+          />
+        </div>
 
-          <div class="form-group">
-            <label>Nueva contraseña</label>
-            <input type="password" v-model="password.new" required>
-            <div class="password-strength" :class="passwordStrength">
-              Seguridad: {{ passwordStrengthText }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Confirmar nueva contraseña</label>
-            <input type="password" v-model="password.confirm" required>
-            <div v-if="passwordMismatch" class="error-message">
-              Las contraseñas no coinciden
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn primary" :disabled="passwordMismatch || password.new.length < 8">
-              Cambiar contraseña
-            </button>
-          </div>
-        </form>
-
-        <div class="security-section">
-          <h3>Sesiónes activas</h3>
-          <div class="sessions-list">
-            <div v-for="session in activeSessions" :key="session.id" class="session-item">
-              <div class="session-info">
-                <i class="material-icons">devices</i>
-                <div>
-                  <div class="session-device">{{ session.device }}</div>
-                  <div class="session-meta">
-                    {{ session.location }} • {{ formatDateTime(session.lastActivity) }}
-                  </div>
-                </div>
-              </div>
-              <button class="btn small" @click="revokeSession(session.id)"
-                      v-if="session.current">Cerrar otras sesiones</button>
-            </div>
-          </div>
+        <!-- Turnos -->
+        <div v-if="activeTipoTab === 'turno'" class="type-section">
+          <h3>Turnos</h3>
+          <ConfigTable
+            :columns="columnsTurnos"
+            :data="turnos"
+            :loading="loading"
+            @create="handleCreateTipo('turno', $event)"
+            @update="handleUpdateTipo('turno', $event)"
+            @delete="handleDeleteTipo('turno', $event)"
+          />
         </div>
       </div>
 
-      <!-- Preferencias -->
-      <div v-if="activeTab === 'preferences'" class="tab-content">
-        <h2 class="tab-title">Preferencias</h2>
-        
-        <div class="preferences-section">
-          <h3>Configuración de la interfaz</h3>
-          <div class="preference-item">
-            <label class="switch-container">
-              Modo oscuro
-              <label class="switch">
-                <input type="checkbox" v-model="preferences.darkMode">
-                <span class="slider"></span>
+      <!-- Sección de Alertas -->
+      <div v-if="activeTab === 'alertas'" class="config-section">
+        <h2>Configuración de Alertas</h2>
+        <div class="alertas-grid" v-if="!loading">
+          <div v-for="alerta in alertas" :key="alerta.id" class="alerta-card">
+            <h3>{{ alerta.nombre }}</h3>
+            <div class="alerta-controls">
+              <label>
+                <input 
+                  type="checkbox" 
+                  v-model="alerta.activo"
+                  @change="saveAlerta(alerta)"
+                > Activo
               </label>
-            </label>
-          </div>
-
-          <div class="preference-item">
-            <label class="switch-container">
-              Mostrar notificaciones
-              <label class="switch">
-                <input type="checkbox" v-model="preferences.notifications">
-                <span class="slider"></span>
-              </label>
-            </label>
-          </div>
-
-          <div class="preference-item">
-            <label>Densidad de la interfaz</label>
-            <div class="radio-group">
-              <label class="radio-container">
-                Compacta
-                <input type="radio" name="density" value="compact" v-model="preferences.density">
-                <span class="radiomark"></span>
-              </label>
-              <label class="radio-container">
-                Normal
-                <input type="radio" name="density" value="normal" v-model="preferences.density">
-                <span class="radiomark"></span>
-              </label>
-              <label class="radio-container">
-                Amplia
-                <input type="radio" name="density" value="comfortable" v-model="preferences.density">
-                <span class="radiomark"></span>
-              </label>
+              <input 
+                v-model.number="alerta.umbral" 
+                type="number" 
+                placeholder="Umbral"
+                :disabled="!alerta.activo"
+                @blur="saveAlerta(alerta)"
+                min="0"
+              >
+              <button 
+                @click="saveAlerta(alerta)"
+                :disabled="loading"
+                class="btn-save"
+              >
+                {{ loading ? 'Guardando...' : 'Guardar' }}
+              </button>
             </div>
           </div>
         </div>
-
-        <div class="preferences-section">
-          <h3>Preferencias de idioma</h3>
-          <div class="form-group">
-            <label>Idioma principal</label>
-            <select v-model="preferences.language">
-              <option value="es">Español</option>
-              <option value="en">Inglés</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button class="btn primary" @click="savePreferences">Guardar preferencias</button>
-        </div>
+        <div v-else class="loading">Cargando alertas...</div>
       </div>
 
-      <!-- Integraciones -->
-      <div v-if="activeTab === 'integrations'" class="tab-content">
-        <h2 class="tab-title">Integraciones</h2>
-        
-        <div class="integrations-grid">
-          <div class="integration-card" v-for="integration in availableIntegrations" :key="integration.id">
-            <div class="integration-header">
-              <img :src="integration.logo" :alt="integration.name" class="integration-logo">
-              <h3>{{ integration.name }}</h3>
-              <label class="switch">
-                <input type="checkbox" v-model="integration.enabled">
-                <span class="slider"></span>
-              </label>
-            </div>
-            <p class="integration-description">{{ integration.description }}</p>
-            <button class="btn small" @click="configureIntegration(integration.id)"
-                    v-if="integration.enabled">Configurar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notificaciones -->
-      <div v-if="activeTab === 'notifications'" class="tab-content">
-        <h2 class="tab-title">Configuración de Notificaciones</h2>
-        
-        <div class="notifications-section">
-          <h3>Preferencias de notificaciones</h3>
-          <div class="notification-preference">
-            <label class="notification-label">Notificaciones por correo electrónico</label>
-            <div class="notification-options">
-              <label class="radio-container">
-                Todas
-                <input type="radio" name="emailFrequency" value="all" v-model="notifications.emailFrequency">
-                <span class="radiomark"></span>
-              </label>
-              <label class="radio-container">
-                Solo importantes
-                <input type="radio" name="emailFrequency" value="important" v-model="notifications.emailFrequency">
-                <span class="radiomark"></span>
-              </label>
-              <label class="radio-container">
-                Ninguna
-                <input type="radio" name="emailFrequency" value="none" v-model="notifications.emailFrequency">
-                <span class="radiomark"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="notification-preference">
-            <label class="notification-label">Notificaciones en la aplicación</label>
-            <div class="notification-options">
-              <label class="radio-container">
-                Todas
-                <input type="radio" name="appFrequency" value="all" v-model="notifications.appFrequency">
-                <span class="radiomark"></span>
-              </label>
-              <label class="radio-container">
-                Solo importantes
-                <input type="radio" name="appFrequency" value="important" v-model="notifications.appFrequency">
-                <span class="radiomark"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="notifications-section">
-          <h3>Tipos de notificaciones</h3>
-          <div class="notification-types">
-            <div class="notification-type" v-for="type in notificationTypes" :key="type.id">
-              <label class="switch-container">
-                {{ type.label }}
-                <label class="switch">
-                  <input type="checkbox" v-model="type.enabled">
-                  <span class="slider"></span>
-                </label>
-              </label>
-              <p class="notification-description">{{ type.description }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button class="btn primary" @click="saveNotificationSettings">Guardar configuración</button>
-        </div>
+      <!-- Sección de Métodos de Pago -->
+      <div v-if="activeTab === 'metodos-pago'" class="config-section">
+        <h2>Métodos de Pago</h2>
+        <ConfigTable
+          :columns="columnsMetodosPago"
+          :data="metodosPago"
+          :loading="loading"
+          @create="handleCreateMetodoPago($event)"
+          @update="handleUpdateMetodoPago($event)"
+          @delete="handleDeleteMetodoPago($event)"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import ConfigTable from '@/components/GlobalComponents/ConfigTable.vue'
+import { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
+import axios from 'axios' // Importar axios directamente
+
 export default {
+  name: 'ConfiguracionView',
+  components: {
+    ConfigTable
+  },
   data() {
     return {
-      activeTab: 'personal',
+      loading: false,
+      activeTab: 'tipos',
       tabs: [
-        { id: 'personal', label: 'Información Personal', icon: 'person' },
-        { id: 'security', label: 'Seguridad', icon: 'lock' },
-        { id: 'preferences', label: 'Preferencias', icon: 'settings' },
-        { id: 'notifications', label: 'Notificaciones', icon: 'notifications' },
-        { id: 'integrations', label: 'Integraciones', icon: 'extension' }
+        { key: 'tipos', label: 'Tipos' },
+        { key: 'alertas', label: 'Alertas' },
+        { key: 'metodos-pago', label: 'Métodos de Pago' }
       ],
-      user: {
-        name: 'Juan Pérez',
-        email: 'juan.perez@taller.com',
-        role: 'Supervisor de Calidad',
-        phone: '+52 55 1234 5678',
-        department: 'calidad',
-        bio: 'Supervisor con 5 años de experiencia en control de calidad en procesos de mecanizado.',
-        avatar: 'user-avatar.jpg',
-        stats: {
-          projects: 24,
-          tasks: 156
-        },
-        joinDate: '2020-05-15'
-      },
-      originalUser: {},
-      password: {
-        current: '',
-        new: '',
-        confirm: ''
-      },
-      activeSessions: [
-        {
-          id: 1,
-          device: 'Chrome en Windows',
-          location: 'Ciudad de México, MX',
-          lastActivity: new Date(),
-          current: true
-        },
-        {
-          id: 2,
-          device: 'Safari en iPhone',
-          location: 'Guadalajara, MX',
-          lastActivity: new Date(Date.now() - 3600000),
-          current: false
-        }
+      
+      // Subtabs para tipos
+      activeTipoTab: 'herramientas',
+      tipoSubtabs: [
+        { key: 'herramientas', label: 'Herramientas' },
+        { key: 'mantenimiento', label: 'Mantenimiento' },
+        { key: 'transaccion', label: 'Transacción' },
+        { key: 'telefono', label: 'Teléfono' },
+        { key: 'unidad-medida', label: 'Unidad Medida' },
+        { key: 'turno', label: 'Turnos' }
       ],
-      preferences: {
-        darkMode: false,
-        notifications: true,
-        density: 'normal',
-        language: 'es'
+      
+      // Datos
+      tiposHerramientas: [],
+      tiposMantenimiento: [],
+      tiposTransaccion: [],
+      tiposTelefono: [],
+      unidadesMedida: [],
+      turnos: [],
+      alertas: [],
+      metodosPago: [],
+      
+      // Endpoints API
+      apiEndpoints: {
+        herramientas: 'Tipo_Herramienta',
+        mantenimiento: 'Tipo_Mantenimiento',
+        transaccion: 'Tipos_Transaccion',
+        telefono: 'Tipo_Telefono',
+        'unidad-medida': 'Unidad_Medida',
+        turno: 'Turno',
+        alertas: 'AlertaReparacion',
+        'metodos-pago': 'MetodoPago'
       },
-      availableIntegrations: [
-        {
-          id: 1,
-          name: 'Google Calendar',
-          description: 'Sincroniza tus tareas y eventos con Google Calendar',
-          logo: 'https://bootflare.com/wp-content/uploads/2023/03/Google-Calendar-Logo.png',
-          enabled: true
-        },
-        {
-          id: 2,
-          name: 'Slack',
-          description: 'Recibe notificaciones en tus canales de Slack',
-          logo: 'https://th.bing.com/th/id/OIP.wm3r8I6tFttVkUPo-qjkwwHaEK?rs=1&pid=ImgDetMain',
-          enabled: false
-        },
-        {
-          id: 3,
-          name: 'Microsoft Teams',
-          description: 'Integración con Microsoft Teams para notificaciones',
-          logo: 'https://www.knowledgewave.com/hs-fs/hubfs/kisspng-microsoft-teams-microsoft-office-365-sharepoint-co-5af6c8647a8f16.976515281526122596502.png?width=512&name=kisspng-microsoft-teams-microsoft-office-365-sharepoint-co-5af6c8647a8f16.976515281526122596502.png',
-          enabled: true
-        }
+      
+      // Columnas para tablas
+      columnsTipos: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'activo', label: 'Activo', type: 'checkbox' }
       ],
-      notifications: {
-        emailFrequency: 'important',
-        appFrequency: 'all'
-      },
-      notificationTypes: [
-        {
-          id: 1,
-          label: 'Asignación de tareas',
-          description: 'Recibir notificaciones cuando se te asigne una nueva tarea',
-          enabled: true
-        },
-        {
-          id: 2,
-          label: 'Cambios en proyectos',
-          description: 'Notificaciones sobre cambios importantes en proyectos asignados',
-          enabled: true
-        },
-        {
-          id: 3,
-          label: 'Recordatorios',
-          description: 'Recordatorios de tareas pendientes y fechas límite',
-          enabled: false
-        },
-        {
-          id: 4,
-          label: 'Menciones',
-          description: 'Cuando alguien te mencione en comentarios o documentos',
-          enabled: true
-        }
+      columnsMetodosPago: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'comision', label: 'Comisión (%)', type: 'number' },
+        { field: 'activo', label: 'Activo', type: 'checkbox' }
+      ],
+      columnsUnidadMedida: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'simbolo', label: 'Símbolo', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'activo', label: 'Activo', type: 'checkbox' }
+      ],
+      columnsTurnos: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'hora_inicio', label: 'Hora Inicio', type: 'time', required: true },
+        { field: 'hora_fin', label: 'Hora Fin', type: 'time', required: true },
+        { field: 'activo', label: 'Activo', type: 'checkbox' }
       ]
     }
   },
   created() {
-    // Guardar copia original para reset
-    this.originalUser = JSON.parse(JSON.stringify(this.user));
-  },
-  computed: {
-    passwordMismatch() {
-      return this.password.new !== this.password.confirm && this.password.confirm !== '';
-    },
-    passwordStrength() {
-      if (this.password.new.length === 0) return '';
-      if (this.password.new.length < 8) return 'weak';
-      
-      const hasUpper = /[A-Z]/.test(this.password.new);
-      const hasLower = /[a-z]/.test(this.password.new);
-      const hasNumber = /[0-9]/.test(this.password.new);
-      const hasSpecial = /[^A-Za-z0-9]/.test(this.password.new);
-      
-      const strength = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-      
-      if (strength < 2) return 'weak';
-      if (strength < 4) return 'medium';
-      return 'strong';
-    },
-    passwordStrengthText() {
-      return {
-        '': 'No establecida',
-        weak: 'Débil',
-        medium: 'Media',
-        strong: 'Fuerte'
-      }[this.passwordStrength];
+    // Configurar axios si no existe $api
+    if (!this.$api) {
+      this.api = axios.create({
+        baseURL: 'http://localhost:3000/',
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json',
+          // Agregar token de autenticación si existe
+          ...(localStorage.getItem('token') && {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          })
+        }
+      })
+    } else {
+      this.api = this.$api
     }
+    
+    this.loadAllData()
   },
   methods: {
-    triggerAvatarUpload() {
-      this.$refs.avatarInput.click();
-    },
-    handleAvatarChange(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.user.avatar = e.target.result;
-          // Aquí normalmente subirías la imagen al servidor
-        };
-        reader.readAsDataURL(file);
+    async loadAllData() {
+      this.loading = true
+      try {
+        // Cargar todos los datos necesarios (sin estados)
+        const promises = [
+          this.api.get(this.apiEndpoints.herramientas),
+          this.api.get(this.apiEndpoints.mantenimiento),
+          this.api.get(this.apiEndpoints.transaccion),
+          this.api.get(this.apiEndpoints.telefono),
+          this.api.get(this.apiEndpoints['unidad-medida']),
+          this.api.get(this.apiEndpoints.turno),
+          this.api.get(this.apiEndpoints.alertas),
+          this.api.get(this.apiEndpoints['metodos-pago'])
+        ]
+        
+        const [
+          herramientasRes, 
+          mantenimientoRes,
+          transaccionRes,
+          telefonoRes,
+          unidadMedidaRes,
+          turnoRes,
+          alertasRes,
+          metodosRes
+        ] = await Promise.all(promises)
+        
+        this.tiposHerramientas = herramientasRes.data || []
+        this.tiposMantenimiento = mantenimientoRes.data || []
+        this.tiposTransaccion = transaccionRes.data || []
+        this.tiposTelefono = telefonoRes.data || []
+        this.unidadesMedida = unidadMedidaRes.data || []
+        this.turnos = turnoRes.data || []
+        this.alertas = alertasRes.data || []
+        this.metodosPago = metodosRes.data || []
+        
+      } catch (error) {
+        console.error('Error cargando configuración:', error)
+        toast.error('Error al cargar la configuración')
+      } finally {
+        this.loading = false
       }
     },
-    savePersonalInfo() {
-      // Lógica para guardar en el servidor
-      console.log('Guardando información personal:', this.user);
-      this.originalUser = JSON.parse(JSON.stringify(this.user));
-      alert('Información personal actualizada correctamente');
+    
+    // Validar datos antes de enviar
+    validateData(data, required = []) {
+      for (const field of required) {
+        if (!data[field] || data[field].toString().trim() === '') {
+          throw new Error(`El campo ${field} es requerido`)
+        }
+      }
+      return true
     },
-    resetPersonalInfo() {
-      this.user = JSON.parse(JSON.stringify(this.originalUser));
+    
+    // Métodos para Tipos (CRUD completo)
+    async handleCreateTipo(tipo, data) {
+      try {
+        this.validateData(data, ['nombre'])
+        
+        const endpoint = this.apiEndpoints[tipo]
+        const response = await this.api.post(endpoint, data)
+        
+        toast.success('Tipo creado correctamente')
+        await this.loadDataForType(tipo)
+        
+        return response
+      } catch (error) {
+        console.error('Error creando tipo:', error)
+        toast.error(error.message || 'Error al crear tipo')
+        throw error
+      }
     },
-    updatePassword() {
-      // Lógica para cambiar contraseña
-      console.log('Cambiando contraseña');
-      this.password = { current: '', new: '', confirm: '' };
-      alert('Contraseña actualizada correctamente');
+    
+    async handleUpdateTipo(tipo, data) {
+      try {
+        this.validateData(data, ['nombre'])
+        
+        const endpoint = `${this.apiEndpoints[tipo]}/${data.id}`
+        const response = await this.api.put(endpoint, data)
+        
+        toast.success('Tipo actualizado correctamente')
+        await this.loadDataForType(tipo)
+        
+        return response
+      } catch (error) {
+        console.error('Error actualizando tipo:', error)
+        toast.error(error.message || 'Error al actualizar tipo')
+        throw error
+      }
     },
-    revokeSession(sessionId) {
-      this.activeSessions = this.activeSessions.filter(s => s.id === sessionId || s.current);
-      alert('Sesiones revocadas correctamente');
+    
+    async handleDeleteTipo(tipo, id) {
+      try {
+        if (!confirm('¿Estás seguro de que deseas eliminar este tipo?')) {
+          return
+        }
+        
+        const endpoint = `${this.apiEndpoints[tipo]}/${id}`
+        await this.api.delete(endpoint)
+        
+        toast.success('Tipo eliminado correctamente')
+        await this.loadDataForType(tipo)
+      } catch (error) {
+        console.error('Error eliminando tipo:', error)
+        toast.error(error.message || 'Error al eliminar tipo')
+        throw error
+      }
     },
-    savePreferences() {
-      // Lógica para guardar preferencias
-      console.log('Guardando preferencias:', this.preferences);
-      alert('Preferencias guardadas correctamente');
+    
+    // Cargar datos específicos por tipo
+    async loadDataForType(tipo) {
+      try {
+        const response = await this.api.get(this.apiEndpoints[tipo])
+        
+        switch (tipo) {
+          case 'herramientas':
+            this.tiposHerramientas = response.data || []
+            break
+          case 'mantenimiento':
+            this.tiposMantenimiento = response.data || []
+            break
+          case 'transaccion':
+            this.tiposTransaccion = response.data || []
+            break
+          case 'telefono':
+            this.tiposTelefono = response.data || []
+            break
+          case 'unidad-medida':
+            this.unidadesMedida = response.data || []
+            break
+          case 'turno':
+            this.turnos = response.data || []
+            break
+        }
+      } catch (error) {
+        console.error(`Error cargando datos para ${tipo}:`, error)
+      }
     },
-    configureIntegration(integrationId) {
-      console.log('Configurando integración:', integrationId);
-      // Lógica para configurar integración específica
+    
+    // Métodos para Alertas
+    async saveAlerta(alerta) {
+      try {
+        this.loading = true
+        
+        await this.api.put(`${this.apiEndpoints.alertas}/${alerta.id}`, {
+          activo: alerta.activo,
+          umbral: alerta.umbral || 0
+        })
+        
+        toast.success('Configuración de alerta guardada')
+      } catch (error) {
+        console.error('Error guardando alerta:', error)
+        toast.error('Error al guardar alerta')
+      } finally {
+        this.loading = false
+      }
     },
-    saveNotificationSettings() {
-      // Lógica para guardar configuración de notificaciones
-      console.log('Guardando configuración de notificaciones:', this.notifications, this.notificationTypes);
-      alert('Configuración de notificaciones guardada');
+    
+    // Métodos para Métodos de Pago
+    async handleCreateMetodoPago(data) {
+      try {
+        this.validateData(data, ['nombre'])
+        
+        await this.api.post(this.apiEndpoints['metodos-pago'], data)
+        toast.success('Método de pago creado')
+        await this.loadAllData()
+      } catch (error) {
+        console.error('Error creando método de pago:', error)
+        toast.error(error.message || 'Error al crear método de pago')
+      }
     },
-    formatDate(dateString) {
-      const options = { year: 'numeric', month: 'long' };
-      return new Date(dateString).toLocaleDateString('es-ES', options);
+    
+    async handleUpdateMetodoPago(data) {
+      try {
+        this.validateData(data, ['nombre'])
+        
+        await this.api.put(`${this.apiEndpoints['metodos-pago']}/${data.id}`, data)
+        toast.success('Método de pago actualizado')
+        await this.loadAllData()
+      } catch (error) {
+        console.error('Error actualizando método de pago:', error)
+        toast.error(error.message || 'Error al actualizar método de pago')
+      }
     },
-    formatDateTime(date) {
-      const options = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      };
-      return new Date(date).toLocaleDateString('es-ES', options);
+    
+    async handleDeleteMetodoPago(id) {
+      try {
+        if (!confirm('¿Estás seguro de que deseas eliminar este método de pago?')) {
+          return
+        }
+        
+        await this.api.delete(`${this.apiEndpoints['metodos-pago']}/${id}`)
+        toast.success('Método de pago eliminado')
+        await this.loadAllData()
+      } catch (error) {
+        console.error('Error eliminando método de pago:', error)
+        toast.error('Error al eliminar método de pago')
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-.settings-container {
-  display: flex;
-  min-height: calc(100vh - 60px);
-  background-color: #f5f7fa;
-}
-
-.settings-sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
+.configuracion-container {
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.user-profile-card {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.avatar-container {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 15px;
-}
-
-.user-avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #f0f0f0;
-}
-
-.avatar-edit-btn {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: #2c3e50;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+.config-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.avatar-edit-btn:hover {
-  background: #1a252f;
-}
-
-.user-name {
-  margin: 0;
-  font-size: 18px;
-  color: #2c3e50;
-}
-
-.user-role {
-  margin: 5px 0 15px;
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.user-stats {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  font-size: 13px;
-  color: #555;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.stat-item i {
-  font-size: 16px;
-}
-
-.settings-nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.settings-nav li {
-  padding: 12px 15px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
   gap: 10px;
-  cursor: pointer;
-  margin-bottom: 5px;
-  transition: all 0.2s;
-}
-
-.settings-nav li:hover {
-  background-color: #f0f2f5;
-}
-
-.settings-nav li.active {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  font-weight: 500;
-}
-
-.settings-nav li i {
-  font-size: 20px;
-}
-
-.settings-content {
-  flex: 1;
-  padding: 30px;
-  overflow-y: auto;
-}
-
-.tab-content {
-  background: white;
-  border-radius: 8px;
-  padding: 25px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.tab-title {
-  margin-top: 0;
-  margin-bottom: 25px;
-  color: #2c3e50;
-  font-size: 22px;
-}
-
-.settings-form {
-  max-width: 700px;
-}
-
-.form-row {
-  display: flex;
-  gap: 20px;
   margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
 }
 
-.form-group {
-  flex: 1;
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #555;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 25px;
-}
-
-.btn {
-  padding: 10px 18px;
+.config-tabs button {
+  padding: 8px 16px;
+  background: none;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  border: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.btn.primary {
-  background-color: #2c3e50;
+.config-tabs button:hover {
+  background: #f0f0f0;
+}
+
+.config-tabs button.active {
+  background: #42b983;
   color: white;
 }
 
-.btn.primary:hover {
-  background-color: #1a252f;
+.config-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.btn.secondary {
-  background-color: #f0f0f0;
-  color: #555;
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
 }
 
-.btn.secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.btn.small {
+.sub-tabs button {
   padding: 6px 12px;
-  font-size: 13px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
-.password-strength {
-  margin-top: 5px;
-  font-size: 13px;
-  padding: 3px 6px;
-  border-radius: 3px;
-  display: inline-block;
+.sub-tabs button:hover {
+  background: #e0e0e0;
 }
 
-.password-strength.weak {
-  background-color: #ffebee;
-  color: #c62828;
+.sub-tabs button.active {
+  background: #42b983;
+  color: white;
 }
 
-.password-strength.medium {
-  background-color: #fff8e1;
-  color: #f57f17;
-}
-
-.password-strength.strong {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.error-message {
-  color: #d32f2f;
-  font-size: 13px;
-  margin-top: 5px;
-}
-
-.security-section {
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.security-section h3 {
-  margin-top: 0;
-  color: #2c3e50;
-}
-
-.sessions-list {
+.type-section {
   margin-top: 15px;
 }
 
-.session-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.session-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.session-info i {
-  color: #555;
-  font-size: 20px;
-}
-
-.session-device {
-  font-weight: 500;
-}
-
-.session-meta {
-  font-size: 13px;
-  color: #7f8c8d;
-}
-
-.preferences-section {
-  margin-bottom: 30px;
-}
-
-.preference-item {
-  margin-bottom: 20px;
-}
-
-.switch-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #2c3e50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.radio-group {
-  display: flex;
-  gap: 20px;
-  margin-top: 10px;
-}
-
-.radio-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.radiomark {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #7f8c8d;
-  border-radius: 50%;
-  position: relative;
-}
-
-.radio-container input {
-  display: none;
-}
-
-.radio-container input:checked + .radiomark {
-  border-color: #2c3e50;
-}
-
-.radio-container input:checked + .radiomark::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #2c3e50;
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.integrations-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.integration-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  transition: all 0.2s;
-}
-
-.integration-card:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.integration-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.integration-logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 12px;
-  object-fit: contain;
-}
-
-.integration-header h3 {
-  flex: 1;
-  margin: 0;
-  font-size: 16px;
-}
-
-.integration-description {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 15px;
-}
-
-.notifications-section {
-  margin-bottom: 30px;
-}
-
-.notification-preference {
-  margin-bottom: 20px;
-}
-
-.notification-label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 10px;
-  color: #555;
-}
-
-.notification-options {
-  display: flex;
-  gap: 20px;
-}
-
-.notification-types {
+.alertas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  gap: 15px;
 }
 
-.notification-type {
-  border: 1px solid #eee;
-  border-radius: 6px;
+.alerta-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
   padding: 15px;
+  background: #fafafa;
 }
 
-.notification-description {
-  font-size: 13px;
-  color: #7f8c8d;
-  margin-top: 8px;
-  margin-bottom: 0;
+.alerta-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
 }
 
+.alerta-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.alerta-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.alerta-controls input[type="number"] {
+  width: 80px;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.btn-save {
+  padding: 5px 12px;
+  background: #42b983;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #369870;
+}
+
+.btn-save:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.config-section h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.config-section h3 {
+  margin-bottom: 15px;
+  color: #555;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .settings-container {
-    flex-direction: column;
+  .configuracion-container {
+    padding: 10px;
   }
   
-  .settings-sidebar {
+  .config-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .config-content {
+    padding: 15px;
+  }
+  
+  .alertas-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .alerta-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .alerta-controls input[type="number"] {
     width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .form-row {
-    flex-direction: column;
-    gap: 0;
   }
 }
 </style>

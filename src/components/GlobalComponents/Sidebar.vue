@@ -66,6 +66,12 @@ export default {
         badge: 3
       },
       { 
+          icon: 'miscellaneous_services', 
+          text: 'Mantenimientos', 
+          path: '/maintenance',
+          badge: 2
+        },
+      { 
         icon: 'local_shipping', 
         text: 'Ordenes', 
         path: '/admin/orders',

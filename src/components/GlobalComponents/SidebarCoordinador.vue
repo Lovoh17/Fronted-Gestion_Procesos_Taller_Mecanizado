@@ -75,7 +75,7 @@
         { 
           icon: 'miscellaneous_services', 
           text: 'Mantenimientos', 
-          path: '/coordinator/maintenance',
+          path: '/maintenance',
           badge: 2
         },
         { 
@@ -93,7 +93,7 @@
         { 
           icon: 'settings', 
           text: 'Configuración', 
-          path: '/configuracion',
+          path: '/settings',
           badge: null
         }
       ])

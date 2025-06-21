@@ -279,16 +279,13 @@ export default {
       trabajos: [],
       loading: false,
       loadingDelete: null,
+      loadingTecnicos: false,
       searchQuery: '',
       estadoFilter: 'todos',
       tecnicoFilter: 'todos',
       fechaInicio: '',
       fechaFin: '',
-      tecnicos: [
-        { id: 1, nombre: 'Juan Pérez' },
-        { id: 2, nombre: 'María Gómez' },
-        { id: 3, nombre: 'Carlos Rodríguez' }
-      ],
+      tecnicos: [], // Ya no tiene datos predeterminados
       sortField: 'fecha_inicio',
       sortDirection: 'desc',
       currentPage: 1,
@@ -297,7 +294,6 @@ export default {
       showTrabajoModal: false,
       showNuevoTrabajoModal: false,
       selectedTrabajo: null,
-
     }
   },
   
@@ -400,6 +396,29 @@ export default {
         this.showToast('Error al cargar trabajos', 'error');
       } finally {
         this.loading = false;
+      }
+    },
+
+    async loadTecnicos() {
+      try {
+        this.loadingTecnicos = true;
+        const response = await axios.get('/api/Usuario');
+        
+        // Filtrar solo usuarios con rol empleado
+        this.tecnicos = response.data
+          .filter(usuario => usuario.puesto_id === 2)
+          .map(usuario => ({
+            id: usuario.id,
+            nombre: usuario.nombre || `${usuario.firstName} ${usuario.lastName}`.trim()
+          }));
+        
+      } catch (error) {
+        console.error("Error cargando técnicos:", error);
+        this.showToast('Error al cargar técnicos', 'error');
+        // En caso de error, mantener array vacío
+        this.tecnicos = [];
+      } finally {
+        this.loadingTecnicos = false;
       }
     },
 
@@ -593,8 +612,12 @@ export default {
     }
   },
   
-  mounted() {
-    this.loadTrabajos();
+  async mounted() {
+    // Cargar tanto trabajos como técnicos al montar el componente
+    await Promise.all([
+      this.loadTrabajos(),
+      this.loadTecnicos()
+    ]);
   }
 }
 </script>

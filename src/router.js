@@ -20,6 +20,7 @@ const routes = [
       public: true,
       layout: 'empty'
     }
+    
   },
   {
     path: '/unauthorized',
@@ -27,7 +28,12 @@ const routes = [
     component: () => import('./components/Unauthorized .vue'),
     meta: { public: true }
   },
-
+  {
+    path: '/maintenance',
+    name: 'maintenance',
+    component: () => import('@/components/VistasCoordinador/Maintenance.vue'),
+    meta: { public: true }
+  },
   /********************** Rutas de Administrador **********************/
   {
     path: '/admin-dashboard',

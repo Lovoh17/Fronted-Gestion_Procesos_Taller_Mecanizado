@@ -1,262 +1,52 @@
 <template>
-  <div> 
+  <div>
     <main>
       <div class="inventory-content">
-        <!-- Filtros -->
-        <div class="inventory-filters">
-          <!-- Filtro por Categoría -->
-          <div class="filter-group">
-            <label for="category-filter">Categoría:</label>
-            <select 
-              id="category-filter"
-              v-model="categoryFilter" 
-              @change="filterProducts"
-              class="filter-select"
-            >
-              <option value="">Todas</option>
-              <option 
-                v-for="category in categories" 
-                :key="category" 
-                :value="category"
-              >
-                {{ category }}
-              </option>
-            </select>
-          </div>
-          
-          <!-- Filtro por Estado -->
-          <div class="filter-group">
-            <label for="status-filter">Estado:</label>
-            <select 
-              id="status-filter"
-              v-model="statusFilter" 
-              @change="filterProducts"
-              class="filter-select"
-            >
-              <option value="">Todos</option>
-              <option value="in_stock">En Stock</option>
-              <option value="low_stock">Stock Bajo</option>
-              <option value="out_of_stock">Agotado</option>
-            </select>
-          </div>
-
-          <!-- Filtro por Tipo de Inventario -->
-          <div class="filter-group">
-            <label for="inventory-type-filter">Tipo de Inventario:</label>
-            <select 
-              id="inventory-type-filter"
-              v-model="inventoryTypeFilter" 
-              @change="filterProducts"
-              class="filter-select"
-            >
-              <option value="">Todos</option>
-              <option value="interno">Trabajos Internos</option>
-              <option value="externo">Trabajos Externos</option>
-              <option value="practicas">Prácticas</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Botones de acción -->
-        <div class="action-buttons">
-          <button @click="showAddModal = true" class="btn btn-primary">
-            Agregar Materia Prima
-          </button>
-        </div>
-        
-        <!-- Componentes modales -->
-        <AddMateriaPrima
-          v-if="showAddModal"
-          @close="showAddModal = false"
-          @created="handleMateriaPrimaCreated"
-        />
-        
-        <!-- Modal para edición -->
-        <AddMateriaPrima
-          v-if="showEditModal"
-          :editing="true"
-          :materia-prima-to-edit="selectedMateriaPrima"
-          @close="showEditModal = false"
-          @updated="handleMateriaPrimaUpdated"
-        />
-        
-        <!-- Loading spinner -->
-        <div v-if="loading" class="loading-spinner">
-          Cargando productos...
-        </div>
-
-        <!-- Error message -->
-        <div v-if="error" class="error-message">
-          {{ error }}
-        </div>
+        <h2 class="title">Inventario de Materia Prima</h2>
         
         <!-- Tabla de productos -->
-        <div class="table-responsive" v-if="!loading">
+        <div class="table-responsive">
           <table class="inventory-table">
             <thead>
               <tr>
                 <th @click="sortBy('codigo')" class="sortable">
-                  Código
-                  <span class="sort-icon" v-if="sortKey === 'codigo'">
-                    {{ sortOrder === 1 ? '↑' : '↓' }}
-                  </span>
+                  Código <SortIcon :direction="sortDirection('codigo')" />
                 </th>
                 <th @click="sortBy('nombre')" class="sortable">
-                  Nombre
-                  <span class="sort-icon" v-if="sortKey === 'nombre'">
-                    {{ sortOrder === 1 ? '↑' : '↓' }}
-                  </span>
+                  Nombre <SortIcon :direction="sortDirection('nombre')" />
                 </th>
-                <th>Categoría</th>
                 <th @click="sortBy('stock_total')" class="sortable">
-                  Stock Total
-                  <span class="sort-icon" v-if="sortKey === 'stock_total'">
-                    {{ sortOrder === 1 ? '↑' : '↓' }}
-                  </span>
+                  Stock <SortIcon :direction="sortDirection('stock_total')" />
                 </th>
-                <th>Stock Mínimo</th>
                 <th @click="sortBy('costo_unitario')" class="sortable">
-                  Costo Unitario
-                  <span class="sort-icon" v-if="sortKey === 'costo_unitario'">
-                    {{ sortOrder === 1 ? '↑' : '↓' }}
-                  </span>
+                  Precio <SortIcon :direction="sortDirection('costo_unitario')" />
                 </th>
+                <th>Proveedor</th>
                 <th>Estado</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in paginatedProducts" :key="product.id">
+              <tr v-for="product in sortedProducts" :key="product.id">
                 <td>{{ product.codigo }}</td>
                 <td>{{ product.nombre }}</td>
-                <td>{{ getCategoryName(product.tipo_materia_prima_id) }}</td>
-                <td :class="{
-                  'text-warning': product.stock_total < product.stock_minimo && product.stock_total > 0,
-                  'text-danger': product.stock_total === 0
-                }">
+                <td :class="stockStatusClass(product)">
                   {{ product.stock_total }} {{ getUnitName(product.unidad_base_id) }}
                 </td>
-                <td>{{ product.stock_minimo }}</td>
-                <td>${{ formatCurrency(product.costo_unitario) }}</td>
+                <td>${{ formatPrice(product.costo_unitario) }}</td>
+                <td>{{ product.proveedor_principal || 'N/A' }}</td>
                 <td>
-                  <span class="status-badge" :class="getStatusClass(product)">
-                    {{ getStatusText(product) }}
+                  <span :class="statusBadgeClass(product)">
+                    {{ stockStatusText(product) }}
                   </span>
-                </td>
-                <td class="actions-cell">
-                  <button class="btn-icon" @click="editProduct(product)" title="Editar">
-                    <span class="material-icons">edit</span>
-                  </button>
-                  <button class="btn-icon" @click="confirmDelete(product)" title="Eliminar">
-                    <span class="material-icons">delete</span>
-                  </button>
-                  <button class="btn-icon" @click="viewDetails(product)" title="Detalles">
-                    <span class="material-icons">visibility</span>
-                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
-
-          <!-- Mensaje cuando no hay productos -->
-          <div v-if="filteredProducts.length === 0" class="no-products">
-            No se encontraron productos que coincidan con los filtros aplicados.
-          </div>
-        </div>
-        
-        <!-- Paginación -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button 
-            @click="prevPage" 
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            &laquo;
-          </button>
-          
-          <button 
-            v-for="page in visiblePages" 
-            :key="page"
-            @click="goToPage(page)"
-            :class="{ active: currentPage === page }"
-            class="pagination-btn"
-          >
-            {{ page }}
-          </button>
-          
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
-            &raquo;
-          </button>
         </div>
 
-        <!-- Información de paginación -->
-        <div class="pagination-info" v-if="filteredProducts.length > 0">
-          Mostrando {{ startItem }} - {{ endItem }} de {{ filteredProducts.length }} productos
-        </div>
-      </div>
-      
-      <!-- Modal de confirmación de eliminación -->
-      <div v-if="showConfirmModal" class="modal-overlay">
-        <div class="confirm-modal">
-          <h3>Confirmar Eliminación</h3>
-          <p>¿Estás seguro de eliminar la materia prima "{{ productToDelete?.nombre }}"?</p>
-          <p class="warning-text">Esta acción no se puede deshacer.</p>
-          <div class="confirm-actions">
-            <button @click="showConfirmModal = false" class="btn btn-outline">
-              Cancelar
-            </button>
-            <button @click="deleteProduct" class="btn btn-danger">
-              Eliminar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal de detalles -->
-      <div v-if="showDetailsModal" class="modal-overlay">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>Detalles de {{ selectedProduct?.nombre }}</h3>
-            <button @click="showDetailsModal = false" class="btn-icon">
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-          <div class="product-details" v-if="selectedProduct">
-            <div class="detail-row">
-              <strong>Código:</strong> {{ selectedProduct.codigo }}
-            </div>
-            <div class="detail-row">
-              <strong>Nombre:</strong> {{ selectedProduct.nombre }}
-            </div>
-            <div class="detail-row">
-              <strong>Descripción:</strong> {{ selectedProduct.descripcion || 'No especificada' }}
-            </div>
-            <div class="detail-row">
-              <strong>Stock Total:</strong> {{ selectedProduct.stock_total }}
-            </div>
-            <div class="detail-row">
-              <strong>Stock Mínimo:</strong> {{ selectedProduct.stock_minimo }}
-            </div>
-            <div class="detail-row">
-              <strong>Stock Máximo:</strong> {{ selectedProduct.stock_maximo }}
-            </div>
-            <div class="detail-row">
-              <strong>Costo Unitario:</strong> ${{ formatCurrency(selectedProduct.costo_unitario) }}
-            </div>
-            <div class="detail-row">
-              <strong>Proveedor Principal:</strong> {{ selectedProduct.proveedor_principal || 'No especificado' }}
-            </div>
-            <div class="detail-row">
-              <strong>Tiempo de Reposición:</strong> {{ selectedProduct.tiempo_reposicion }} días
-            </div>
-            <div class="detail-row">
-              <strong>Es Controlado:</strong> {{ selectedProduct.es_controlado ? 'Sí' : 'No' }}
-            </div>
-          </div>
+        <!-- Total de items -->
+        <div class="total-items">
+          Mostrando {{ sortedProducts.length }} items
         </div>
       </div>
     </main>
@@ -264,271 +54,90 @@
 </template>
 
 <script>
-import AddMateriaPrima from '@/components/VistasAdmin/ComponentesAdmin/AddMateriaPrima.vue'
-import axios from 'axios'
+import SortIcon from '@/components/VistasAdmin/ComponentesAdmin/SortIcon.vue'
 
 export default {
-  name: 'InventoryView',
+  name: 'ProductInventory',
   components: {
-    AddMateriaPrima
+    SortIcon
   },
   data() {
     return {
       products: [],
-      categories: [],
-      units: [],
-      searchQuery: '',
-      categoryFilter: '',
-      statusFilter: '',
-      inventoryTypeFilter: '',
-      filteredProducts: [],
-      sortKey: 'codigo',
-      sortOrder: 1,
-      currentPage: 1,
-      itemsPerPage: 10,
-      showConfirmModal: false,
-      showDetailsModal: false,
-      productToDelete: null,
-      selectedProduct: null,
-      loading: false,
-      error: null,
-      showAddModal: false,
-      showEditModal: false,
-      selectedMateriaPrima: null
+      sortField: 'codigo',
+      sortOrder: 'asc',
+      units: {
+        1: { nombre: 'metros', abreviatura: 'm' },
+        2: { nombre: 'litros', abreviatura: 'l' },
+        3: { nombre: 'kilogramos', abreviatura: 'kg' }
+      }
     }
   },
   computed: {
-    totalPages() {
-      return Math.ceil(this.filteredProducts.length / this.itemsPerPage)
-    },
-    paginatedProducts() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.filteredProducts.slice(start, end)
-    },
-    visiblePages() {
-      const total = this.totalPages
-      const current = this.currentPage
-      const delta = 2
+    sortedProducts() {
+      return [...this.products].sort((a, b) => {
+        let valA = a[this.sortField]
+        let valB = b[this.sortField]
 
-      let range = []
-      for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-        range.push(i)
-      }
+        // Convertir a número si es posible
+        if (!isNaN(valA)) valA = Number(valA)
+        if (!isNaN(valB)) valB = Number(valB)
 
-      if (current - delta > 2) {
-        range.unshift('...')
-      }
-      if (current + delta < total - 1) {
-        range.push('...')
-      }
-
-      range.unshift(1)
-      if (total !== 1) {
-        range.push(total)
-      }
-
-      return range
-    },
-    startItem() {
-      return (this.currentPage - 1) * this.itemsPerPage + 1
-    },
-    endItem() {
-      return Math.min(this.currentPage * this.itemsPerPage, this.filteredProducts.length)
+        if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+        if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+        return 0
+      })
     }
   },
   async created() {
     await this.fetchProducts()
-    await this.fetchCategories()
-    await this.fetchUnits()
-    this.filterProducts()
   },
   methods: {
     async fetchProducts() {
-      this.loading = true
-      this.error = null
       try {
-        const response = await axios.get('/MateriaPrima')
-        this.products = response.data
+        const response = await fetch('api/MateriaPrima')
+        if (!response.ok) throw new Error('Error en la respuesta del servidor')
+        this.products = await response.json()
       } catch (error) {
-        this.error = 'Error al cargar los productos: ' + error.message
-        console.error('Error fetching products:', error)
-      } finally {
-        this.loading = false
+        console.error('Error al cargar productos:', error)
       }
     },
-
-    async fetchCategories() {
-      try {
-        const response = await axios.get('/TipoMateriaPrima')
-        this.categories = response.data
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-      }
-    },
-
-    async fetchUnits() {
-      try {
-        const response = await axios.get('/UnidadMedida')
-        this.units = response.data
-      } catch (error) {
-        console.error('Error fetching units:', error)
-      }
-    },
-    
-    handleSearch(query) {
-      this.searchQuery = query
-      this.filterProducts()
-    },
-    
-    filterProducts() {
-      this.filteredProducts = this.products.filter(product => {
-        const matchesSearch = product.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                            product.codigo.toLowerCase().includes(this.searchQuery.toLowerCase())
-        const matchesCategory = !this.categoryFilter || product.tipo_materia_prima_id === this.categoryFilter
-        const matchesStatus = this.matchesStatusFilter(product)
-        const matchesInventoryType = this.matchesInventoryTypeFilter(product)
-        
-        return matchesSearch && matchesCategory && matchesStatus && matchesInventoryType
-      })
-      
-      this.sortProducts()
-      this.currentPage = 1
-    },
-    
-    matchesStatusFilter(product) {
-      if (!this.statusFilter) return true
-      
-      switch(this.statusFilter) {
-        case 'in_stock': return product.stock_total >= product.stock_minimo
-        case 'low_stock': return product.stock_total < product.stock_minimo && product.stock_total > 0
-        case 'out_of_stock': return product.stock_total === 0
-        default: return true
-      }
-    },
-
-    matchesInventoryTypeFilter(product) {
-      if (!this.inventoryTypeFilter) return true
-      // Aquí puedes implementar la lógica específica para tipos de inventario
-      // según tu modelo de datos
-      return true
-    },
-    
-    sortBy(key) {
-      if (this.sortKey === key) {
-        this.sortOrder *= -1
+    sortBy(field) {
+      if (this.sortField === field) {
+        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc'
       } else {
-        this.sortKey = key
-        this.sortOrder = 1
+        this.sortField = field
+        this.sortOrder = 'asc'
       }
-      this.sortProducts()
     },
-    
-    sortProducts() {
-      this.filteredProducts.sort((a, b) => {
-        let aVal = a[this.sortKey]
-        let bVal = b[this.sortKey]
-        
-        // Handle null/undefined values
-        if (aVal == null) aVal = ''
-        if (bVal == null) bVal = ''
-        
-        if (aVal < bVal) return -1 * this.sortOrder
-        if (aVal > bVal) return 1 * this.sortOrder
-        return 0
-      })
+    sortDirection(field) {
+      return this.sortField === field ? this.sortOrder : null
     },
-    
-    getStatusClass(product) {
-      if (product.stock_total === 0) return 'status-out'
-      if (product.stock_total < product.stock_minimo) return 'status-low'
-      return 'status-ok'
-    },
-    
-    getStatusText(product) {
-      if (product.stock_total === 0) return 'Agotado'
-      if (product.stock_total < product.stock_minimo) return 'Bajo Stock'
-      return 'En Stock'
-    },
-
-    getCategoryName(categoryId) {
-      const category = this.categories.find(cat => cat.id === categoryId)
-      return category ? category.nombre : 'Sin categoría'
-    },
-
     getUnitName(unitId) {
-      const unit = this.units.find(u => u.id === unitId)
-      return unit ? unit.nombre : 'unidad'
+      return this.units[unitId]?.abreviatura || 'unid.'
     },
-
-    formatCurrency(value) {
-      if (!value) return '0.00'
-      return value.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    formatPrice(price) {
+      return Number(price).toFixed(2)
     },
-    
-    editProduct(product) {
-      this.selectedMateriaPrima = { ...product }
-      this.showEditModal = true
-    },
-    
-    handleMateriaPrimaCreated(newMateriaPrima) {
-      this.fetchProducts()
-      this.showAddModal = false
-      this.showNotification('Materia prima creada correctamente', 'success')
-    },
-    
-    handleMateriaPrimaUpdated(updatedMateriaPrima) {
-      this.fetchProducts()
-      this.showEditModal = false
-      this.showNotification('Materia prima actualizada correctamente', 'success')
-    },
-    
-    confirmDelete(product) {
-      this.productToDelete = product
-      this.showConfirmModal = true
-    },
-    
-    async deleteProduct() {
-      if (!this.productToDelete) return
+    stockStatusClass(product) {
+      const stock = Number(product.stock_total)
+      const minStock = Number(product.stock_minimo)
       
-      try {
-        await axios.delete(`/MateriaPrima/${this.productToDelete.id}`)
-        await this.fetchProducts()
-        this.showConfirmModal = false
-        this.productToDelete = null
-        this.filterProducts()
-        this.showNotification('Materia prima eliminada correctamente', 'success')
-      } catch (error) {
-        this.error = 'Error al eliminar el producto: ' + error.message
-        console.error('Error deleting product:', error)
-        this.showNotification('Error al eliminar la materia prima', 'error')
-      }
+      if (stock === 0) return 'out-of-stock'
+      if (stock < minStock) return 'low-stock'
+      return 'in-stock'
     },
-    
-    viewDetails(product) {
-      this.selectedProduct = product
-      this.showDetailsModal = true
+    stockStatusText(product) {
+      const stock = Number(product.stock_total)
+      const minStock = Number(product.stock_minimo)
+      
+      if (stock === 0) return 'Agotado'
+      if (stock < minStock) return 'Bajo stock'
+      return 'Disponible'
     },
-
-    showNotification(message, type) {
-      // Implementar sistema de notificaciones o usar el que tengas disponible
-      console.log(`${type.toUpperCase()}: ${message}`)
-      // Si tienes $notify disponible:
-      // this.$notify({ title: type === 'success' ? 'Éxito' : 'Error', message, type })
-    },
-    
-    prevPage() {
-      if (this.currentPage > 1) this.currentPage--
-    },
-    
-    nextPage() {
-      if (this.currentPage < this.totalPages) this.currentPage++
-    },
-    
-    goToPage(page) {
-      if (page !== '...') {
-        this.currentPage = page
-      }
+    statusBadgeClass(product) {
+      const status = this.stockStatusClass(product)
+      return `status-badge ${status}`
     }
   }
 }
@@ -537,294 +146,98 @@ export default {
 <style scoped>
 .inventory-content {
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.inventory-filters {
-  display: flex;
-  gap: 20px;
+.title {
+  color: #2c3e50;
   margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 150px;
-}
-
-.filter-group label {
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.filter-select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.action-buttons {
-  margin-bottom: 20px;
-}
-
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-.btn-outline {
-  background-color: transparent;
-  border: 1px solid #6c757d;
-  color: #6c757d;
-}
-
-.btn-outline:hover {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-.loading-spinner {
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-  color: #666;
-}
-
-.error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 12px;
-  border-radius: 4px;
-  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .table-responsive {
   overflow-x: auto;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .inventory-table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .inventory-table th,
 .inventory-table td {
-  padding: 12px;
+  padding: 12px 15px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .inventory-table th {
   background-color: #f8f9fa;
   font-weight: 600;
+  color: #2c3e50;
 }
 
 .sortable {
   cursor: pointer;
   user-select: none;
-}
-
-.sortable:hover {
-  background-color: #e9ecef;
-}
-
-.sort-icon {
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.text-warning {
-  color: #856404;
-}
-
-.text-danger {
-  color: #721c24;
-}
-
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-ok {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-low {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.status-out {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.actions-cell {
-  white-space: nowrap;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  padding: 4px;
-  margin: 0 2px;
-  cursor: pointer;
-  border-radius: 4px;
   transition: background-color 0.2s;
 }
 
-.btn-icon:hover {
-  background-color: #f8f9fa;
+.sortable:hover {
+  background-color: #f0f0f0;
 }
 
-.material-icons {
-  font-size: 18px;
+.inventory-table tbody tr:hover {
+  background-color: #f5f5f5;
 }
 
-.no-products {
-  text-align: center;
-  padding: 40px;
+/* Estilos de estado */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.in-stock {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.low-stock {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.out-of-stock {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Estilos para niveles de stock */
+.in-stock {
+  color: #2e7d32;
+}
+
+.low-stock {
+  color: #ff8f00;
+}
+
+.out-of-stock {
+  color: #c62828;
+}
+
+.total-items {
+  text-align: right;
   color: #666;
-  font-style: italic;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin: 20px 0;
-}
-
-.pagination-btn {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  background-color: white;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background-color: #f8f9fa;
-}
-
-.pagination-btn.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #ddd;
-}
-
-.modal-header h3 {
-  margin: 0;
-}
-
-.confirm-modal {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 400px;
-  width: 90%;
-}
-
-.confirm-modal h3 {
-  margin-top: 0;
-  color: #721c24;
-}
-
-.warning-text {
-  color: #856404;
-  font-size: 14px;
-  font-style: italic;
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.product-details {
-  padding: 20px;
-}
-
-.detail-row {
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
+  font-size: 0.9rem;
+  margin-top: 10px;
 }
 </style>
