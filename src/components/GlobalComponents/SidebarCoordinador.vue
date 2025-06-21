@@ -62,21 +62,21 @@
           icon: 'build', 
           text: 'Órdenes de Trabajo', 
           path: '/coordinator/orders',
-          badge: 5,
-          badgeType: 'warning'
+          badgeType: 'warning',
+          badge: null
         },
         { 
           icon: 'inventory_2',  
           text: 'Gestión de Inventario', 
           path: '/inventory',
-          badge: 3,
-          badgeType: 'danger'
+          badgeType: 'danger',
+          badge: null
         },
         { 
           icon: 'miscellaneous_services', 
-          text: 'Mantenimientos', 
-          path: '/maintenance',
-          badge: 2
+          text: 'Departamentos', 
+          path: '/departments',
+          badge: null
         },
         { 
           icon: 'assignment', 

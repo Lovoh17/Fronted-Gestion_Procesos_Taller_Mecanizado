@@ -1,376 +1,205 @@
 <template>
-    <div class="modal-overlay" @click.self="close">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>
-            <span class="material-icons">handyman</span>
-            {{ mode === 'create' ? 'Registrar Mantenimiento' : 'Editar Mantenimiento' }}
-          </h2>
-          <button class="close-btn" @click="close">
-            <span class="material-icons">close</span>
-          </button>
-        </div>
-  
+  <div class="modal-overlay" @click.self="close">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Nuevo Mantenimiento</h2>
+        <button class="close-btn" @click="close">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <form @submit.prevent="submitForm">
         <div class="modal-body">
-          <div class="form-section">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Equipo *</label>
-                <select v-model="maintenance.equipmentId" required @change="updateEquipmentInfo">
-                  <option value="">Seleccionar equipo</option>
-                  <option 
-                    v-for="equipment in equipments" 
-                    :key="equipment.id" 
-                    :value="equipment.id"
-                    :disabled="equipment.status === 'in-maintenance' && mode === 'create'"
-                  >
-                    {{ equipment.name }} 
-                    <template v-if="equipment.status === 'in-maintenance'">(En mantenimiento)</template>
-                  </option>
-                </select>
-              </div>
-  
-              <div class="form-group">
-                <label>Tipo de Mantenimiento *</label>
-                <select v-model="maintenance.type" required>
-                  <option value="preventive">Preventivo</option>
-                  <option value="corrective">Correctivo</option>
-                  <option value="predictive">Predictivo</option>
-                </select>
-              </div>
-            </div>
-  
-            <div class="form-row">
-              <div class="form-group">
-                <label>Fecha Programada *</label>
-                <input 
-                  type="date" 
-                  v-model="maintenance.scheduledDate" 
-                  :min="minDate"
-                  required
-                >
-              </div>
-  
-              <div class="form-group">
-                <label>Prioridad *</label>
-                <select v-model="maintenance.priority" required>
-                  <option value="high">Alta</option>
-                  <option value="medium">Media</option>
-                  <option value="low">Baja</option>
-                </select>
-              </div>
-            </div>
-  
+          <!-- Campos obligatorios -->
+          <div class="form-row">
             <div class="form-group">
-              <label>Responsable *</label>
-              <select v-model="maintenance.assignedTo" required>
-                <option value="">Seleccionar técnico</option>
+              <label>Nombre *</label>
+              <input v-model="form.nombre" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Herramienta *</label>
+              <select v-model="form.herramienta_id" required>
+                <option value="">Seleccionar herramienta</option>
                 <option 
-                  v-for="technician in technicians" 
-                  :key="technician.id" 
-                  :value="technician.id"
+                  v-for="herramienta in herramientas" 
+                  :key="herramienta.id" 
+                  :value="herramienta.id"
                 >
-                  {{ technician.name }} ({{ technician.specialty }})
+                  {{ herramienta.nombre }}
                 </option>
               </select>
             </div>
-  
+
             <div class="form-group">
-              <label>Descripción del Problema/Actividad *</label>
-              <textarea 
-                v-model="maintenance.description" 
-                rows="3" 
-                required
-                placeholder="Describa el problema o las actividades de mantenimiento a realizar"
-              ></textarea>
-            </div>
-  
-            <div class="form-group">
-              <label>Procedimiento a Seguir</label>
-              <textarea 
-                v-model="maintenance.procedure" 
-                rows="3" 
-                placeholder="Describa el procedimiento técnico a seguir"
-              ></textarea>
-            </div>
-  
-            <div class="form-row">
-              <div class="form-group">
-                <label>Duración Estimada (horas) *</label>
-                <input 
-                  type="number" 
-                  v-model="maintenance.estimatedDuration" 
-                  min="1" 
-                  max="24" 
-                  required
+              <label>Tipo de Mantenimiento *</label>
+              <select v-model="form.tipo_mantenimiento_id" required>
+                <option value="">Seleccionar tipo</option>
+                <option 
+                  v-for="tipo in tiposMantenimiento" 
+                  :key="tipo.id" 
+                  :value="tipo.id"
                 >
-              </div>
-  
-              <div class="form-group">
-                <label>Estado</label>
-                <select v-model="maintenance.status" :disabled="mode === 'create'">
-                  <option value="pending">Pendiente</option>
-                  <option value="in-progress">En Progreso</option>
-                  <option value="completed">Completado</option>
-                  <option value="delayed">Retrasado</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
-              </div>
+                  {{ tipo.nombre }}
+                </option>
+              </select>
             </div>
-  
-            <div v-if="maintenance.status === 'completed'" class="form-group">
-              <label>Fecha Real de Ejecución</label>
-              <input 
-                type="date" 
-                v-model="maintenance.actualDate" 
-                :max="today"
-              >
-            </div>
-  
-            <div v-if="maintenance.status === 'completed'" class="form-group">
-              <label>Duración Real (horas)</label>
-              <input 
-                type="number" 
-                v-model="maintenance.actualDuration" 
-                min="1" 
-                max="24"
-              >
-            </div>
-  
-            <div v-if="maintenance.status === 'completed'" class="form-group">
-              <label>Resultados y Observaciones</label>
-              <textarea 
-                v-model="maintenance.results" 
-                rows="3" 
-                placeholder="Describa los resultados del mantenimiento y cualquier observación relevante"
-              ></textarea>
-            </div>
-  
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
-              <label>Partes/Repuestos Utilizados</label>
-              <div class="parts-list">
-                <div class="part-item" v-for="(part, index) in maintenance.partsUsed" :key="index">
-                  <div class="part-row">
-                    <select v-model="part.id" class="part-select">
-                      <option value="">Seleccionar repuesto</option>
-                      <option 
-                        v-for="p in partsInventory" 
-                        :key="p.id" 
-                        :value="p.id"
-                        :disabled="isPartUnavailable(p.id, index)"
-                      >
-                        {{ p.name }} (Stock: {{ p.quantity }})
-                      </option>
-                    </select>
-  
-                    <input 
-                      type="number" 
-                      v-model="part.quantity" 
-                      min="1" 
-                      :max="getMaxPartQuantity(part.id)"
-                      placeholder="Cantidad"
-                      class="quantity-input"
-                    >
-  
-                    <button class="remove-btn" @click="removePart(index)">
-                      <span class="material-icons">delete</span>
-                    </button>
-                  </div>
-  
-                  <div v-if="partError(part)" class="error-message">
-                    {{ partError(part) }}
-                  </div>
-                </div>
-  
-                <button class="add-btn" @click="addPart">
-                  <span class="material-icons">add</span> Agregar Repuesto
-                </button>
-              </div>
+              <label>Fecha Programada *</label>
+              <input type="date" v-model="form.fecha_programada" required>
+            </div>
+
+            <div class="form-group">
+              <label>Prioridad *</label>
+              <select v-model="form.prioridad_id" required>
+                <option value="">Seleccionar prioridad</option>
+                <option 
+                  v-for="prioridad in prioridades" 
+                  :key="prioridad.id" 
+                  :value="prioridad.id"
+                >
+                  {{ prioridad.nombre }}
+                </option>
+              </select>
             </div>
           </div>
-  
-          <div class="equipment-info" v-if="selectedEquipment">
-            <h3 class="section-title">
-              <span class="material-icons">info</span> Información del Equipo
-            </h3>
-  
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Modelo:</label>
-                <span>{{ selectedEquipment.model || 'N/A' }}</span>
-              </div>
-              <div class="info-item">
-                <label>Serial:</label>
-                <span>{{ selectedEquipment.serial || 'N/A' }}</span>
-              </div>
-              <div class="info-item">
-                <label>Horas de Uso:</label>
-                <span>{{ selectedEquipment.usageHours || '0' }} hrs</span>
-              </div>
-              <div class="info-item">
-                <label>Último Mantenimiento:</label>
-                <span>{{ selectedEquipment.lastMaintenance || 'Nunca' }}</span>
-              </div>
-              <div class="info-item full-width">
-                <label>Notas:</label>
-                <span>{{ selectedEquipment.notes || 'No hay notas registradas' }}</span>
-              </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Técnico Asignado</label>
+              <select v-model="form.tecnico_asignado_id">
+                <option value="">Sin asignar</option>
+                <option 
+                  v-for="tecnico in tecnicos" 
+                  :key="tecnico.id" 
+                  :value="tecnico.id"
+                >
+                  {{ tecnico.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Costo Estimado (S/)</label>
+              <input type="number" step="0.01" v-model="form.costo_estimado">
             </div>
           </div>
+
+          <div class="form-group">
+            <label>Descripción del Problema *</label>
+            <textarea v-model="form.descripcion_problema" required></textarea>
+          </div>
+
+          <!-- Campos ocultos con valores por defecto -->
+          <input type="hidden" v-model="form.estado_id" value="1">
+          <input type="hidden" v-model="form.mantenimiento_hecho_por" :value="usuarioActual.id">
         </div>
-  
+
         <div class="modal-footer">
-          <button class="btn secondary" @click="close">
+          <button type="button" class="btn secondary" @click="close">
             Cancelar
           </button>
-          <button class="btn primary" @click="saveMaintenance">
-            {{ mode === 'create' ? 'Registrar Mantenimiento' : 'Guardar Cambios' }}
+          <button type="submit" class="btn primary">
+            Guardar Mantenimiento
           </button>
         </div>
-      </div>
+      </form>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    props: {
-      maintenance: {
-        type: Object,
-        required: true
-      },
-      mode: {
-        type: String,
-        default: 'create',
-        validator: value => ['create', 'edit'].includes(value)
-      }
-    },
-    data() {
-      return {
-        equipments: [
-          {
-            id: 1,
-            name: 'Máquina CNC',
-            model: 'CNC-3000',
-            serial: 'SN-2021-001',
-            type: 'Maquinaria',
-            usageHours: 1245,
-            lastMaintenance: '15/03/2023',
-            status: 'operational',
-            notes: 'Requiere lubricación cada 200 horas de uso'
-          },
-          {
-            id: 2,
-            name: 'Equipo de Soldadura',
-            model: 'WELD-MAX',
-            serial: 'SN-2020-045',
-            type: 'Equipo',
-            usageHours: 890,
-            lastMaintenance: '22/02/2023',
-            status: 'operational',
-            notes: 'Revisar cables de alimentación'
-          },
-          {
-            id: 3,
-            name: 'Horno Industrial',
-            model: 'FURN-500',
-            serial: 'SN-2022-012',
-            type: 'Maquinaria',
-            usageHours: 560,
-            lastMaintenance: '10/01/2023',
-            status: 'in-maintenance',
-            notes: 'En espera de repuestos'
-          }
-        ],
-        technicians: [
-          { id: 1, name: 'Juan Pérez', specialty: 'Mecánica' },
-          { id: 2, name: 'María Gómez', specialty: 'Electrónica' },
-          { id: 3, name: 'Carlos Rojas', specialty: 'Sistemas' }
-        ],
-        partsInventory: [
-          { id: 1, name: 'Rodamientos', quantity: 12 },
-          { id: 2, name: 'Correas', quantity: 8 },
-          { id: 3, name: 'Filtros', quantity: 5 },
-          { id: 4, name: 'Sensores', quantity: 3 }
-        ],
-        today: new Date().toISOString().split('T')[0],
-        minDate: new Date().toISOString().split('T')[0]
-      };
-    },
-    computed: {
-      selectedEquipment() {
-        return this.equipments.find(e => e.id === this.maintenance.equipmentId);
-      }
-    },
-    methods: {
-      close() {
-        this.$emit('close');
-      },
-      saveMaintenance() {
-        if (this.validateForm()) {
-          this.$emit('save', this.maintenance);
-        }
-      },
-      validateForm() {
-        // Validación básica - implementar validación completa según necesidades
-        if (!this.maintenance.equipmentId || 
-            !this.maintenance.type || 
-            !this.maintenance.scheduledDate || 
-            !this.maintenance.priority || 
-            !this.maintenance.assignedTo || 
-            !this.maintenance.description || 
-            !this.maintenance.estimatedDuration) {
-          alert('Por favor complete todos los campos requeridos');
-          return false;
-        }
-  
-        // Validar repuestos
-        for (const part of this.maintenance.partsUsed) {
-          if (part.id && part.quantity > this.getMaxPartQuantity(part.id)) {
-            alert(`La cantidad para ${this.getPartName(part.id)} excede el stock disponible`);
-            return false;
-          }
-        }
-  
-        return true;
-      },
-      updateEquipmentInfo() {
-        if (this.selectedEquipment) {
-          this.maintenance.equipmentName = this.selectedEquipment.name;
-          this.maintenance.equipmentType = this.selectedEquipment.type;
-        }
-      },
-      addPart() {
-        this.maintenance.partsUsed.push({ id: '', quantity: 1 });
-      },
-      removePart(index) {
-        this.maintenance.partsUsed.splice(index, 1);
-      },
-      isPartUnavailable(partId, currentIndex) {
-        return this.maintenance.partsUsed.some((part, index) => 
-          part.id === partId && index !== currentIndex
-        );
-      },
-      getMaxPartQuantity(partId) {
-        const part = this.partsInventory.find(p => p.id === partId);
-        return part ? part.quantity : 0;
-      },
-      getPartName(partId) {
-        const part = this.partsInventory.find(p => p.id === partId);
-        return part ? part.name : 'Repuesto';
-      },
-      partError(part) {
-        if (part.id) {
-          const selectedPart = this.partsInventory.find(p => p.id === part.id);
-          if (selectedPart && part.quantity > selectedPart.quantity) {
-            return `Cantidad excede el stock disponible (${selectedPart.quantity})`;
-          }
-        }
-        return null;
-      }
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import { toast } from 'vue3-toastify'
+
+export default {
+  name: 'NuevoMantenimientoModal',
+  props: {
+    usuarioActual: {
+      type: Object,
+      required: true
     }
-  };
-  </script>
-  
+  },
+  data() {
+    return {
+      form: {
+        nombre: '',
+        herramienta_id: '',
+        tipo_mantenimiento_id: '',
+        fecha_programada: new Date().toISOString().split('T')[0],
+        estado_id: 1, // Programado por defecto
+        prioridad_id: 1, // Baja por defecto
+        costo_estimado: 0,
+        tecnico_asignado_id: null,
+        descripcion_problema: '',
+        mantenimiento_hecho_por: null
+      },
+      herramientas: [],
+      tiposMantenimiento: [],
+      prioridades: [],
+      tecnicos: [],
+      loading: false
+    }
+  },
+  async created() {
+    await this.cargarDatosIniciales()
+    this.form.mantenimiento_hecho_por = this.usuarioActual.id
+  },
+  methods: {
+    async cargarDatosIniciales() {
+      try {
+        this.loading = true
+        const [herramientas, tipos, prioridades, tecnicos] = await Promise.all([
+          axios.get('/api/Herramienta'),
+          axios.get('/api/Tipo_Mantenimiento'),
+          axios.get('/api/Prioridad_Mantenimiento'),
+          axios.get('/api/Usuario')
+        ])
+
+        this.herramientas = herramientas.data
+        this.tiposMantenimiento = tipos.data
+        this.prioridades = prioridades.data
+        this.tecnicos = tecnicos.data
+      } catch (error) {
+        console.error('Error al cargar datos:', error)
+        toast.error('Error al cargar datos iniciales')
+      } finally {
+        this.loading = false
+      }
+    },
+    async submitForm() {
+      try {
+        // Validación básica
+        if (!this.form.nombre || 
+            !this.form.herramienta_id || 
+            !this.form.tipo_mantenimiento_id || 
+            !this.form.fecha_programada || 
+            !this.form.prioridad_id || 
+            !this.form.descripcion_problema) {
+          toast.error('Por favor complete todos los campos obligatorios')
+          return
+        }
+
+        const response = await axios.post('/api/Mantenimiento', this.form)
+        toast.success('Mantenimiento creado correctamente')
+        this.$emit('creado', response.data)
+        this.close()
+      } catch (error) {
+        console.error('Error al crear mantenimiento:', error)
+        toast.error(error.response?.data?.message || 'Error al crear mantenimiento')
+      }
+    },
+    close() {
+      this.$emit('close')
+    }
+  }
+}
+</script>
   <style scoped>
   .modal-overlay {
     position: fixed;

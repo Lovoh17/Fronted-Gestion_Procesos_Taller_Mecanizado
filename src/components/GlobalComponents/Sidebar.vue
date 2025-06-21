@@ -63,14 +63,20 @@ export default {
         icon: 'inventory_2',  
         text: 'Gestión Inventario', 
         path: '/inventory',
-        badge: 3
+        badge: null
       },
       { 
           icon: 'miscellaneous_services', 
-          text: 'Mantenimientos', 
-          path: '/maintenance',
-          badge: 2
+          text: 'Departamentos', 
+          path: '/admin/departments',
+          badge: null
         },
+        { 
+        icon: 'account_balance', 
+        text: 'Transacciones', 
+        path: '/admin/transacciones',
+        badge: null 
+      },
       { 
         icon: 'local_shipping', 
         text: 'Ordenes', 
@@ -82,12 +88,6 @@ export default {
         text: 'Usuarios', 
         path: '/admin/users',
         badge: null 
-      },
-      { 
-        icon: 'precision_manufacturing',
-        text: 'Reportes', 
-        path: '/admin/reports',
-        badge: 5 
       },
       { 
         icon: 'tune', 

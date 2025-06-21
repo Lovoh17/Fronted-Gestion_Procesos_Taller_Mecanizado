@@ -119,13 +119,6 @@
                       <i class="fas fa-edit"></i>
                     </button>
                     <button 
-                      class="btn btn-sm btn-icon" 
-                      @click="toggleUserStatus(user)"
-                      :title="user.status === 'active' ? 'Desactivar' : 'Activar'"
-                    >
-                      <i :class="user.status === 'active' ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
-                    </button>
-                    <button 
                       class="btn btn-sm btn-icon btn-danger" 
                       @click="confirmDelete(user.id)"
                       title="Eliminar"
@@ -765,7 +758,8 @@ showToast(message, type = 'success') {
         const types = {
           1: 'Coordinador',
           2: 'Empleado',
-          3: 'Administrador'
+          3: 'Administrador',
+          4: 'Tecnico'
         }
         return types[type] || 'Empleado'
       }

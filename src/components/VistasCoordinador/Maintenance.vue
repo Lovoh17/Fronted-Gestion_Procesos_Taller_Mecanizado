@@ -92,15 +92,6 @@
           </div>
           
           <div class="form-group">
-            <label>Estado:</label>
-            <select v-model="currentMantenimiento.estado_id" required>
-              <option v-for="(e, id) in estadosMantenimiento" :key="id" :value="id">
-                {{ e.nombre }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="form-group">
             <label>Descripción del Problema:</label>
             <textarea v-model="currentMantenimiento.descripcion_problema"></textarea>
           </div>
@@ -296,7 +287,7 @@ export default {
         await this.fetchMantenimientos()
       } catch (error) {
         console.error('Error al guardar mantenimiento:', error)
-        this.error = 'Error al guardar el mantenimiento'
+        this.error = 'Error al guardar el mantenimiento',error
       }
     },
     

@@ -1,156 +1,66 @@
 <template>
-  <div class="configuracion-container">
-    <h1>Configuración del Sistema</h1>
-    
-    <div class="config-tabs">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.key"
-        @click="activeTab = tab.key"
-        :class="{active: activeTab === tab.key}"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
-    
-    <div class="config-content">
-      <!-- Sección de Tipos -->
-      <div v-if="activeTab === 'tipos'" class="config-section">
+  <div class="configuracion-view">
+    <div class="container">
+      <h1>Configuración del Sistema</h1>
+      
+      <!-- Tabs principales -->
+      <div class="main-tabs">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab.key"
+          @click="activeTab = tab.key"
+          :class="['tab-button', { active: activeTab === tab.key }]"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <!-- Contenido de Tipos -->
+      <div v-if="activeTab === 'tipos'" class="tipos-section">
+        <!-- Sub-tabs para tipos -->
         <div class="sub-tabs">
-          <button
-            v-for="subTab in tipoSubtabs"
-            :key="subTab.key"
-            @click="activeTipoTab = subTab.key"
-            :class="{active: activeTipoTab === subTab.key}"
+          <button 
+            v-for="subtab in tipoSubtabs" 
+            :key="subtab.key"
+            @click="activeTipoTab = subtab.key"
+            :class="['subtab-button', { active: activeTipoTab === subtab.key }]"
           >
-            {{ subTab.label }}
+            {{ subtab.label }}
           </button>
         </div>
 
-        <!-- Tipos de Herramientas -->
-        <div v-if="activeTipoTab === 'herramientas'" class="type-section">
-          <h3>Tipos de Herramientas</h3>
-          <ConfigTable
-            :columns="columnsTipos"
-            :data="tiposHerramientas"
-            :loading="loading"
-            @create="handleCreateTipo('herramientas', $event)"
-            @update="handleUpdateTipo('herramientas', $event)"
-            @delete="handleDeleteTipo('herramientas', $event)"
-          />
-        </div>
-
-        <!-- Tipos de Mantenimiento -->
-        <div v-if="activeTipoTab === 'mantenimiento'" class="type-section">
-          <h3>Tipos de Mantenimiento</h3>
-          <ConfigTable
-            :columns="columnsTipos"
-            :data="tiposMantenimiento"
-            :loading="loading"
-            @create="handleCreateTipo('mantenimiento', $event)"
-            @update="handleUpdateTipo('mantenimiento', $event)"
-            @delete="handleDeleteTipo('mantenimiento', $event)"
-          />
-        </div>
-
-        <!-- Tipos de Transacción -->
-        <div v-if="activeTipoTab === 'transaccion'" class="type-section">
-          <h3>Tipos de Transacción</h3>
-          <ConfigTable
-            :columns="columnsTipos"
-            :data="tiposTransaccion"
-            :loading="loading"
-            @create="handleCreateTipo('transaccion', $event)"
-            @update="handleUpdateTipo('transaccion', $event)"
-            @delete="handleDeleteTipo('transaccion', $event)"
-          />
-        </div>
-
-        <!-- Tipos de Teléfono -->
-        <div v-if="activeTipoTab === 'telefono'" class="type-section">
-          <h3>Tipos de Teléfono</h3>
-          <ConfigTable
-            :columns="columnsTipos"
-            :data="tiposTelefono"
-            :loading="loading"
-            @create="handleCreateTipo('telefono', $event)"
-            @update="handleUpdateTipo('telefono', $event)"
-            @delete="handleDeleteTipo('telefono', $event)"
-          />
-        </div>
-
-        <!-- Unidades de Medida -->
-        <div v-if="activeTipoTab === 'unidad-medida'" class="type-section">
-          <h3>Unidades de Medida</h3>
-          <ConfigTable
-            :columns="columnsUnidadMedida"
-            :data="unidadesMedida"
-            :loading="loading"
-            @create="handleCreateTipo('unidad-medida', $event)"
-            @update="handleUpdateTipo('unidad-medida', $event)"
-            @delete="handleDeleteTipo('unidad-medida', $event)"
-          />
-        </div>
-
-        <!-- Turnos -->
-        <div v-if="activeTipoTab === 'turno'" class="type-section">
-          <h3>Turnos</h3>
-          <ConfigTable
-            :columns="columnsTurnos"
-            :data="turnos"
-            :loading="loading"
-            @create="handleCreateTipo('turno', $event)"
-            @update="handleUpdateTipo('turno', $event)"
-            @delete="handleDeleteTipo('turno', $event)"
-          />
-        </div>
+        <!-- Tabla de configuración para tipos -->
+        <ConfigTable
+          :columns="currentColumns"
+          :data="currentData"
+          :loading="loading"
+          @create="(data) => handleCreateTipo(activeTipoTab, data)"
+          @update="(data) => handleUpdateTipo(activeTipoTab, data)"
+          @delete="(id) => handleDeleteTipo(activeTipoTab, id)"
+        />
       </div>
 
-      <!-- Sección de Alertas -->
-      <div v-if="activeTab === 'alertas'" class="config-section">
-        <h2>Configuración de Alertas</h2>
-        <div class="alertas-grid" v-if="!loading">
-          <div v-for="alerta in alertas" :key="alerta.id" class="alerta-card">
-            <h3>{{ alerta.nombre }}</h3>
-            <div class="alerta-controls">
-              <label>
-                <input 
-                  type="checkbox" 
-                  v-model="alerta.activo"
-                  @change="saveAlerta(alerta)"
-                > Activo
-              </label>
-              <input 
-                v-model.number="alerta.umbral" 
-                type="number" 
-                placeholder="Umbral"
-                :disabled="!alerta.activo"
-                @blur="saveAlerta(alerta)"
-                min="0"
-              >
-              <button 
-                @click="saveAlerta(alerta)"
-                :disabled="loading"
-                class="btn-save"
-              >
-                {{ loading ? 'Guardando...' : 'Guardar' }}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div v-else class="loading">Cargando alertas...</div>
+      <!-- Contenido de Alertas -->
+      <div v-if="activeTab === 'alertas'" class="alertas-section">
+        <ConfigTable
+          :columns="columnsAlertas"
+          :data="alertas"
+          :loading="loading"
+          @create="handleCreateAlerta"
+          @update="handleUpdateAlerta"
+          @delete="handleDeleteAlerta"
+        />
       </div>
 
-      <!-- Sección de Métodos de Pago -->
-      <div v-if="activeTab === 'metodos-pago'" class="config-section">
-        <h2>Métodos de Pago</h2>
+      <!-- Contenido de Métodos de Pago -->
+      <div v-if="activeTab === 'metodos-pago'" class="metodos-pago-section">
         <ConfigTable
           :columns="columnsMetodosPago"
           :data="metodosPago"
           :loading="loading"
-          @create="handleCreateMetodoPago($event)"
-          @update="handleUpdateMetodoPago($event)"
-          @delete="handleDeleteMetodoPago($event)"
+          @create="handleCreateMetodoPago"
+          @update="handleUpdateMetodoPago"
+          @delete="handleDeleteMetodoPago"
         />
       </div>
     </div>
@@ -161,7 +71,7 @@
 import ConfigTable from '@/components/GlobalComponents/ConfigTable.vue'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
-import axios from 'axios' // Importar axios directamente
+import axios from 'axios'
 
 export default {
   name: 'ConfiguracionView',
@@ -211,33 +121,57 @@ export default {
         'metodos-pago': 'MetodoPago'
       },
       
-      // Columnas para tablas
-      columnsTipos: [
+      // Columnas actualizadas para incluir todos los campos necesarios
+      columnsHerramientas: [
         { field: 'id', label: 'ID', readonly: true },
         { field: 'nombre', label: 'Nombre', required: true },
         { field: 'descripcion', label: 'Descripción' },
-        { field: 'activo', label: 'Activo', type: 'checkbox' }
+        { field: 'caracteristicas_clave', label: 'Características Clave' }
+      ],
+      columnsMantenimiento: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' }
+      ],
+      columnsTransaccion: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'afecta_ingresos', label: 'Afecta Ingresos', type: 'boolean' },
+        { field: 'afecta_gastos', label: 'Afecta Gastos', type: 'boolean' },
+        { field: 'es_interno', label: 'Es Interno', type: 'boolean' }
+      ],
+      columnsTelefono: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' }
+      ],
+      columnsUnidadMedida: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'abreviatura', label: 'Abreviatura', required: true },
+        { field: 'tipo', label: 'Tipo' }
+      ],
+      columnsTurnos: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'hora_inicio', label: 'Hora Inicio', type: 'time', required: true },
+        { field: 'hora_fin', label: 'Hora Fin', type: 'time', required: true },
+        { field: 'dias_semana', label: 'Días de la Semana' }
+      ],
+      columnsAlertas: [
+        { field: 'id', label: 'ID', readonly: true },
+        { field: 'nombre', label: 'Nombre', required: true },
+        { field: 'descripcion', label: 'Descripción' },
+        { field: 'activo', label: 'Activo', type: 'boolean' },
+        { field: 'umbral', label: 'Umbral', type: 'number' }
       ],
       columnsMetodosPago: [
         { field: 'id', label: 'ID', readonly: true },
         { field: 'nombre', label: 'Nombre', required: true },
         { field: 'descripcion', label: 'Descripción' },
-        { field: 'comision', label: 'Comisión (%)', type: 'number' },
-        { field: 'activo', label: 'Activo', type: 'checkbox' }
-      ],
-      columnsUnidadMedida: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'simbolo', label: 'Símbolo', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'activo', label: 'Activo', type: 'checkbox' }
-      ],
-      columnsTurnos: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'hora_inicio', label: 'Hora Inicio', type: 'time', required: true },
-        { field: 'hora_fin', label: 'Hora Fin', type: 'time', required: true },
-        { field: 'activo', label: 'Activo', type: 'checkbox' }
+        { field: 'requiere_referencia', label: 'Requiere Referencia', type: 'boolean' }
       ]
     }
   },
@@ -261,11 +195,51 @@ export default {
     
     this.loadAllData()
   },
+  computed: {
+    // Obtener las columnas correctas según el tipo seleccionado
+    currentColumns() {
+      switch (this.activeTipoTab) {
+        case 'herramientas':
+          return this.columnsHerramientas
+        case 'mantenimiento':
+          return this.columnsMantenimiento
+        case 'transaccion':
+          return this.columnsTransaccion
+        case 'telefono':
+          return this.columnsTelefono
+        case 'unidad-medida':
+          return this.columnsUnidadMedida
+        case 'turno':
+          return this.columnsTurnos
+        default:
+          return []
+      }
+    },
+    
+    // Obtener los datos actuales según el tipo seleccionado
+    currentData() {
+      switch (this.activeTipoTab) {
+        case 'herramientas':
+          return this.tiposHerramientas
+        case 'mantenimiento':
+          return this.tiposMantenimiento
+        case 'transaccion':
+          return this.tiposTransaccion
+        case 'telefono':
+          return this.tiposTelefono
+        case 'unidad-medida':
+          return this.unidadesMedida
+        case 'turno':
+          return this.turnos
+        default:
+          return []
+      }
+    }
+  },
   methods: {
     async loadAllData() {
       this.loading = true
       try {
-        // Cargar todos los datos necesarios (sin estados)
         const promises = [
           this.api.get(this.apiEndpoints.herramientas),
           this.api.get(this.apiEndpoints.mantenimiento),
@@ -305,8 +279,95 @@ export default {
       }
     },
     
+    // Preparar datos según el tipo antes de enviar
+    prepareDataForType(tipo, data) {
+      // Crear una copia del objeto para no modificar el original
+      const preparedData = { ...data }
+
+      if (!data.id || data.id === 0) {
+        delete preparedData.id
+      }
+      
+      switch (tipo) {
+        case 'herramientas':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || '',
+            caracteristicas_clave: preparedData.caracteristicas_clave || ''
+          }
+        
+        case 'mantenimiento':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || ''
+          }
+        
+        case 'transaccion':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || '',
+            afecta_ingresos: Boolean(preparedData.afecta_ingresos),
+            afecta_gastos: Boolean(preparedData.afecta_gastos),
+            es_interno: Boolean(preparedData.es_interno)
+          }
+        
+        case 'telefono':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || ''
+          }
+        
+        case 'unidad-medida':
+          return {
+            nombre: preparedData.nombre,
+            abreviatura: preparedData.abreviatura,
+            tipo: preparedData.tipo || ''
+          }
+        
+        case 'turno':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || '',
+            hora_inicio: preparedData.hora_inicio,
+            hora_fin: preparedData.hora_fin,
+            dias_semana: preparedData.dias_semana || ''
+          }
+        
+        case 'alertas':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || '',
+            activo: Boolean(preparedData.activo),
+            umbral: parseInt(preparedData.umbral) || 0
+          }
+        
+        case 'metodos-pago':
+          return {
+            nombre: preparedData.nombre,
+            descripcion: preparedData.descripcion || '',
+            requiere_referencia: Boolean(preparedData.requiere_referencia)
+          }
+        
+        default:
+          return preparedData
+      }
+    },
+    
     // Validar datos antes de enviar
-    validateData(data, required = []) {
+    validateData(tipo, data) {
+      const requiredFields = {
+        'herramientas': ['nombre'],
+        'mantenimiento': ['nombre'],
+        'transaccion': ['nombre'],
+        'telefono': ['nombre'],
+        'unidad-medida': ['nombre', 'abreviatura'],
+        'turno': ['nombre', 'hora_inicio', 'hora_fin'],
+        'alertas': ['nombre'],
+        'metodos-pago': ['nombre']
+      }
+      
+      const required = requiredFields[tipo] || ['nombre']
+      
       for (const field of required) {
         if (!data[field] || data[field].toString().trim() === '') {
           throw new Error(`El campo ${field} es requerido`)
@@ -318,10 +379,11 @@ export default {
     // Métodos para Tipos (CRUD completo)
     async handleCreateTipo(tipo, data) {
       try {
-        this.validateData(data, ['nombre'])
+        this.validateData(tipo, data)
+        const preparedData = this.prepareDataForType(tipo, data)
         
         const endpoint = this.apiEndpoints[tipo]
-        const response = await this.api.post(endpoint, data)
+        const response = await this.api.post(endpoint, preparedData)
         
         toast.success('Tipo creado correctamente')
         await this.loadDataForType(tipo)
@@ -329,17 +391,19 @@ export default {
         return response
       } catch (error) {
         console.error('Error creando tipo:', error)
-        toast.error(error.message || 'Error al crear tipo')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al crear tipo'
+        toast.error(errorMessage)
         throw error
       }
     },
     
     async handleUpdateTipo(tipo, data) {
       try {
-        this.validateData(data, ['nombre'])
+        this.validateData(tipo, data)
+        const preparedData = this.prepareDataForType(tipo, data)
         
         const endpoint = `${this.apiEndpoints[tipo]}/${data.id}`
-        const response = await this.api.put(endpoint, data)
+        const response = await this.api.put(endpoint, preparedData)
         
         toast.success('Tipo actualizado correctamente')
         await this.loadDataForType(tipo)
@@ -347,7 +411,8 @@ export default {
         return response
       } catch (error) {
         console.error('Error actualizando tipo:', error)
-        toast.error(error.message || 'Error al actualizar tipo')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar tipo'
+        toast.error(errorMessage)
         throw error
       }
     },
@@ -365,7 +430,8 @@ export default {
         await this.loadDataForType(tipo)
       } catch (error) {
         console.error('Error eliminando tipo:', error)
-        toast.error(error.message || 'Error al eliminar tipo')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar tipo'
+        toast.error(errorMessage)
         throw error
       }
     },
@@ -394,6 +460,12 @@ export default {
           case 'turno':
             this.turnos = response.data || []
             break
+          case 'alertas':
+            this.alertas = response.data || []
+            break
+          case 'metodos-pago':
+            this.metodosPago = response.data || []
+            break
         }
       } catch (error) {
         console.error(`Error cargando datos para ${tipo}:`, error)
@@ -401,48 +473,80 @@ export default {
     },
     
     // Métodos para Alertas
-    async saveAlerta(alerta) {
+    async handleCreateAlerta(data) {
       try {
-        this.loading = true
+        this.validateData('alertas', data)
+        const preparedData = this.prepareDataForType('alertas', data)
         
-        await this.api.put(`${this.apiEndpoints.alertas}/${alerta.id}`, {
-          activo: alerta.activo,
-          umbral: alerta.umbral || 0
-        })
-        
-        toast.success('Configuración de alerta guardada')
+        await this.api.post(this.apiEndpoints.alertas, preparedData)
+        toast.success('Alerta creada correctamente')
+        await this.loadDataForType('alertas')
       } catch (error) {
-        console.error('Error guardando alerta:', error)
-        toast.error('Error al guardar alerta')
-      } finally {
-        this.loading = false
+        console.error('Error creando alerta:', error)
+        const errorMessage = error.response?.data?.error || error.message || 'Error al crear alerta'
+        toast.error(errorMessage)
+      }
+    },
+    
+    async handleUpdateAlerta(data) {
+      try {
+        this.validateData('alertas', data)
+        const preparedData = this.prepareDataForType('alertas', data)
+        
+        await this.api.put(`${this.apiEndpoints.alertas}/${data.id}`, preparedData)
+        toast.success('Alerta actualizada correctamente')
+        await this.loadDataForType('alertas')
+      } catch (error) {
+        console.error('Error actualizando alerta:', error)
+        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar alerta'
+        toast.error(errorMessage)
+      }
+    },
+    
+    async handleDeleteAlerta(id) {
+      try {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta alerta?')) {
+          return
+        }
+        
+        await this.api.delete(`${this.apiEndpoints.alertas}/${id}`)
+        toast.success('Alerta eliminada correctamente')
+        await this.loadDataForType('alertas')
+      } catch (error) {
+        console.error('Error eliminando alerta:', error)
+        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar alerta'
+        toast.error(errorMessage)
       }
     },
     
     // Métodos para Métodos de Pago
     async handleCreateMetodoPago(data) {
       try {
-        this.validateData(data, ['nombre'])
+        this.validateData('metodos-pago', data)
+        const preparedData = this.prepareDataForType('metodos-pago', data)
         
-        await this.api.post(this.apiEndpoints['metodos-pago'], data)
-        toast.success('Método de pago creado')
-        await this.loadAllData()
+        await this.api.post(this.apiEndpoints['metodos-pago'], preparedData)
+        toast.success('Método de pago creado correctamente')
+        await this.loadDataForType('metodos-pago')
       } catch (error) {
         console.error('Error creando método de pago:', error)
-        toast.error(error.message || 'Error al crear método de pago')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al crear método de pago'
+        toast.error(errorMessage)
       }
     },
     
     async handleUpdateMetodoPago(data) {
       try {
-        this.validateData(data, ['nombre'])
+        this.validateData('metodos-pago', data)
+        const preparedData = this.prepareDataForType('metodos-pago', data)
         
-        await this.api.put(`${this.apiEndpoints['metodos-pago']}/${data.id}`, data)
-        toast.success('Método de pago actualizado')
-        await this.loadAllData()
+        await this.api.put(`${this.apiEndpoints['metodos-pago']}/${data.id}`, preparedData)
+        toast.success('Método de pago actualizado correctamente')
+        await this.loadDataForType('metodos-pago')
       } catch (error) {
         console.error('Error actualizando método de pago:', error)
-        toast.error(error.message || 'Error al actualizar método de pago')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar método de pago'
+        toast.error(errorMessage)
       }
     },
     
@@ -453,11 +557,12 @@ export default {
         }
         
         await this.api.delete(`${this.apiEndpoints['metodos-pago']}/${id}`)
-        toast.success('Método de pago eliminado')
-        await this.loadAllData()
+        toast.success('Método de pago eliminado correctamente')
+        await this.loadDataForType('metodos-pago')
       } catch (error) {
         console.error('Error eliminando método de pago:', error)
-        toast.error('Error al eliminar método de pago')
+        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar método de pago'
+        toast.error(errorMessage)
       }
     }
   }
@@ -465,178 +570,137 @@ export default {
 </script>
 
 <style scoped>
-.configuracion-container {
+.configuracion-view {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.config-tabs {
+.container h1 {
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.main-tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0;
 }
 
-.config-tabs button {
-  padding: 8px 16px;
-  background: none;
+.tab-button {
+  padding: 12px 24px;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  background: transparent;
+  color: #6c757d;
   font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
   transition: all 0.3s ease;
+  font-size: 16px;
 }
 
-.config-tabs button:hover {
-  background: #f0f0f0;
+.tab-button:hover {
+  color: #495057;
+  background-color: #f8f9fa;
 }
 
-.config-tabs button.active {
-  background: #42b983;
-  color: white;
-}
-
-.config-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  background-color: #fff;
 }
 
 .sub-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 15px;
-  overflow-x: auto;
-  padding-bottom: 5px;
-}
-
-.sub-tabs button {
-  padding: 6px 12px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-}
-
-.sub-tabs button:hover {
-  background: #e0e0e0;
-}
-
-.sub-tabs button.active {
-  background: #42b983;
-  color: white;
-}
-
-.type-section {
-  margin-top: 15px;
-}
-
-.alertas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
-}
-
-.alerta-card {
-  border: 1px solid #ddd;
+  gap: 5px;
+  margin-bottom: 20px;
+  background: #f8f9fa;
+  padding: 10px;
   border-radius: 8px;
-  padding: 15px;
-  background: #fafafa;
-}
-
-.alerta-card h3 {
-  margin: 0 0 10px 0;
-  color: #333;
-}
-
-.alerta-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-top: 10px;
   flex-wrap: wrap;
 }
 
-.alerta-controls label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.subtab-button {
+  padding: 8px 16px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #6c757d;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
   font-size: 14px;
 }
 
-.alerta-controls input[type="number"] {
-  width: 80px;
-  padding: 5px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.subtab-button:hover {
+  background: #e9ecef;
+  color: #495057;
 }
 
-.btn-save {
-  padding: 5px 12px;
-  background: #42b983;
+.subtab-button.active {
+  background: #007bff;
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.3s ease;
+  border-color: #007bff;
 }
 
-.btn-save:hover:not(:disabled) {
-  background: #369870;
-}
-
-.btn-save:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.loading {
-  text-align: center;
+.tipos-section,
+.alertas-section,
+.metodos-pago-section {
+  background: white;
+  border-radius: 8px;
   padding: 20px;
-  color: #666;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.config-section h2 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.config-section h3 {
-  margin-bottom: 15px;
-  color: #555;
-}
-
-/* Responsive */
+/* Responsive design */
 @media (max-width: 768px) {
-  .configuracion-container {
+  .configuracion-view {
     padding: 10px;
   }
   
-  .config-tabs {
-    flex-wrap: wrap;
+  .main-tabs {
+    flex-direction: column;
+    gap: 5px;
   }
   
-  .config-content {
+  .tab-button {
+    text-align: left;
+    padding: 10px 15px;
+  }
+  
+  .sub-tabs {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .tipos-section,
+  .alertas-section,
+  .metodos-pago-section {
     padding: 15px;
   }
-  
-  .alertas-grid {
-    grid-template-columns: 1fr;
+}
+
+@media (max-width: 480px) {
+  .configuracion-view {
+    padding: 5px;
   }
   
-  .alerta-controls {
-    flex-direction: column;
-    align-items: stretch;
+  .container h1 {
+    font-size: 1.3rem;
   }
   
-  .alerta-controls input[type="number"] {
-    width: 100%;
+  .tipos-section,
+  .alertas-section,
+  .metodos-pago-section {
+    padding: 10px;
   }
 }
 </style>

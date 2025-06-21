@@ -12,11 +12,20 @@
       <div class="form-grid">
         <div v-for="col in editableColumns" :key="col.field" class="form-field">
           <label>{{ col.label }}{{ col.required ? ' *' : '' }}</label>
-          <input
-            v-if="col.type === 'checkbox'"
-            type="checkbox"
-            v-model="newItem[col.field]"
-          >
+          
+          <!-- Campo booleano -->
+          <div v-if="col.type === 'boolean'" class="checkbox-container">
+            <input
+              type="checkbox"
+              :id="`new-${col.field}`"
+              v-model="newItem[col.field]"
+            >
+            <label :for="`new-${col.field}`" class="checkbox-label">
+              {{ newItem[col.field] ? 'Sí' : 'No' }}
+            </label>
+          </div>
+          
+          <!-- Otros campos -->
           <input
             v-else-if="col.type === 'number'"
             type="number"
@@ -72,11 +81,21 @@
             <td v-for="col in columns" :key="col.field">
               <template v-if="editingItem?.id === item.id">
                 <!-- Campos de edición -->
-                <input 
-                  v-if="col.type === 'checkbox'"
-                  type="checkbox"
-                  v-model="editingItem[col.field]"
-                >
+                
+                <!-- Campo booleano en edición -->
+                <div v-if="col.type === 'boolean'" class="checkbox-container">
+                  <input
+                    type="checkbox"
+                    :id="`edit-${col.field}-${item.id}`"
+                    v-model="editingItem[col.field]"
+                    :disabled="col.readonly"
+                  >
+                  <label :for="`edit-${col.field}-${item.id}`" class="checkbox-label">
+                    {{ editingItem[col.field] ? 'Sí' : 'No' }}
+                  </label>
+                </div>
+                
+                <!-- Otros campos en edición -->
                 <input
                   v-else-if="col.type === 'number'"
                   type="number"
@@ -108,8 +127,10 @@
               </template>
               <template v-else>
                 <!-- Visualización normal -->
-                <span v-if="col.type === 'checkbox'" class="checkbox-display">
-                  {{ item[col.field] ? '✓' : '✗' }}
+                <span v-if="col.type === 'boolean'" class="boolean-display">
+                  <span :class="['boolean-badge', { 'true': item[col.field], 'false': !item[col.field] }]">
+                    {{ item[col.field] ? 'Sí' : 'No' }}
+                  </span>
                 </span>
                 <span v-else-if="col.type === 'color'" class="color-display">
                   <span class="color-box" :style="{backgroundColor: item[col.field]}"></span>
@@ -166,9 +187,36 @@ export default {
       return this.columns.filter(col => !col.readonly)
     }
   },
+  watch: {
+    showAddForm(newVal) {
+      if (newVal) {
+        this.initializeNewItem()
+      }
+    }
+  },
   methods: {
+    // Inicializar nuevo item con valores por defecto
+    initializeNewItem() {
+      this.newItem = {}
+      this.columns.forEach(col => {
+        if (col.type === 'boolean') {
+          this.newItem[col.field] = false
+        } else if (col.type === 'number') {
+          this.newItem[col.field] = 0
+        } else {
+          this.newItem[col.field] = ''
+        }
+      })
+    },
+    
     startEdit(item) {
       this.editingItem = { ...item }
+      // Asegurar que los campos booleanos sean booleanos
+      this.columns.forEach(col => {
+        if (col.type === 'boolean') {
+          this.editingItem[col.field] = Boolean(this.editingItem[col.field])
+        }
+      })
     },
     
     cancelEdit() {
@@ -180,7 +228,8 @@ export default {
         // Validar campos requeridos
         const requiredFields = this.columns.filter(col => col.required).map(col => col.field)
         for (const field of requiredFields) {
-          if (!this.editingItem[field] && this.editingItem[field] !== 0) {
+          const value = this.editingItem[field]
+          if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
             throw new Error(`El campo ${this.columns.find(c => c.field === field)?.label} es requerido`)
           }
         }
@@ -189,7 +238,7 @@ export default {
         this.editingItem = null
       } catch (error) {
         console.error('Error en saveItem:', error)
-        // El error se maneja en el componente padre
+        alert(error.message)
       }
     },
     
@@ -203,7 +252,8 @@ export default {
         // Validar campos requeridos
         const requiredFields = this.columns.filter(col => col.required && !col.readonly).map(col => col.field)
         for (const field of requiredFields) {
-          if (!this.newItem[field] && this.newItem[field] !== 0) {
+          const value = this.newItem[field]
+          if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) {
             throw new Error(`El campo ${this.columns.find(c => c.field === field)?.label} es requerido`)
           }
         }
@@ -213,7 +263,7 @@ export default {
         this.showAddForm = false
       } catch (error) {
         console.error('Error en addItem:', error)
-        // El error se maneja en el componente padre
+        alert(error.message)
       }
     },
     
@@ -232,6 +282,8 @@ export default {
           return typeof value === 'number' ? value.toLocaleString() : value
         case 'time':
           return value
+        case 'boolean':
+          return value ? 'Sí' : 'No'
         default:
           return value
       }
@@ -292,12 +344,32 @@ export default {
   color: #333;
 }
 
-.form-field input {
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field input[type="time"],
+.form-field input[type="color"] {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   box-sizing: border-box;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-container input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.checkbox-label {
+  margin: 0 !important;
+  font-weight: normal !important;
+  cursor: pointer;
 }
 
 .form-actions {
@@ -363,9 +435,27 @@ th {
   font-style: italic;
 }
 
-.checkbox-display {
-  font-size: 16px;
-  font-weight: bold;
+.boolean-display {
+  display: flex;
+  align-items: center;
+}
+
+.boolean-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.boolean-badge.true {
+  background: #d4edda;
+  color: #155724;
+}
+
+.boolean-badge.false {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 .color-display {
