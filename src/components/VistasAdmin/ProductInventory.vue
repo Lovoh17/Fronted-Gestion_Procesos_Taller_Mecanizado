@@ -1,7 +1,21 @@
 <template>
-  <div>
-    <main>
-      <div class="inventory-content">
+  <div class="inventario-container">
+    <!-- Header con gradiente similar al de departamentos -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-boxes"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Inventario de Materia Prima</h1>
+            <p class="header-subtitle">Gestiona el inventario de materiales</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inventory-content">
         <h2 class="title">Inventario de Materia Prima</h2>
         
         <!-- Panel de Filtros -->
@@ -225,8 +239,7 @@
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
 </template>
 
 <script>

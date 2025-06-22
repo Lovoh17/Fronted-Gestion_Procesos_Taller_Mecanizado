@@ -30,59 +30,68 @@
     </div>
 
     <!-- Panel de filtros mejorado -->
-    <div class="filters-card" v-if="!loading && departamentos.length > 0">
-      <div class="filters-header" @click="toggleFilters">
-        <div class="filters-title">
-          <i class="fas fa-filter"></i>
-          <span>Filtros de Búsqueda</span>
-          <div class="filter-badge" v-if="hasActiveFilters">{{ activeFiltersCount }}</div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 overflow-hidden"
+      v-if="!loading && departamentos.length > 0">
+      <div class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+        @click="toggleFilters">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-filter text-gray-500"></i>
+          <span class="font-medium text-gray-700">Filtros de Búsqueda</span>
+          <div v-if="hasActiveFilters"
+            class="bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+            {{ activeFiltersCount }}
+          </div>
         </div>
-        <div class="filters-toggle">
+        <div class="text-gray-500">
           <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
         </div>
       </div>
 
       <transition name="slide-down">
-        <div class="filters-content" v-if="showFilters">
-          <div class="filters-grid">
-            <div class="filter-item">
-              <label class="filter-label">
-                <i class="fas fa-toggle-on"></i>
+        <div v-if="showFilters" class="border-t border-gray-200 p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Filtro Estado -->
+            <div class="space-y-1">
+              <label class="flex items-center text-sm font-medium text-gray-700">
+                <i class="fas fa-toggle-on mr-2 text-gray-500"></i>
                 Estado
               </label>
-              <select v-model="estadoFilter" class="modern-select">
+              <select v-model="estadoFilter"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="todos">Todos los estados</option>
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
               </select>
             </div>
 
-            <div class="filter-item">
-              <label class="filter-label">
-                <i class="fas fa-search"></i>
+            <!-- Filtro Búsqueda -->
+            <div class="space-y-1">
+              <label class="flex items-center text-sm font-medium text-gray-700">
+                <i class="fas fa-search mr-2 text-gray-500"></i>
                 Búsqueda
               </label>
-              <div class="search-container">
-                <input 
-                  v-model="searchQuery" 
-                  placeholder="Buscar por nombre, código..."
-                  class="modern-input"
-                  @keyup.enter="applyFilters"
-                >
-                <button class="search-button" @click="applyFilters">
+              <div class="relative">
+                <input v-model="searchQuery" placeholder="Buscar por nombre, código..."
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                  @keyup.enter="applyFilters">
+                <button class="absolute right-2 top-2 text-gray-500 hover:text-blue-500" @click="applyFilters">
                   <i class="fas fa-search"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="filters-actions">
-            <button class="btn-modern btn-primary" @click="applyFilters">
-              <i class="fas fa-check"></i>
+          <div class="flex justify-end space-x-2 pt-2">
+            <button
+              class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              @click="applyFilters">
+              <i class="fas fa-check mr-2"></i>
               Aplicar Filtros
             </button>
-            <button class="btn-modern btn-secondary" @click="resetFilters">
-              <i class="fas fa-undo"></i>
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+              @click="resetFilters">
+              <i class="fas fa-undo mr-2"></i>
               Limpiar Todo
             </button>
           </div>
@@ -106,11 +115,7 @@
     <!-- Tarjetas de departamentos -->
     <div class="departments-grid" v-if="!loading && departamentos.length > 0">
       <transition-group name="fade-in" tag="div" class="grid-container">
-        <div 
-          v-for="departamento in paginatedDepartamentos" 
-          :key="departamento.id"
-          class="department-card"
-        >
+        <div v-for="departamento in paginatedDepartamentos" :key="departamento.id" class="department-card">
           <div class="card-header">
             <div class="department-id">{{ departamento.id }}</div>
             <div class="card-actions">
@@ -120,18 +125,14 @@
               <button class="action-btn edit-btn" @click="editarDepartamento(departamento)" title="Editar">
                 <i class="fas fa-edit"></i>
               </button>
-              <button 
-                class="action-btn delete-btn" 
-                @click="eliminarDepartamento(departamento.id)"
-                :disabled="loadingDelete === departamento.id"
-                title="Eliminar"
-              >
+              <button class="action-btn delete-btn" @click="eliminarDepartamento(departamento.id)"
+                :disabled="loadingDelete === departamento.id" title="Eliminar">
                 <i v-if="loadingDelete === departamento.id" class="fas fa-spinner fa-spin"></i>
                 <i v-else class="fas fa-trash"></i>
               </button>
             </div>
           </div>
-          
+
           <div class="card-body">
             <h3 class="department-name">{{ departamento.nombre }}</h3>
             <div class="department-info">
@@ -160,57 +161,37 @@
     <div class="modern-pagination" v-if="!loading && departamentos.length > 0 && totalPages > 1">
       <div class="pagination-info">
         <span class="info-text">
-          Mostrando <strong>{{ showingFrom }}</strong> a <strong>{{ showingTo }}</strong> de <strong>{{ filteredDepartamentos.length }}</strong> departamentos
+          Mostrando <strong>{{ showingFrom }}</strong> a <strong>{{ showingTo }}</strong> de <strong>{{
+            filteredDepartamentos.length }}</strong> departamentos
         </span>
       </div>
-      
+
       <div class="pagination-controls">
-        <button 
-          class="page-btn prev-btn" 
-          @click="prevPage" 
-          :disabled="currentPage === 1"
-          title="Página anterior"
-        >
+        <button class="page-btn prev-btn" @click="prevPage" :disabled="currentPage === 1" title="Página anterior">
           <i class="fas fa-chevron-left"></i>
         </button>
-        
+
         <div class="page-numbers">
-          <button 
-            v-for="page in pages" 
-            :key="page" 
-            class="page-btn number-btn"
-            :class="{ active: page === currentPage, disabled: page === '...' }"
-            @click="goToPage(page)"
-            :disabled="page === '...'"
-          >
+          <button v-for="page in pages" :key="page" class="page-btn number-btn"
+            :class="{ active: page === currentPage, disabled: page === '...' }" @click="goToPage(page)"
+            :disabled="page === '...'">
             {{ page }}
           </button>
         </div>
-        
-        <button 
-          class="page-btn next-btn" 
-          @click="nextPage" 
-          :disabled="currentPage === totalPages"
-          title="Página siguiente"
-        >
+
+        <button class="page-btn next-btn" @click="nextPage" :disabled="currentPage === totalPages"
+          title="Página siguiente">
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>
     </div>
 
     <!-- Modales (mantenemos los componentes originales) -->
-    <DepartamentoModal 
-      v-if="showDepartamentoModal" 
-      :departamento="selectedDepartamento"
-      @close="closeDepartamentoModal"
-      @save="saveDepartamento"
-    />
+    <DepartamentoModal v-if="showDepartamentoModal" :departamento="selectedDepartamento" @close="closeDepartamentoModal"
+      @save="saveDepartamento" />
 
-    <NuevoDepartamentoModal 
-      v-if="showNuevoDepartamentoModal"
-      @close="showNuevoDepartamentoModal = false"
-      @save="addDepartamento"
-    />
+    <NuevoDepartamentoModal v-if="showNuevoDepartamentoModal" @close="showNuevoDepartamentoModal = false"
+      @save="addDepartamento" />
   </div>
 </template>
 
@@ -224,7 +205,7 @@ export default {
     DepartamentoModal,
     NuevoDepartamentoModal
   },
-  
+
   data() {
     return {
       departamentos: [],
@@ -242,29 +223,29 @@ export default {
       selectedDepartamento: null
     }
   },
-  
+
   computed: {
     hasActiveFilters() {
       return this.searchQuery !== '' || this.estadoFilter !== 'todos';
     },
-    
+
     activeFiltersCount() {
       let count = 0;
       if (this.searchQuery !== '') count++;
       if (this.estadoFilter !== 'todos') count++;
       return count;
     },
-    
+
     filteredDepartamentos() {
       return this.departamentos.filter(departamento => {
-        const matchesEstado = this.estadoFilter === 'todos' || 
-                           departamento.estado === this.estadoFilter;
-        
+        const matchesEstado = this.estadoFilter === 'todos' ||
+          departamento.estado === this.estadoFilter;
+
         const matchesSearch = this.searchQuery === '' ||
-                            departamento.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            (departamento.codigo && departamento.codigo.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-                            (departamento.responsable && departamento.responsable.toLowerCase().includes(this.searchQuery.toLowerCase()));
-        
+          departamento.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (departamento.codigo && departamento.codigo.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (departamento.responsable && departamento.responsable.toLowerCase().includes(this.searchQuery.toLowerCase()));
+
         return matchesEstado && matchesSearch;
       }).sort((a, b) => {
         const modifier = this.sortDirection === 'asc' ? 1 : -1;
@@ -273,48 +254,48 @@ export default {
         return 0;
       });
     },
-    
+
     paginatedDepartamentos() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredDepartamentos.slice(start, start + this.itemsPerPage);
     },
-    
+
     totalPages() {
       return Math.ceil(this.filteredDepartamentos.length / this.itemsPerPage);
     },
-    
+
     pages() {
       const pages = [];
       const maxVisiblePages = 5;
-      
+
       if (this.totalPages <= maxVisiblePages) {
         for (let i = 1; i <= this.totalPages; i++) pages.push(i);
         return pages;
       }
-      
+
       let start = Math.max(1, this.currentPage - 2);
       let end = Math.min(this.totalPages, start + maxVisiblePages - 1);
-      
+
       if (end - start + 1 < maxVisiblePages) {
         start = end - maxVisiblePages + 1;
       }
-      
+
       if (start > 1) pages.push(1, start > 2 ? '...' : null);
       for (let i = start; i <= end; i++) pages.push(i);
       if (end < this.totalPages) pages.push(end < this.totalPages - 1 ? '...' : null, this.totalPages);
-      
+
       return pages.filter(p => p);
     },
-    
+
     showingFrom() {
       return (this.currentPage - 1) * this.itemsPerPage + 1;
     },
-    
+
     showingTo() {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredDepartamentos.length);
     }
   },
-  
+
   methods: {
     // Métodos de API (mantenemos los originales)
     async loadDepartamentos() {
@@ -372,18 +353,18 @@ export default {
         throw error;
       }
     },
-    
+
     // Métodos de UI
     applyFilters() {
       this.currentPage = 1;
     },
-    
+
     resetFilters() {
       this.searchQuery = '';
       this.estadoFilter = 'todos';
       this.currentPage = 1;
     },
-    
+
     async verDetalles(departamento) {
       try {
         const departamentoActualizado = await this.obtenerDepartamentoPorId(departamento.id);
@@ -394,12 +375,12 @@ export default {
         this.showDepartamentoModal = true;
       }
     },
-    
+
     editarDepartamento(departamento) {
       this.selectedDepartamento = { ...departamento };
       this.showDepartamentoModal = true;
     },
-    
+
     async eliminarDepartamento(id) {
       if (!confirm('¿Estás seguro de que deseas eliminar este departamento?')) {
         return;
@@ -408,7 +389,7 @@ export default {
       try {
         this.loadingDelete = id;
         await this.eliminarDepartamentoAPI(id);
-        
+
         this.departamentos = this.departamentos.filter(d => d.id !== id);
         this.showToast('Departamento eliminado correctamente', 'success');
       } catch (error) {
@@ -417,17 +398,17 @@ export default {
         this.loadingDelete = null;
       }
     },
-    
+
     async saveDepartamento(departamentoData) {
       try {
         if (departamentoData.id) {
           const departamentoActualizado = await this.actualizarDepartamento(departamentoData.id, departamentoData);
-          
+
           const index = this.departamentos.findIndex(d => d.id === departamentoData.id);
           if (index !== -1) {
             this.departamentos[index] = departamentoActualizado;
           }
-          
+
           this.showToast('Departamento actualizado correctamente', 'success');
         }
         this.closeDepartamentoModal();
@@ -435,11 +416,11 @@ export default {
         // Error ya manejado en actualizarDepartamento
       }
     },
-    
+
     async addDepartamento(nuevoDepartamento) {
       try {
         const departamentoCreado = await this.crearDepartamento(nuevoDepartamento);
-        
+
         this.departamentos.unshift(departamentoCreado);
         this.showNuevoDepartamentoModal = false;
         this.showToast('Nuevo departamento creado correctamente', 'success');
@@ -447,20 +428,20 @@ export default {
         // Error ya manejado en crearDepartamento
       }
     },
-    
+
     closeDepartamentoModal() {
       this.showDepartamentoModal = false;
       this.selectedDepartamento = null;
     },
-    
+
     formatEstado(estado) {
       return estado === 'activo' ? 'Activo' : 'Inactivo';
     },
-    
+
     estadoClass(estado) {
       return estado === 'activo' ? 'status-active' : 'status-inactive';
     },
-    
+
     sortBy(field) {
       if (this.sortField === field) {
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -469,29 +450,29 @@ export default {
         this.sortDirection = 'asc';
       }
     },
-    
+
     prevPage() {
       if (this.currentPage > 1) this.currentPage--;
     },
-    
+
     nextPage() {
       if (this.currentPage < this.totalPages) this.currentPage++;
     },
-    
+
     goToPage(page) {
       if (page !== '...') this.currentPage = page;
     },
-    
+
     toggleFilters() {
       this.showFilters = !this.showFilters;
     },
-    
+
     showToast(message, type = 'success') {
       const alertType = type === 'success' ? 'Éxito' : 'Error';
       alert(`${alertType}: ${message}`);
     }
   },
-  
+
   async mounted() {
     await this.loadDepartamentos();
   }
@@ -597,7 +578,7 @@ export default {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: all 0.6s ease;
 }
 
@@ -660,8 +641,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-spinner p {
@@ -1134,26 +1120,26 @@ export default {
   .departamentos-container {
     padding: 1.5rem;
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: 1.5rem;
     text-align: center;
   }
-  
+
   .header-info {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .header-text {
     align-items: center;
   }
-  
+
   .filters-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .filters-actions {
     justify-content: center;
   }
@@ -1163,11 +1149,11 @@ export default {
   .grid-container {
     grid-template-columns: 1fr;
   }
-  
+
   .department-card {
     max-width: 100%;
   }
-  
+
   .pagination-controls {
     flex-wrap: wrap;
   }
