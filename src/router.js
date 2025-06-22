@@ -59,8 +59,8 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/admin/departments',
-    name: 'Departamentos',
+    path: '/admin/transacciones',
+    name: 'Transacciones',
     component: () => import('@/components/VistasAdmin/Transacciones.vue'),
     meta: { requiresAuth: true, requiresAdmin: true}
   },
