@@ -34,5 +34,17 @@ export const mockUsers = [
         avatar: '/avatars/technician.jpg'
       },
       token: 'mock-token-technician'
+    },
+    {
+      username: 'worked',
+      password: 'worked123',
+      user: {
+        id: 3,
+        name: 'Operario',
+        email: 'worked@taller.com',
+        role: 'Operario',
+        avatar: '/avatars/operario.jpg'
+      },
+      token: 'mock-token-operario'
     }
   ];

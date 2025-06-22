@@ -77,7 +77,7 @@ const handleLogin = async () => {
     } else if (authStore.user?.role === 'admin') {
       router.push('/admin-dashboard');
     } else {
-      router.push('/dashboard');
+      router.push('/dashboard-operario');
     }
     
   } catch (error) {

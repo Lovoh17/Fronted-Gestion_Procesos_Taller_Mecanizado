@@ -13,6 +13,24 @@ const routes = [
     }
   },
   {
+    path: '/herramientas',
+    name: 'herramientas',
+    component: () => import('@/components/VistasAdmin/Herramientas.vue'),
+    meta: { public: true }
+  },
+  {
+    path: '/inventory',
+    name: 'admin-inventory',
+    component: () => import('@/components/VistasAdmin/ProductInventory.vue'),
+    meta: {public: true}
+  },
+  {
+    path: '/admin/reports',
+    name: 'admin-reports',
+    component: () => import('@/components/VistasAdmin/Reports.vue'),
+    meta: { public: true}
+  },
+  {
     path: '/settings',
     name: 'settings', 
     component: () => import('./components/settings.vue'),
@@ -20,7 +38,6 @@ const routes = [
       public: true,
       layout: 'empty'
     }
-    
   },
   {
     path: '/unauthorized',
@@ -42,32 +59,16 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/admin/transacciones',
-    name: 'Transacciones',
+    path: '/admin/departments',
+    name: 'Departamentos',
     component: () => import('@/components/VistasAdmin/Transacciones.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, requiresAdmin: true}
   },
   {
     path: '/admin/departments',
     name: 'Departamentos',
     component: () => import('@/components/VistasAdmin/Departamentos.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/admin',
-    name: 'admin',
-    component: () => import('@/components/VistasAdmin/adminView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
-  },
-  {
-    path: '/inventory',
-    name: 'admin-inventory',
-    component: () => import('@/components/VistasAdmin/ProductInventory.vue'),
-  },
-  {
-    path: '/admin/reports',
-    name: 'admin-reports',
-    component: () => import('@/components/VistasAdmin/Reports.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true}
   },
   {
     path: '/admin/users',
@@ -103,11 +104,6 @@ const routes = [
     meta: { requiresAuth: true, requiresCoordinator: true }
   },
   {
-    path: '/inventory',
-    name: 'admin-inventory',
-    component: () => import('@/components/VistasAdmin/ProductInventory.vue'),
-  },
-  {
     path: '/coordinator/orders',
     name: 'coordinator-orders',
     component: () => import('@/components/VistasCoordinador/WorkOrders.vue'),
@@ -119,7 +115,25 @@ const routes = [
     component: () => import('@/components/VistasCoordinador/Maintenance.vue'),
     meta: { requiresAuth: true, requiresCoordinator: true }
   },
-
+   /********************** Rutas de Operario **********************/
+  {
+    path: '/dashboard-operario',
+    name: 'operario-dashboard',
+    component: () => import('@/components/VistasOperarios/Principal.vue'),
+    meta: { requiresAuth: true, requiresOperator: true }
+  },
+  {
+    path: '/operario/trabajos',
+    name: 'operario-trabajo',
+    component: () => import('@/components/VistasOperarios/Trabajos.vue'),
+    meta: { requiresAuth: true, requiresOperator: true }
+  },
+  {
+    path: '/operario/reportes',
+    name: 'operario-reportes',
+    component: () => import('@/components/VistasOperarios/Reportes.vue'),
+    meta: { requiresAuth: true, requiresOperator: true }
+  },
   /********************** Ruta de Catch-all **********************/
   {
     path: '/:pathMatch(.*)*',
@@ -132,7 +146,8 @@ const routes = [
     name: 'settings',
     component: () => import('@/components/settings.vue'),
     meta: { public: true }
-  }
+  },
+  
 ]
 
 const router = createRouter({
@@ -143,17 +158,15 @@ const router = createRouter({
   }
 })
 
-// Guardia de navegación modificada
+// Guardia de navegación
 router.beforeEach(async (to, from, next) => {
-  // Importación dinámica del store
-  const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
   
   if (to.meta.public) {
     return next()
   }
 
-  if (to.meta.requiresAuth && !authStore.user) {
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next('/')
   }
 
@@ -162,6 +175,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.requiresCoordinator && authStore.user?.role !== 'coordinator') {
+    return next('/unauthorized')
+  }
+
+  if (to.meta.requiresOperator && authStore.user?.role !== 'operator') {
     return next('/unauthorized')
   }
 

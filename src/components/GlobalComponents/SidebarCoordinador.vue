@@ -73,12 +73,6 @@
           badge: null
         },
         { 
-          icon: 'miscellaneous_services', 
-          text: 'Departamentos', 
-          path: '/departments',
-          badge: null
-        },
-        { 
           icon: 'assignment', 
           text: 'Control Calidad', 
           path: '/control-calidad',

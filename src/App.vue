@@ -18,11 +18,21 @@ import { useAuthStore } from '@/stores/auth';
 import TopBar from '@/components/GlobalComponents/TopBar.vue';
 import SideBar from '@/components/GlobalComponents/Sidebar.vue';
 import SidebarCoordinator from '@/components/GlobalComponents/SidebarCoordinador.vue';
+import SidebarOperario from '@/components/GlobalComponents/SidebarOperario.vue';
 
 const authStore = useAuthStore();
 
 const currentSidebar = computed(() => {
-  return authStore.user?.role === 'coordinator' ? SidebarCoordinator : SideBar;
+  switch(authStore.user?.role) {
+    case 'admin':
+      return SideBar;
+    case 'coordinator':
+      return SidebarCoordinator;
+    case 'operator':
+      return SidebarOperario;
+    default:
+      return null; 
+  }
 });
 </script>
 

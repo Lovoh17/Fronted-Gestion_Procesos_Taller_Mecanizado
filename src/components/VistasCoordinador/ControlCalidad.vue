@@ -25,8 +25,9 @@
           </select>
         </div>
         
-        <button class="qc-btn refresh-btn" @click="refreshData">
-          <i class="material-icons">refresh</i> Actualizar
+        <button class="qc-btn refresh-btn" @click="refreshData" :disabled="loading">
+          <i class="material-icons">refresh</i> 
+          {{ loading ? 'Cargando...' : 'Actualizar' }}
         </button>
       </div>
     </div>
@@ -55,49 +56,69 @@
       </div>
     </div>
 
-    <!-- Listado de trabajos -->
-    <div class="qc-work-orders">
+    <!-- Loading spinner -->
+    <div v-if="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Cargando planos...</p>
+    </div>
+
+    <!-- Error message -->
+    <div v-if="error" class="error-container">
+      <i class="material-icons">error</i>
+      <p>{{ error }}</p>
+      <button class="btn primary" @click="fetchPlanos">Reintentar</button>
+    </div>
+
+    <!-- Listado de trabajos (basado en planos) -->
+    <div class="qc-work-orders" v-if="!loading && !error">
       <table class="qc-table">
         <thead>
           <tr>
-            <th @click="sortBy('orderNumber')">
-              Orden # <i class="material-icons sort-icon">{{ sortIcon('orderNumber') }}</i>
+            <th @click="sortBy('numeroPlano')">
+              Plano # <i class="material-icons sort-icon">{{ sortIcon('numeroPlano') }}</i>
             </th>
-            <th @click="sortBy('client')">Cliente</th>
-            <th @click="sortBy('description')">Descripción</th>
-            <th @click="sortBy('process')">Proceso</th>
-            <th>Planos</th>
+            <th @click="sortBy('nombrePlano')">Nombre</th>
+            <th @click="sortBy('descripcion')">Descripción</th>
+            <th @click="sortBy('fechaCreacion')">Fecha Creación</th>
+            <th @click="sortBy('version')">Versión</th>
+            <th>Archivo</th>
             <th @click="sortBy('status')">Estado QC</th>
             <th @click="sortBy('inspector')">Inspector</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="work in filteredWorkOrders" :key="work.id" :class="work.status">
-            <td>{{ work.orderNumber }}</td>
-            <td>{{ work.client }}</td>
-            <td class="description-cell">{{ work.description }}</td>
-            <td>{{ work.process }}</td>
+          <tr v-for="plano in filteredWorkOrders" :key="plano.idPlano" :class="getPlanoStatus(plano)">
+            <td>{{ plano.numeroPlano }}</td>
+            <td>{{ plano.nombrePlano }}</td>
+            <td class="description-cell">{{ plano.descripcion || '--' }}</td>
+            <td>{{ formatDate(plano.fechaCreacion) }}</td>
+            <td>{{ plano.version }}</td>
             <td>
-              <button class="icon-btn" @click="viewBlueprints(work)" v-if="work.blueprints">
-                <i class="material-icons">picture_as_pdf</i> ({{ work.blueprints.length }})
+              <button class="icon-btn" @click="downloadPlano(plano)" v-if="plano.rutaArchivo">
+                <i class="material-icons">picture_as_pdf</i>
+                {{ getFileExtension(plano.rutaArchivo) }}
               </button>
+              <span v-else>--</span>
             </td>
             <td>
-              <span class="status-badge" :class="work.status">
-                {{ statusLabels[work.status] }}
+              <span class="status-badge" :class="getPlanoStatus(plano)">
+                {{ getStatusLabel(getPlanoStatus(plano)) }}
               </span>
             </td>
-            <td>{{ work.inspector || '--' }}</td>
+            <td>{{ getInspector(plano) || '--' }}</td>
             <td class="actions-cell">
-              <button class="icon-btn" @click="startInspection(work)" v-if="work.status === 'pending'">
+              <button class="icon-btn" @click="startInspection(plano)" v-if="getPlanoStatus(plano) === 'pending'">
                 <i class="material-icons">play_arrow</i>
               </button>
-              <button class="icon-btn" @click="openInspection(work)" v-if="work.status === 'in-progress'">
+              <button class="icon-btn" @click="openInspection(plano)" v-if="getPlanoStatus(plano) === 'in-progress'">
                 <i class="material-icons">engineering</i>
               </button>
-              <button class="icon-btn" @click="viewReport(work)" v-if="work.status === 'approved' || work.status === 'rejected'">
+              <button class="icon-btn" @click="viewReport(plano)" v-if="['approved', 'rejected'].includes(getPlanoStatus(plano))">
                 <i class="material-icons">description</i>
+              </button>
+              <button class="icon-btn" @click="viewBlueprint(plano)" v-if="plano.rutaArchivo">
+                <i class="material-icons">visibility</i>
               </button>
             </td>
           </tr>
@@ -109,7 +130,7 @@
     <div class="modal-overlay" v-if="showInspectionModal" @click.self="closeInspectionModal">
       <div class="modal-content large">
         <div class="modal-header">
-          <h2>Inspección de Calidad - {{ currentWork.orderNumber }}</h2>
+          <h2>Inspección de Calidad - {{ currentPlano.numeroPlano }}</h2>
           <button class="close-btn" @click="closeInspectionModal">
             <i class="material-icons">close</i>
           </button>
@@ -117,20 +138,30 @@
         
         <div class="modal-body">
           <div class="inspection-sections">
-            <!-- Sección de detalles -->
+            <!-- Sección de detalles del plano -->
             <div class="inspection-section">
-              <h3><i class="material-icons">info</i> Detalles del Trabajo</h3>
+              <h3><i class="material-icons">info</i> Detalles del Plano</h3>
               <div class="detail-row">
-                <span class="detail-label">Cliente:</span>
-                <span>{{ currentWork.client }}</span>
+                <span class="detail-label">Nombre:</span>
+                <span>{{ currentPlano.nombrePlano }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Proceso:</span>
-                <span>{{ currentWork.process }}</span>
+                <span class="detail-label">Descripción:</span>
+                <span>{{ currentPlano.descripcion || 'Sin descripción' }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Fecha Inicio:</span>
-                <span>{{ formatDate(currentWork.startDate) }}</span>
+                <span class="detail-label">Versión:</span>
+                <span>{{ currentPlano.version }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Fecha Creación:</span>
+                <span>{{ formatDate(currentPlano.fechaCreacion) }}</span>
+              </div>
+              <div class="detail-row" v-if="currentPlano.rutaArchivo">
+                <span class="detail-label">Archivo:</span>
+                <button class="btn secondary small" @click="downloadPlano(currentPlano)">
+                  <i class="material-icons">download</i> Descargar Plano
+                </button>
               </div>
             </div>
 
@@ -186,14 +217,14 @@
               <div class="decision-options">
                 <div class="decision-option">
                   <label class="radio-container">
-                    Aprobar trabajo
+                    Aprobar plano
                     <input type="radio" name="decision" value="approved" v-model="inspectionDecision">
                     <span class="radiomark"></span>
                   </label>
                 </div>
                 <div class="decision-option">
                   <label class="radio-container">
-                    Rechazar trabajo
+                    Rechazar plano
                     <input type="radio" name="decision" value="rejected" v-model="inspectionDecision">
                     <span class="radiomark"></span>
                   </label>
@@ -218,7 +249,7 @@
     <div class="modal-overlay" v-if="showReportModal" @click.self="closeReportModal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Reporte de Calidad - {{ currentWork.orderNumber }}</h2>
+          <h2>Reporte de Calidad - {{ currentPlano.numeroPlano }}</h2>
           <button class="close-btn" @click="closeReportModal">
             <i class="material-icons">close</i>
           </button>
@@ -230,19 +261,19 @@
             <div class="report-details">
               <div class="report-row">
                 <span class="report-label">Estado:</span>
-                <span class="report-value" :class="currentWork.status">{{ statusLabels[currentWork.status] }}</span>
+                <span class="report-value" :class="getPlanoStatus(currentPlano)">{{ getStatusLabel(getPlanoStatus(currentPlano)) }}</span>
               </div>
               <div class="report-row">
                 <span class="report-label">Inspector:</span>
-                <span class="report-value">{{ currentWork.inspector }}</span>
+                <span class="report-value">{{ getInspector(currentPlano) }}</span>
               </div>
               <div class="report-row">
                 <span class="report-label">Fecha Inspección:</span>
-                <span class="report-value">{{ formatDate(currentWork.inspectionDate) }}</span>
+                <span class="report-value">{{ formatDate(currentPlano.inspectionDate) }}</span>
               </div>
-              <div class="report-row" v-if="currentWork.status === 'rejected'">
+              <div class="report-row" v-if="getPlanoStatus(currentPlano) === 'rejected'">
                 <span class="report-label">Motivo Rechazo:</span>
-                <span class="report-value">{{ currentWork.rejectionReason }}</span>
+                <span class="report-value">{{ currentPlano.rejectionReason }}</span>
               </div>
             </div>
           </div>
@@ -260,7 +291,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(measure, index) in currentWork.measurements" :key="index">
+                <tr v-for="(measure, index) in currentPlano.measurements || []" :key="index">
                   <td>{{ measure.parameter }}</td>
                   <td>{{ measure.expected }} {{ measure.unit }}</td>
                   <td>{{ measure.actual }} {{ measure.unit }}</td>
@@ -284,6 +315,30 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de vista de plano -->
+    <div class="modal-overlay" v-if="showBlueprintModal" @click.self="closeBlueprintModal">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h2>Plano - {{ selectedPlano.numeroPlano }}</h2>
+          <button class="close-btn" @click="closeBlueprintModal">
+            <i class="material-icons">close</i>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="blueprint-viewer">
+            <p>Archivo: {{ selectedPlano.rutaArchivo }}</p>
+            <p>Versión: {{ selectedPlano.version }}</p>
+            <div class="blueprint-actions">
+              <button class="btn primary" @click="downloadPlano(selectedPlano)">
+                <i class="material-icons">download</i> Descargar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -291,30 +346,16 @@
 export default {
   data() {
     return {
-      workOrders: [
-        {
-          id: 1,
-          orderNumber: 'OT-2023-001',
-          client: 'Industrias ACME',
-          description: 'Bastidor metálico para equipo industrial',
-          process: 'Mecanizado CNC',
-          status: 'pending',
-          startDate: '2023-06-01',
-          blueprints: ['plano-001.pdf', 'plano-002.pdf'],
-          measurements: [
-            { parameter: 'Longitud', expected: 120, unit: 'mm', tolerance: 0.5, step: 0.1 },
-            { parameter: 'Ancho', expected: 80, unit: 'mm', tolerance: 0.3, step: 0.1 },
-            { parameter: 'Diámetro', expected: 25.4, unit: 'mm', tolerance: 0.1, step: 0.01 }
-          ]
-        },
-        // Más órdenes de ejemplo...
-      ],
+      planos: [], // Array de planos desde la API
+      inspectionData: {}, // Datos de inspección por plano
+      loading: false,
+      error: null,
       filters: {
         status: 'all',
         dateRange: 'all'
       },
       sort: {
-        field: 'orderNumber',
+        field: 'numeroPlano',
         order: 'asc'
       },
       statusLabels: {
@@ -325,31 +366,69 @@ export default {
       },
       showInspectionModal: false,
       showReportModal: false,
-      currentWork: {},
+      showBlueprintModal: false,
+      currentPlano: {},
+      selectedPlano: {},
       qualityChecklist: [
         { name: 'Verificar dimensiones según plano', checked: false, notes: '' },
         { name: 'Comprobar acabado superficial', checked: false, notes: '' },
         { name: 'Verificar ausencia de rebabas', checked: false, notes: '' },
-        { name: 'Confirmar tolerancias geométricas', checked: false, notes: '' }
+        { name: 'Confirmar tolerancias geométricas', checked: false, notes: '' },
+        { name: 'Revisar especificaciones técnicas', checked: false, notes: '' }
       ],
-      measurements: [],
+      measurements: [
+        { parameter: 'Longitud', expected: 120, unit: 'mm', tolerance: 0.5, step: 0.1 },
+        { parameter: 'Ancho', expected: 80, unit: 'mm', tolerance: 0.3, step: 0.1 },
+        { parameter: 'Diámetro', expected: 25.4, unit: 'mm', tolerance: 0.1, step: 0.01 },
+        { parameter: 'Altura', expected: 50, unit: 'mm', tolerance: 0.2, step: 0.1 }
+      ],
       inspectionDecision: null,
       rejectionReason: ''
     }
   },
   computed: {
     filteredWorkOrders() {
-      let filtered = this.workOrders.slice();
+      let filtered = this.planos.slice();
       
-      // Aplicar filtros
+      // Aplicar filtros de estado
       if (this.filters.status !== 'all') {
-        filtered = filtered.filter(work => work.status === this.filters.status);
+        filtered = filtered.filter(plano => this.getPlanoStatus(plano) === this.filters.status);
+      }
+      
+      // Aplicar filtros de fecha (puedes implementar lógica específica aquí)
+      if (this.filters.dateRange !== 'all') {
+        // Implementar filtro de fecha basado en fechaCreacion
+        const now = new Date();
+        const filterDate = new Date();
+        
+        switch(this.filters.dateRange) {
+          case 'today':
+            filterDate.setHours(0, 0, 0, 0);
+            break;
+          case 'week':
+            filterDate.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            filterDate.setMonth(now.getMonth() - 1);
+            break;
+        }
+        
+        filtered = filtered.filter(plano => {
+          const planoDate = new Date(plano.fechaCreacion);
+          return planoDate >= filterDate;
+        });
       }
       
       // Aplicar ordenamiento
       filtered.sort((a, b) => {
         let fieldA = a[this.sort.field];
         let fieldB = b[this.sort.field];
+        
+        // Manejo especial para fechas
+        if (this.sort.field === 'fechaCreacion') {
+          fieldA = new Date(fieldA);
+          fieldB = new Date(fieldB);
+        }
         
         if (fieldA < fieldB) return this.sort.order === 'asc' ? -1 : 1;
         if (fieldA > fieldB) return this.sort.order === 'asc' ? 1 : -1;
@@ -359,17 +438,72 @@ export default {
       return filtered;
     },
     stats() {
-      const total = this.workOrders.length;
-      const pending = this.workOrders.filter(w => w.status === 'pending').length;
-      const inProgress = this.workOrders.filter(w => w.status === 'in-progress').length;
-      const approved = this.workOrders.filter(w => w.status === 'approved').length;
-      const rejected = this.workOrders.filter(w => w.status === 'rejected').length;
-      const qualityRate = total > 0 ? Math.round((approved / (approved + rejected)) * 100) : 0;
+      const total = this.planos.length;
+      const pending = this.planos.filter(p => this.getPlanoStatus(p) === 'pending').length;
+      const inProgress = this.planos.filter(p => this.getPlanoStatus(p) === 'in-progress').length;
+      const approved = this.planos.filter(p => this.getPlanoStatus(p) === 'approved').length;
+      const rejected = this.planos.filter(p => this.getPlanoStatus(p) === 'rejected').length;
+      const qualityRate = (approved + rejected) > 0 ? Math.round((approved / (approved + rejected)) * 100) : 0;
       
       return { pending, inProgress, approved, rejected, qualityRate };
     }
   },
+  mounted() {
+    this.fetchPlanos();
+  },
   methods: {
+    async fetchPlanos() {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const response = await fetch('/api/Plano');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.planos = data;
+        
+        // Inicializar datos de inspección si no existen
+        this.planos.forEach(plano => {
+          if (!this.inspectionData[plano.idPlano]) {
+            this.inspectionData[plano.idPlano] = {
+              status: 'pending',
+              inspector: null,
+              inspectionDate: null,
+              measurements: [],
+              rejectionReason: null
+            };
+          }
+        });
+        
+      } catch (error) {
+        this.error = `Error al cargar los planos: ${error.message}`;
+        console.error('Error fetching planos:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    getPlanoStatus(plano) {
+      return this.inspectionData[plano.idPlano]?.status || 'pending';
+    },
+    
+    getInspector(plano) {
+      return this.inspectionData[plano.idPlano]?.inspector;
+    },
+    
+    getStatusLabel(status) {
+      return this.statusLabels[status] || status;
+    },
+    
+    getFileExtension(filePath) {
+      if (!filePath) return '';
+      return filePath.split('.').pop().toUpperCase();
+    },
+    
     sortBy(field) {
       if (this.sort.field === field) {
         this.sort.order = this.sort.order === 'asc' ? 'desc' : 'asc';
@@ -378,186 +512,154 @@ export default {
         this.sort.order = 'asc';
       }
     },
+    
     sortIcon(field) {
       if (this.sort.field !== field) return 'unfold_more';
       return this.sort.order === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down';
     },
+    
     setFilter(field, value) {
       this.filters[field] = value;
     },
+    
     refreshData() {
-      // Simular recarga de datos
-      console.log('Refrescando datos...');
+      this.fetchPlanos();
     },
+    
     formatDate(dateString) {
       if (!dateString) return '--';
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
       return new Date(dateString).toLocaleDateString('es-ES', options);
     },
-    startInspection(work) {
-      this.currentWork = JSON.parse(JSON.stringify(work));
-      this.currentWork.status = 'in-progress';
-      this.currentWork.inspector = 'Inspector Actual'; // Reemplazar con usuario real
-      this.measurements = JSON.parse(JSON.stringify(work.measurements || []));
+    
+    downloadPlano(plano) {
+      if (plano.rutaArchivo) {
+        // Implementar descarga del archivo
+        console.log('Descargando plano:', plano.rutaArchivo);
+        // window.open(plano.rutaArchivo, '_blank');
+      }
+    },
+    
+    viewBlueprint(plano) {
+      this.selectedPlano = plano;
+      this.showBlueprintModal = true;
+    },
+    
+    closeBlueprintModal() {
+      this.showBlueprintModal = false;
+      this.selectedPlano = {};
+    },
+    
+    startInspection(plano) {
+      this.currentPlano = JSON.parse(JSON.stringify(plano));
+      
+      // Actualizar estado a en progreso
+      this.inspectionData[plano.idPlano].status = 'in-progress';
+      this.inspectionData[plano.idPlano].inspector = 'Inspector Actual'; // Reemplazar con usuario real
+      
+      // Resetear formulario de inspección
+      this.measurements.forEach(measure => {
+        measure.actual = null;
+      });
       this.qualityChecklist.forEach(item => {
         item.checked = false;
         item.notes = '';
       });
+      this.inspectionDecision = null;
+      this.rejectionReason = '';
+      
       this.showInspectionModal = true;
     },
-    openInspection(work) {
-      this.currentWork = JSON.parse(JSON.stringify(work));
-      this.measurements = JSON.parse(JSON.stringify(work.measurements || []));
+    
+    openInspection(plano) {
+      this.currentPlano = JSON.parse(JSON.stringify(plano));
+      
+      // Cargar datos existentes de la inspección
+      const inspectionData = this.inspectionData[plano.idPlano];
+      if (inspectionData.measurements.length > 0) {
+        this.measurements = JSON.parse(JSON.stringify(inspectionData.measurements));
+      }
+      
       this.showInspectionModal = true;
     },
+    
     closeInspectionModal() {
       this.showInspectionModal = false;
       this.inspectionDecision = null;
       this.rejectionReason = '';
     },
+    
     submitInspection() {
-      // Actualizar el trabajo con los resultados
-      const index = this.workOrders.findIndex(w => w.id === this.currentWork.id);
-      if (index !== -1) {
-        this.currentWork.status = this.inspectionDecision;
-        this.currentWork.inspectionDate = new Date().toISOString();
-        this.currentWork.measurements = this.measurements;
-        
-        if (this.inspectionDecision === 'rejected') {
-          this.currentWork.rejectionReason = this.rejectionReason;
-        }
-        
-        this.workOrders.splice(index, 1, this.currentWork);
+      const inspectionData = this.inspectionData[this.currentPlano.idPlano];
+      
+      // Actualizar datos de inspección
+      inspectionData.status = this.inspectionDecision;
+      inspectionData.inspectionDate = new Date().toISOString();
+      inspectionData.measurements = JSON.parse(JSON.stringify(this.measurements));
+      
+      if (this.inspectionDecision === 'rejected') {
+        inspectionData.rejectionReason = this.rejectionReason;
       }
+      
+      // Aquí podrías hacer una llamada a la API para guardar los resultados
+      console.log('Guardando inspección:', inspectionData);
       
       this.closeInspectionModal();
     },
-    viewReport(work) {
-      this.currentWork = JSON.parse(JSON.stringify(work));
+    
+    viewReport(plano) {
+      this.currentPlano = JSON.parse(JSON.stringify(plano));
+      this.currentPlano.measurements = this.inspectionData[plano.idPlano]?.measurements || [];
+      this.currentPlano.inspectionDate = this.inspectionData[plano.idPlano]?.inspectionDate;
+      this.currentPlano.rejectionReason = this.inspectionData[plano.idPlano]?.rejectionReason;
       this.showReportModal = true;
     },
+    
     closeReportModal() {
       this.showReportModal = false;
     },
+    
     getMeasureResult(measure) {
       if (measure.actual === undefined || measure.actual === null) return 'No medido';
       const diff = Math.abs(measure.actual - measure.expected);
       return diff <= measure.tolerance ? 'Dentro' : 'Fuera';
     },
+    
     getMeasureClass(measure) {
       if (measure.actual === undefined || measure.actual === null) return '';
       const diff = Math.abs(measure.actual - measure.expected);
       return diff <= measure.tolerance ? 'within-tolerance' : 'out-of-tolerance';
     },
+    
     printReport() {
       window.print();
     },
+    
     downloadReport() {
-      // Lógica para generar PDF
       console.log('Generando PDF del reporte...');
-    },
-    viewBlueprints(work) {
-      console.log('Ver planos para:', work.orderNumber);
-      // Implementar lógica para mostrar planos
+      // Implementar generación de PDF
     }
   }
 }
 </script>
 
 <style scoped>
-.quality-control-container {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.qc-header {
+.error-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.qc-title {
-  font-size: 24px;
-  color: #2c3e50;
-}
-
-.qc-filters {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qc-select {
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.qc-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.refresh-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-.refresh-btn:hover {
-  background-color: #2980b9;
-}
-
-.qc-stats {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  flex: 1;
+  justify-content: center;
+  padding: 40px;
   background: white;
   border-radius: 8px;
-  padding: 15px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s;
+  gap: 15px;
 }
 
-.stat-card:hover {
-  transform: translateY(-3px);
-}
-
-.stat-card.highlight {
-  background: #2c3e50;
-  color: white;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #7f8c8d;
-}
-
-.stat-card.highlight .stat-label {
-  color: #ecf0f1;
+.error-container i {
+  font-size: 48px;
+  color: #e74c3c;
 }
 
 .qc-table {
@@ -633,10 +735,46 @@ export default {
   cursor: pointer;
   color: #7f8c8d;
   padding: 5px;
+  margin: 0 2px;
 }
 
 .icon-btn:hover {
   color: #2c3e50;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  border: none;
+}
+
+.btn.primary {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #1a252f;
+}
+
+.btn.secondary {
+  background-color: #ecf0f1;
+  color: #7f8c8d;
+  border: 1px solid #ddd;
+}
+
+.btn.secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 .modal-overlay {
@@ -878,35 +1016,6 @@ export default {
   gap: 10px;
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.btn.secondary {
-  background-color: #ecf0f1;
-  color: #7f8c8d;
-  border: 1px solid #ddd;
-}
-
-.btn.secondary:hover {
-  background-color: #e0e0e0;
-}
-
-.btn.primary {
-  background-color: #2c3e50;
-  color: white;
-  border: none;
-}
-
-.btn.primary:hover {
-  background-color: #1a252f;
-}
-
 .report-body {
   display: flex;
   flex-direction: column;
@@ -959,5 +1068,19 @@ export default {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+.blueprint-viewer {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.blueprint-actions {
+  display: flex;
+  gap: 15px;
 }
 </style>

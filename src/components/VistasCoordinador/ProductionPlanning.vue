@@ -1,1008 +1,694 @@
 <template>
-    <div class="planning-page" :class="{ 'dark-mode': $root.darkMode }">
+  <div class="calendario-container">
+    <!-- Loading -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-content">
+        <i class="fas fa-spinner fa-spin loading-icon"></i>
+        <span>Cargando pedidos...</span>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-content">
+        <i class="fas fa-exclamation-circle error-icon"></i>
+        <h3>Error al cargar los pedidos</h3>
+        <p>{{ error }}</p>
+        <button @click="cargarPedidos" class="btn btn-primary">
+          Reintentar
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendario -->
+    <div v-else>
+      <!-- Header -->
       <div class="header">
-        <h1><span class="material-icons">schedule</span> Planificación de Producción</h1>
-        <div class="controls">
-          <button class="btn primary" @click="openCreateModal">
-            <span class="material-icons">add</span> Nueva Tarea
+        <div class="header-left">
+          <h1>Calendario de Pedidos</h1>
+          <div class="fecha-info">
+            <i class="fas fa-calendar"></i>
+            <span>{{ fechaFormateada }}</span>
+          </div>
+          <div class="contador-pedidos">
+            ({{ pedidos.length }} pedidos totales)
+          </div>
+        </div>
+        <div class="header-right">
+          <button @click="navegarMes(-1)" class="btn-nav">
+            <i class="fas fa-chevron-left"></i>
           </button>
-          <div class="date-navigation">
-            <button @click="previousWeek" class="icon-btn">
-              <span class="material-icons">chevron_left</span>
-            </button>
-            <h2>{{ currentWeekRange }}</h2>
-            <button @click="nextWeek" class="icon-btn">
-              <span class="material-icons">chevron_right</span>
-            </button>
-          </div>
-          <div class="view-options">
-            <button @click="viewMode = 'week'" :class="{ active: viewMode === 'week' }">
-              Semana
-            </button>
-            <button @click="viewMode = 'day'" :class="{ active: viewMode === 'day' }">
-              Día
-            </button>
+          <button @click="irHoy" class="btn btn-primary">
+            Hoy
+          </button>
+          <button @click="navegarMes(1)" class="btn-nav">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <button @click="cargarPedidos" class="btn btn-success" :disabled="loading">
+            <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
+            Actualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Leyenda -->
+      <div class="leyenda">
+        <h3>Leyenda de Estados:</h3>
+        <div class="estados-container">
+          <div v-for="(estado, id) in estados" :key="id" class="estado-item">
+            <i :class="obtenerIconoEstado(parseInt(id))"></i>
+            <span :class="estado.class">{{ estado.nombre }}</span>
           </div>
         </div>
       </div>
-  
-      <!-- Vista Semanal -->
-      <div class="week-view" v-if="viewMode === 'week'">
-        <div class="calendar-header">
-          <div class="resource-header">Recursos</div>
-          <div class="day-header" v-for="day in weekDays" :key="day.date">
-            <div>{{ day.name }}</div>
-            <div>{{ day.date }}</div>
+
+      <!-- Calendario -->
+      <div class="calendario">
+        <!-- Días de la semana -->
+        <div class="dias-semana">
+          <div v-for="dia in diasSemana" :key="dia" class="dia-semana">
+            {{ dia }}
           </div>
         </div>
-  
-        <div class="calendar-body">
-          <div class="resource-row" v-for="resource in resources" :key="resource.id">
-            <div class="resource-cell">
-              <div class="resource-info">
-                <span class="resource-icon material-icons">{{ resource.icon }}</span>
-                {{ resource.name }}
+
+        <!-- Días del mes -->
+        <div class="dias-mes">
+          <div 
+            v-for="(day, index) in diasCalendario" 
+            :key="index"
+            class="dia"
+            :class="{ 
+              'dia-vacio': !day, 
+              'dia-hoy': esHoy(day),
+              'dia-con-pedidos': day && getPedidosDelDia(day).length > 0
+            }"
+          >
+            <div v-if="day" class="dia-contenido">
+              <div class="dia-numero" :class="{ 'hoy': esHoy(day) }">
+                {{ day }}
+                <span v-if="esHoy(day)" class="hoy-label">(Hoy)</span>
               </div>
-              <div class="resource-details">
-                Cap: {{ resource.capacity }} {{ resource.unit }}
-              </div>
-            </div>
-            <div 
-              class="day-cell" 
-              v-for="day in weekDays" 
-              :key="day.date"
-              @drop="onDrop($event, day.date, resource.id)"
-              @dragover.prevent
-              @dragenter.prevent
-            >
-              <div 
-                class="task-item" 
-                v-for="task in getTasksForDayAndResource(day.date, resource.id)"
-                :key="task.id"
-                :style="{ backgroundColor: task.color }"
-                draggable="true"
-                @dragstart="onDragStart($event, task)"
-              >
-                <div class="task-header">
-                  <span class="task-title">{{ task.title }}</span>
-                  <span class="material-icons task-actions" @click.stop="openEditModal(task)">edit</span>
+              
+              <div class="pedidos-dia">
+                <div 
+                  v-for="pedido in getPedidosDelDia(day)" 
+                  :key="pedido.id"
+                  class="pedido-item"
+                  :class="estados[pedido.estado_id]?.class || 'estado-default'"
+                  :title="obtenerTooltip(pedido)"
+                >
+                  <div class="pedido-header">
+                    <span class="pedido-codigo">{{ pedido.codigo_pedido }}</span>
+                    <i :class="obtenerIconoEstado(pedido.estado_id)"></i>
+                  </div>
+                  <div class="pedido-proyecto">
+                    {{ pedido.proyecto_asociado }}
+                  </div>
+                  <div v-if="pedido.prioridad" class="pedido-prioridad"
+                       :class="prioridades[pedido.prioridad]?.class">
+                    Prioridad: {{ prioridades[pedido.prioridad]?.nombre }}
+                  </div>
                 </div>
-                <div class="task-details">
-                  <span class="material-icons">schedule</span>
-                  {{ task.startTime }} - {{ task.endTime }}
-                </div>
-                <div class="task-details">
-                  <span class="material-icons">work</span>
-                  {{ task.quantity }} {{ resource.unit }}
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-  
-      <!-- Vista Diaria -->
-      <div class="day-view" v-if="viewMode === 'day'">
-        <div class="timeline">
-          <div class="time-slot" v-for="hour in hours" :key="hour">
-            <div class="time-label">{{ hour }}:00</div>
-            <div class="time-line"></div>
+
+      <!-- Resumen -->
+      <div class="resumen">
+        <div v-for="(estado, id) in estados" :key="id" class="resumen-item">
+          <div class="resumen-header">
+            <i :class="obtenerIconoEstado(parseInt(id))"></i>
+            <h3>{{ estado.nombre }}</h3>
           </div>
-        </div>
-        <div class="day-resources">
-          <div class="resource-column" v-for="resource in resources" :key="resource.id">
-            <div class="resource-header">
-              <span class="material-icons">{{ resource.icon }}</span>
-              {{ resource.name }}
-            </div>
-            <div 
-              class="time-block" 
-              v-for="hour in hours" 
-              :key="hour"
-              @click="openCreateModalForTime(resource.id, currentDate, hour)"
-            >
-              <div 
-                class="task-block" 
-                v-for="task in getTasksForHourAndResource(hour, resource.id)"
-                :key="task.id"
-                :style="{
-                  backgroundColor: task.color,
-                  height: calculateTaskHeight(task) + 'px'
-                }"
-              >
-                {{ task.title }} ({{ task.quantity }} {{ resource.unit }})
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Modal de Tarea -->
-      <div class="modal" v-if="showTaskModal">
-        <div class="modal-content">
-          <span class="close-btn material-icons" @click="closeModal">close</span>
-          <h2>{{ editingTask ? 'Editar Tarea' : 'Nueva Tarea' }}</h2>
-          
-          <div class="form-group">
-            <label>Título</label>
-            <input type="text" v-model="currentTask.title" placeholder="Nombre de la tarea">
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Fecha</label>
-              <input type="date" v-model="currentTask.date">
-            </div>
-            <div class="form-group">
-              <label>Hora inicio</label>
-              <select v-model="currentTask.startTime">
-                <option v-for="hour in hours" :value="hour + ':00'">{{ hour }}:00</option>
-                <option v-for="hour in hours" :value="hour + ':30'">{{ hour }}:30</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Hora fin</label>
-              <select v-model="currentTask.endTime">
-                <option v-for="hour in hours" :value="hour + ':00'">{{ hour }}:00</option>
-                <option v-for="hour in hours" :value="hour + ':30'">{{ hour }}:30</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label>Recurso</label>
-              <select v-model="currentTask.resourceId">
-                <option v-for="resource in resources" :value="resource.id">
-                  {{ resource.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Cantidad</label>
-              <input type="number" v-model="currentTask.quantity" :max="getResourceCapacity(currentTask.resourceId)">
-            </div>
-          </div>
-          
-          <div class="form-group">
-            <label>Prioridad</label>
-            <select v-model="currentTask.priority">
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>Notas</label>
-            <textarea v-model="currentTask.notes" rows="3"></textarea>
-          </div>
-          
-          <div class="form-actions">
-            <button class="btn secondary" @click="closeModal">Cancelar</button>
-            <button class="btn primary" @click="saveTask">
-              {{ editingTask ? 'Actualizar' : 'Guardar' }}
-            </button>
-            <button 
-              class="btn danger" 
-              @click="deleteTask" 
-              v-if="editingTask"
-            >
-              Eliminar
-            </button>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Resumen de Capacidad -->
-      <div class="capacity-summary">
-        <h3>Resumen de Capacidad</h3>
-        <div class="summary-grid">
-          <div class="summary-header">Recurso</div>
-          <div class="summary-header">Capacidad Total</div>
-          <div class="summary-header">Asignado</div>
-          <div class="summary-header">Disponible</div>
-          
-          <template v-for="resource in resources" :key="resource.id">
-            <div class="summary-item">{{ resource.name }}</div>
-            <div class="summary-item">{{ resource.capacity }} {{ resource.unit }}</div>
-            <div class="summary-item" :class="{ 'over-capacity': getAssignedQuantity(resource.id) > resource.capacity }">
-              {{ getAssignedQuantity(resource.id) }} {{ resource.unit }}
-            </div>
-            <div class="summary-item">
-              {{ Math.max(0, resource.capacity - getAssignedQuantity(resource.id)) }} {{ resource.unit }}
-            </div>
-          </template>
+          <div class="resumen-numero">{{ contarPedidosPorEstado(parseInt(id)) }}</div>
+          <div class="resumen-label">pedidos</div>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        viewMode: 'week',
-        currentDate: new Date(),
-        hours: Array.from({ length: 12 }, (_, i) => i + 7), // 7am to 6pm
-        resources: [
-          { id: 1, name: '', icon: '', capacity: 0, unit: '' },
-        ],
-        tasks: [
-          {
-            id: 1,
-            title: '',
-            date: this.formatDate(new Date()),
-            startTime: '',
-            endTime: '',
-            resourceId: 1,
-            quantity: 4,
-            priority: '',
-            notes: '',
-            color: '#4CAF50'
-          },
-        ],
-        showTaskModal: false,
-        editingTask: false,
-        currentTask: this.getEmptyTask(),
-        nextTaskId: 3
+  </div>
+</template>
+
+<script>
+import { ref, computed, onMounted } from 'vue'
+
+export default {
+  name: 'PedidosCalendario',
+  setup() {
+    const currentDate = ref(new Date())
+    const pedidos = ref([])
+    const loading = ref(true)
+    const error = ref(null)
+
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+    const estados = {
+      1: { nombre: 'Pendiente', class: 'estado-pendiente' },
+      2: { nombre: 'En Proceso', class: 'estado-proceso' },
+      3: { nombre: 'Completado', class: 'estado-completado' },
+      4: { nombre: 'Cancelado', class: 'estado-cancelado' }
+    }
+
+    const prioridades = {
+      1: { nombre: 'Alta', class: 'prioridad-alta' },
+      2: { nombre: 'Media', class: 'prioridad-media' },
+      3: { nombre: 'Baja', class: 'prioridad-baja' }
+    }
+
+    // Computed properties
+    const fechaFormateada = computed(() => {
+      return currentDate.value.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long'
+      })
+    })
+
+    const primerDiaDelMes = computed(() => {
+      return new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), 1)
+    })
+
+    const ultimoDiaDelMes = computed(() => {
+      return new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 0)
+    })
+
+    const primerDiaDeLaSemana = computed(() => {
+      return primerDiaDelMes.value.getDay()
+    })
+
+    const diasCalendario = computed(() => {
+      const days = []
+      const totalDays = ultimoDiaDelMes.value.getDate()
+      
+      // Días vacíos al inicio
+      for (let i = 0; i < primerDiaDeLaSemana.value; i++) {
+        days.push(null)
       }
-    },
-    computed: {
-      weekDays() {
-        const days = [];
-        const current = new Date(this.currentDate);
-        current.setDate(current.getDate() - current.getDay() + 1); // Start on Monday
-        
-        for (let i = 0; i < 7; i++) {
-          const day = new Date(current);
-          day.setDate(current.getDate() + i);
-          days.push({
-            name: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][i],
-            date: this.formatDate(day, false)
-          });
-        }
-        return days;
-      },
-      currentWeekRange() {
-        const start = new Date(this.currentDate);
-        start.setDate(start.getDate() - start.getDay() + 1);
-        
-        const end = new Date(start);
-        end.setDate(start.getDate() + 6);
-        
-        return `${this.formatDate(start, false)} - ${this.formatDate(end, false)}`;
+      
+      // Días del mes
+      for (let day = 1; day <= totalDays; day++) {
+        days.push(day)
       }
-    },
-    methods: {
-      formatDate(date, includeYear = true) {
-        const d = new Date(date);
-        const day = d.getDate().toString().padStart(2, '0');
-        const month = (d.getMonth() + 1).toString().padStart(2, '0');
-        const year = d.getFullYear();
+      
+      return days
+    })
+
+    // Methods
+    const cargarPedidos = async () => {
+      try {
+        loading.value = true
+        error.value = null
         
-        return includeYear ? `${year}-${month}-${day}` : `${day}/${month}`;
-      },
-      previousWeek() {
-        const newDate = new Date(this.currentDate);
-        newDate.setDate(newDate.getDate() - 7);
-        this.currentDate = newDate;
-      },
-      nextWeek() {
-        const newDate = new Date(this.currentDate);
-        newDate.setDate(newDate.getDate() + 7);
-        this.currentDate = newDate;
-      },
-      getEmptyTask() {
-        return {
-          id: null,
-          title: '',
-          date: this.formatDate(new Date()),
-          startTime: '8:00',
-          endTime: '9:00',
-          resourceId: 1,
-          quantity: 1,
-          priority: 'medium',
-          notes: '',
-          color: this.getRandomColor()
-        };
-      },
-      getRandomColor() {
-        const colors = ['#4CAF50', '#2196F3', '#9C27B0', '#FF9800', '#607D8B', '#E91E63'];
-        return colors[Math.floor(Math.random() * colors.length)];
-      },
-      getTasksForDayAndResource(date, resourceId) {
-        return this.tasks.filter(task => 
-          task.date === date && task.resourceId === resourceId
-        );
-      },
-      getTasksForHourAndResource(hour, resourceId) {
-        const targetTime = hour + ':00';
-        return this.tasks.filter(task => {
-          return task.resourceId === resourceId && 
-                 task.date === this.formatDate(this.currentDate) &&
-                 task.startTime <= targetTime && 
-                 task.endTime >= targetTime;
-        });
-      },
-      calculateTaskHeight(task) {
-        const start = parseInt(task.startTime.split(':')[0]);
-        const end = parseInt(task.endTime.split(':')[0]);
-        return (end - start) * 40; // 40px per hour
-      },
-      getResourceCapacity(resourceId) {
-        const resource = this.resources.find(r => r.id === resourceId);
-        return resource ? resource.capacity : 0;
-      },
-      getAssignedQuantity(resourceId) {
-        const resourceTasks = this.tasks.filter(task => task.resourceId === resourceId);
-        return resourceTasks.reduce((sum, task) => sum + task.quantity, 0);
-      },
-      openCreateModal() {
-        this.currentTask = this.getEmptyTask();
-        this.editingTask = false;
-        this.showTaskModal = true;
-      },
-      openCreateModalForTime(resourceId, date, hour) {
-        this.currentTask = this.getEmptyTask();
-        this.currentTask.resourceId = resourceId;
-        this.currentTask.date = this.formatDate(date);
-        this.currentTask.startTime = hour + ':00';
-        this.currentTask.endTime = (hour + 1) + ':00';
-        this.editingTask = false;
-        this.showTaskModal = true;
-      },
-      openEditModal(task) {
-        this.currentTask = { ...task };
-        this.editingTask = true;
-        this.showTaskModal = true;
-      },
-      closeModal() {
-        this.showTaskModal = false;
-      },
-      saveTask() {
-        if (this.editingTask) {
-          const index = this.tasks.findIndex(t => t.id === this.currentTask.id);
-          this.tasks.splice(index, 1, this.currentTask);
-        } else {
-          this.currentTask.id = this.nextTaskId++;
-          this.tasks.push(this.currentTask);
+        const response = await fetch('/api/Pedido')
+        if (!response.ok) {
+          throw new Error(`Error al cargar los pedidos: ${response.status}`)
         }
-        this.closeModal();
-      },
-      deleteTask() {
-        this.tasks = this.tasks.filter(t => t.id !== this.currentTask.id);
-        this.closeModal();
-      },
-      onDragStart(event, task) {
-        event.dataTransfer.setData('taskId', task.id);
-      },
-      onDrop(event, date, resourceId) {
-        const taskId = event.dataTransfer.getData('taskId');
-        const task = this.tasks.find(t => t.id === parseInt(taskId));
-        if (task) {
-          task.date = date;
-          task.resourceId = resourceId;
-        }
+        
+        const data = await response.json()
+        pedidos.value = data
+      } catch (err) {
+        console.error('Error al cargar pedidos:', err)
+        error.value = err.message
+      } finally {
+        loading.value = false
       }
     }
+
+    const navegarMes = (direccion) => {
+      currentDate.value = new Date(
+        currentDate.value.getFullYear(), 
+        currentDate.value.getMonth() + direccion, 
+        1
+      )
+    }
+
+    const irHoy = () => {
+      currentDate.value = new Date()
+    }
+
+    const esHoy = (day) => {
+      if (!day) return false
+      const today = new Date()
+      return day === today.getDate() && 
+             currentDate.value.getMonth() === today.getMonth() && 
+             currentDate.value.getFullYear() === today.getFullYear()
+    }
+
+    const getPedidosDelDia = (day) => {
+      if (!day) return []
+      
+      const fecha = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), day)
+      const fechaStr = fecha.toISOString().split('T')[0]
+      
+      return pedidos.value.filter(pedido => {
+        const fechaSolicitud = new Date(pedido.fecha_solicitud).toISOString().split('T')[0]
+        const fechaRequerida = pedido.fecha_requerida
+        const fechaEstimada = pedido.fecha_estimada_entrega
+        const fechaCompletado = pedido.fecha_completado ? 
+          new Date(pedido.fecha_completado).toISOString().split('T')[0] : null
+        
+        return fechaSolicitud === fechaStr || 
+               fechaRequerida === fechaStr || 
+               fechaEstimada === fechaStr ||
+               fechaCompletado === fechaStr
+      })
+    }
+
+    const obtenerIconoEstado = (estadoId) => {
+      switch(estadoId) {
+        case 1: return 'fas fa-clock'
+        case 2: return 'fas fa-box'
+        case 3: return 'fas fa-check-circle'
+        case 4: return 'fas fa-times-circle'
+        default: return 'fas fa-calendar'
+      }
+    }
+
+    const obtenerTooltip = (pedido) => {
+      return `${pedido.codigo_pedido} - ${pedido.notas || 'Sin notas'}`
+    }
+
+    const contarPedidosPorEstado = (estadoId) => {
+      return pedidos.value.filter(p => p.estado_id === estadoId).length
+    }
+
+    // Lifecycle
+    onMounted(() => {
+      cargarPedidos()
+    })
+
+    return {
+      currentDate,
+      pedidos,
+      loading,
+      error,
+      diasSemana,
+      estados,
+      prioridades,
+      fechaFormateada,
+      diasCalendario,
+      cargarPedidos,
+      navegarMes,
+      irHoy,
+      esHoy,
+      getPedidosDelDia,
+      obtenerIconoEstado,
+      obtenerTooltip,
+      contarPedidosPorEstado
+    }
   }
-  </script>
-  
-  <style scoped>
-  .planning-page {
-    padding: 20px;
-    background-color: #f5f7fa;
-    min-height: 100vh;
+}
+</script>
+
+<style scoped>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.calendario-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background: white;
+  min-height: 100vh;
+}
+
+/* Loading y Error */
+.loading-container, .error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.loading-content, .error-content {
+  text-align: center;
+}
+
+.loading-icon, .error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.loading-icon {
+  color: #3b82f6;
+}
+
+.error-icon {
+  color: #ef4444;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-left h1 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #111827;
+}
+
+.fecha-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.contador-pedidos {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Botones */
+.btn, .btn-nav {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-nav {
+  padding: 8px 12px;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.btn-nav:hover {
+  background: #f3f4f6;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Leyenda */
+.leyenda {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.leyenda h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.estados-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.estado-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estados */
+.estado-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.estado-proceso {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.estado-completado {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.estado-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.estado-default {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* Prioridades */
+.prioridad-alta {
+  color: #dc2626;
+}
+
+.prioridad-media {
+  color: #d97706;
+}
+
+.prioridad-baja {
+  color: #059669;
+}
+
+/* Calendario */
+.calendario {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.dias-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f9fafb;
+}
+
+.dia-semana {
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dia-semana:last-child {
+  border-right: none;
+}
+
+.dias-mes {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.dia {
+  min-height: 120px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.dia:nth-child(7n) {
+  border-right: none;
+}
+
+.dia:hover:not(.dia-vacio) {
+  background: #f9fafb;
+}
+
+.dia-vacio {
+  background: #f9fafb;
+}
+
+.dia-hoy {
+  background: #eff6ff;
+}
+
+.dia-contenido {
+  padding: 8px;
+  height: 100%;
+}
+
+.dia-numero {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.dia-numero.hoy {
+  color: #2563eb;
+  font-weight: bold;
+}
+
+.hoy-label {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.pedidos-dia {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pedido-item {
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.pedido-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.pedido-codigo {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pedido-proyecto {
+  font-size: 11px;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pedido-prioridad {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Resumen */
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.resumen-item {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.resumen-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.resumen-header h3 {
+  font-weight: 500;
+  color: #111827;
+}
+
+.resumen-numero {
+  font-size: 32px;
+  font-weight: bold;
+  color: #111827;
+}
+
+.resumen-label {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .calendario-container {
+    padding: 16px;
   }
-  
-  .dark-mode .planning-page {
-    background-color: #121212;
-    color: #ffffff;
-  }
-  
+
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 20px;
+    flex-direction: column;
+    align-items: stretch;
   }
-  
-  .header h1 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--primary-color);
-  }
-  
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+
+  .header-left, .header-right {
+    justify-content: center;
     flex-wrap: wrap;
   }
-  
-  .date-navigation {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+
+  .dia {
+    min-height: 80px;
+  }
+
+  .resumen {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .resumen {
+    grid-template-columns: 1fr;
   }
   
-  .date-navigation h2 {
-    margin: 0;
-    min-width: 180px;
-    text-align: center;
-  }
-  
-  .view-options {
-    display: flex;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  
-  .view-options button {
-    padding: 8px 16px;
-    border: none;
-    background-color: #e0e0e0;
-    cursor: pointer;
-  }
-  
-  .dark-mode .view-options button {
-    background-color: #333;
-    color: #fff;
-  }
-  
-  .view-options button.active {
-    background-color: var(--primary-color);
-    color: white;
-  }
-  
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-  
-  .btn.primary {
-    background-color: var(--primary-color);
-    color: white;
-  }
-  
-  .btn.primary:hover {
-    background-color: var(--secondary-color);
-  }
-  
-  .btn.secondary {
-    background-color: #e0e0e0;
-    color: #333;
-  }
-  
-  .dark-mode .btn.secondary {
-    background-color: #333;
-    color: #fff;
-  }
-  
-  .btn.secondary:hover {
-    background-color: #d0d0d0;
-  }
-  
-  .dark-mode .btn.secondary:hover {
-    background-color: #444;
-  }
-  
-  .btn.danger {
-    background-color: #f44336;
-    color: white;
-  }
-  
-  .btn.danger:hover {
-    background-color: #d32f2f;
-  }
-  
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    color: var(--primary-color);
-  }
-  
-  .icon-btn:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-  
-  .dark-mode .icon-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Estilos para la vista semanal */
-  .week-view {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    margin-bottom: 30px;
-  }
-  
-  .dark-mode .week-view {
-    background-color: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .calendar-header {
-    display: grid;
-    grid-template-columns: 200px repeat(7, 1fr);
-    background-color: #f5f5f5;
-    font-weight: bold;
-    text-align: center;
-  }
-  
-  .dark-mode .calendar-header {
-    background-color: #2d2d2d;
-  }
-  
-  .resource-header {
-    padding: 15px;
-    border-right: 1px solid #ddd;
-  }
-  
-  .dark-mode .resource-header {
-    border-right-color: #444;
-  }
-  
-  .day-header {
-    padding: 10px;
-    border-right: 1px solid #ddd;
-  }
-  
-  .dark-mode .day-header {
-    border-right-color: #444;
-  }
-  
-  .day-header:last-child {
-    border-right: none;
-  }
-  
-  .calendar-body {
-    display: grid;
-    grid-template-rows: repeat(auto-fill, minmax(100px, auto));
-  }
-  
-  .resource-row {
-    display: grid;
-    grid-template-columns: 200px repeat(7, 1fr);
-    min-height: 100px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .dark-mode .resource-row {
-    border-bottom-color: #333;
-  }
-  
-  .resource-row:last-child {
-    border-bottom: none;
-  }
-  
-  .resource-cell {
-    padding: 10px;
-    border-right: 1px solid #eee;
-    display: flex;
+  .estados-container {
     flex-direction: column;
-    justify-content: center;
-  }
-  
-  .dark-mode .resource-cell {
-    border-right-color: #333;
-  }
-  
-  .resource-info {
-    font-weight: 500;
-    display: flex;
-    align-items: center;
     gap: 8px;
   }
-  
-  .resource-icon {
-    color: var(--primary-color);
-  }
-  
-  .resource-details {
-    font-size: 0.8em;
-    color: #666;
-  }
-  
-  .dark-mode .resource-details {
-    color: #aaa;
-  }
-  
-  .day-cell {
-    padding: 5px;
-    border-right: 1px solid #eee;
-    min-height: 100px;
-    background-color: rgba(0, 0, 0, 0.01);
-  }
-  
-  .dark-mode .day-cell {
-    border-right-color: #333;
-    background-color: rgba(255, 255, 255, 0.01);
-  }
-  
-  .day-cell:last-child {
-    border-right: none;
-  }
-  
-  .task-item {
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    color: white;
-    font-size: 0.9em;
-    cursor: move;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-  
-  .task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-  
-  .task-title {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .task-actions {
-    cursor: pointer;
-    opacity: 0.7;
-    font-size: 16px;
-  }
-  
-  .task-actions:hover {
-    opacity: 1;
-  }
-  
-  .task-details {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.8em;
-    margin-top: 3px;
-  }
-  
-  /* Estilos para la vista diaria */
-  .day-view {
-    display: flex;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    margin-bottom: 30px;
-  }
-  
-  .dark-mode .day-view {
-    background-color: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .timeline {
-    width: 60px;
-    background-color: #f5f5f5;
-  }
-  
-  .dark-mode .timeline {
-    background-color: #2d2d2d;
-  }
-  
-  .time-slot {
-    height: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .dark-mode .time-slot {
-    border-bottom-color: #444;
-  }
-  
-  .time-label {
-    font-size: 0.8em;
-    text-align: center;
-    padding: 2px;
-  }
-  
-  .time-line {
-    border-top: 1px solid #ddd;
-    margin: 0 5px;
-  }
-  
-  .dark-mode .time-line {
-    border-top-color: #444;
-  }
-  
-  .day-resources {
-    flex: 1;
-    display: flex;
-    overflow-x: auto;
-  }
-  
-  .resource-column {
-    flex: 1;
-    min-width: 150px;
-  }
-  
-  .resource-header {
-    padding: 10px;
-    text-align: center;
-    font-weight: bold;
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  
-  .dark-mode .resource-header {
-    border-bottom-color: #444;
-    border-right-color: #444;
-  }
-  
-  .time-block {
-    height: 40px;
-    border-bottom: 1px solid #eee;
-    border-right: 1px solid #eee;
-    position: relative;
-    cursor: pointer;
-  }
-  
-  .dark-mode .time-block {
-    border-bottom-color: #333;
-    border-right-color: #333;
-  }
-  
-  .time-block:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-  
-  .dark-mode .time-block:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-  
-  .task-block {
-    position: absolute;
-    width: 100%;
-    padding: 5px;
-    color: white;
-    font-size: 0.8em;
-    border-radius: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-  
-  /* Estilos del modal */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .modal-content {
-    background-color: white;
-    padding: 25px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-  }
-  
-  .dark-mode .modal-content {
-    background-color: #1e1e1e;
-    color: #fff;
-  }
-  
-  .close-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    cursor: pointer;
-    font-size: 24px;
-    color: #666;
-  }
-  
-  .dark-mode .close-btn {
-    color: #aaa;
-  }
-  
-  .close-btn:hover {
-    color: #333;
-  }
-  
-  .dark-mode .close-btn:hover {
-    color: #fff;
-  }
-  
-  .modal h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-    margin-bottom: 20px;
-  }
-  
-  .form-group {
-    margin-bottom: 15px;
-  }
-  
-  .form-row {
-    display: flex;
-    gap: 15px;
-  }
-  
-  .form-row .form-group {
-    flex: 1;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-  }
-  
-  input, select, textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    background-color: white;
-  }
-  
-  .dark-mode input, 
-  .dark-mode select, 
-  .dark-mode textarea {
-    background-color: #333;
-    color: #fff;
-    border-color: #555;
-  }
-  
-  textarea {
-    resize: vertical;
-  }
-  
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  
-  /* Resumen de capacidad */
-  .capacity-summary {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .dark-mode .capacity-summary {
-    background-color: #1e1e1e;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .capacity-summary h3 {
-    margin-top: 0;
-    color: var(--primary-color);
-    margin-bottom: 15px;
-  }
-  
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background-color: #eee;
-  }
-  
-  .dark-mode .summary-grid {
-    background-color: #444;
-  }
-  
-  .summary-header {
-    background-color: #f5f5f5;
-    padding: 10px;
-    font-weight: bold;
-    text-align: center;
-  }
-  
-  .dark-mode .summary-header {
-    background-color: #2d2d2d;
-  }
-  
-  .summary-item {
-    background-color: white;
-    padding: 8px 10px;
-    text-align: center;
-  }
-  
-  .dark-mode .summary-item {
-    background-color: #1e1e1e;
-  }
-  
-  .over-capacity {
-    color: #f44336;
-    font-weight: bold;
-  }
-  
-  /* Responsive */
-  @media (max-width: 1200px) {
-    .week-view {
-      overflow-x: auto;
-    }
-    
-    .calendar-header, .resource-row {
-      min-width: 1000px;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    
-    .controls {
-      width: 100%;
-      justify-content: space-between;
-    }
-    
-    .form-row {
-      flex-direction: column;
-      gap: 0;
-    }
-    
-    .summary-grid {
-      grid-template-columns: 1.5fr repeat(3, 1fr);
-      font-size: 0.9em;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .modal-content {
-      width: 95%;
-      padding: 20px 15px;
-    }
-    
-    .form-actions {
-      flex-direction: column;
-    }
-    
-    .btn {
-      justify-content: center;
-    }
-  }
-  </style>
+}
+</style>

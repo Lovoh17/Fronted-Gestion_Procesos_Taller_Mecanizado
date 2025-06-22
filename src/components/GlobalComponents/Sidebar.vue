@@ -78,6 +78,12 @@ export default {
         badge: null 
       },
       { 
+        icon: 'handyman', 
+        text: 'Herramientas',
+        path: '/herramientas',
+        badge: null 
+      },
+      { 
         icon: 'local_shipping', 
         text: 'Ordenes', 
         path: '/admin/orders',
