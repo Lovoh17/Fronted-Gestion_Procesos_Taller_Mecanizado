@@ -19,93 +19,132 @@
       </div>
     </div>
 
-    <!-- Pestañas -->
-    <div class="tabs-container" v-if="!loading">
-      <ul class="nav nav-tabs">
-        <li class="nav-item">
-          <a class="nav-link" :class="{ active: activeTab === 'produccion' }" 
-             @click="activeTab = 'produccion'">
-            <i class="fas fa-clock mr-1"></i>En Producción
+    <div class="tabs-container mb-4" v-if="!loading">
+      <ul class="flex border-b border-gray-200">
+        <li class="mr-1">
+          <a @click="activeTab = 'produccion'" :class="{
+            'bg-white border-l border-t border-r border-gray-200 text-blue-600': activeTab === 'produccion',
+            'text-gray-500 hover:text-gray-700': activeTab !== 'produccion'
+          }" class="inline-block py-2 px-4 font-semibold text-sm flex items-center">
+            <i class="fas fa-clock mr-2"></i>
+            En Producción
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" :class="{ active: activeTab === 'historial' }" 
-             @click="activeTab = 'historial'">
-            <i class="fas fa-history mr-1"></i>Historial
+        <li class="mr-1">
+          <a @click="activeTab = 'historial'" :class="{
+            'bg-white border-l border-t border-r border-gray-200 text-blue-600': activeTab === 'historial',
+            'text-gray-500 hover:text-gray-700': activeTab !== 'historial'
+          }" class="inline-block py-2 px-4 font-semibold text-sm flex items-center">
+            <i class="fas fa-history mr-2"></i>
+            Historial
           </a>
         </li>
       </ul>
     </div>
 
-    <!-- Filtros -->
-    <div class="filters-panel" v-if="!loading">
-      <div class="panel-header" @click="toggleFilters">
-        <div class="panel-title">
-          <i class="fas fa-filter"></i>
-          <span>Filtros de Búsqueda</span>
-        </div>
-        <button class="panel-toggle">
-          <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        </button>
+<!-- Filtros compactos -->
+<div class="bg-white rounded-lg shadow-sm mb-4" v-if="!loading">
+  <!-- Encabezado del panel -->
+  <div 
+    class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+    @click="toggleFilters"
+  >
+    <div class="flex items-center text-gray-700 font-medium">
+      <i class="fas fa-filter mr-2 text-gray-500"></i>
+      <span>Filtros de Búsqueda</span>
+    </div>
+    <button class="text-gray-500 hover:text-gray-700">
+      <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+    </button>
+  </div>
+
+  <!-- Contenido de filtros  -->
+  <div v-if="showFilters" class="p-3">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <!-- Filtro Estado -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+        <select 
+          v-model="estadoFilter"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="todos">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_proceso">En Proceso</option>
+          <option value="completado">Completado</option>
+          <option value="entregado">Entregado</option>
+        </select>
       </div>
 
-      <div class="report-filters" v-if="showFilters">
-        <div class="filter-row">
-          <div class="filter-group">
-            <label>Estado</label>
-            <select v-model="estadoFilter" class="form-control">
-              <option value="todos">Todos</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="en_proceso">En Proceso</option>
-              <option value="completado">Completado</option>
-              <option value="entregado">Entregado</option>
-            </select>
-          </div>
+      <!-- Filtro Técnico -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Técnico</label>
+        <select 
+          v-model="tecnicoFilter"
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="todos">Todos</option>
+          <option v-for="tecnico in tecnicos" :key="tecnico.id" :value="tecnico.id">
+            {{ tecnico.nombre }}
+          </option>
+        </select>
+      </div>
 
-          <div class="filter-group">
-            <label>Técnico</label>
-            <select v-model="tecnicoFilter" class="form-control">
-              <option value="todos">Todos</option>
-              <option v-for="tecnico in tecnicos" :key="tecnico.id" :value="tecnico.id">
-                {{ tecnico.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>Fecha</label>
-            <div class="date-range">
-              <input type="date" v-model="fechaInicio" class="form-control">
-              <span class="date-separator">a</span>
-              <input type="date" v-model="fechaFin" class="form-control">
-            </div>
-          </div>
-
-          <div class="filter-group">
-            <label>Buscar</label>
-            <div class="search-input">
-              <input 
-                v-model="searchQuery" 
-                placeholder="Código, solicitante o proyecto..."
-                @keyup.enter="applyFilters"
-              >
-              <button class="search-btn" @click="applyFilters">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
-          </div>
+      <!-- Filtro Fecha -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+        <div class="flex items-center space-x-2">
+          <input 
+            type="date" 
+            v-model="fechaInicio"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+          <span class="text-gray-500 text-sm">a</span>
+          <input 
+            type="date" 
+            v-model="fechaFin"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
         </div>
+      </div>
 
-        <div class="filter-actions">
-          <button class="btn btn-primary apply-btn" @click="applyFilters">
-            Aplicar Filtros
-          </button>
-          <button class="btn btn-outline-secondary reset-btn" @click="resetFilters">
-            Limpiar
+      <!-- Filtro Búsqueda -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <div class="relative">
+          <input 
+            v-model="searchQuery"
+            placeholder="Código, solicitante o proyecto..."
+            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+            @keyup.enter="applyFilters"
+          >
+          <button 
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-500"
+            @click="applyFilters"
+          >
+            <i class="fas fa-search"></i>
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Acciones -->
+    <div class="flex justify-end space-x-2 mt-3">
+      <button 
+        class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+        @click="applyFilters"
+      >
+        Aplicar Filtros
+      </button>
+      <button 
+        class="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 transition-colors"
+        @click="resetFilters"
+      >
+        Limpiar
+      </button>
+    </div>
+  </div>
+</div>
 
     <!-- Contenido de pestañas -->
     <div class="tab-content" v-if="!loading">
@@ -149,11 +188,8 @@
                       <button class="btn btn-sm btn-icon" @click="editarTrabajo(pedido)">
                         <i class="fas fa-edit"></i>
                       </button>
-                      <button 
-                        class="btn btn-sm btn-icon btn-danger" 
-                        @click="eliminarTrabajo(pedido.id)"
-                        :disabled="loadingDelete === pedido.id"
-                      >
+                      <button class="btn btn-sm btn-icon btn-danger" @click="eliminarTrabajo(pedido.id)"
+                        :disabled="loadingDelete === pedido.id">
                         <i class="fas fa-trash"></i>
                       </button>
                     </td>
@@ -214,30 +250,16 @@
                 Mostrando {{ showingFrom }} a {{ showingTo }} de {{ filteredHistorial.length }} pedidos
               </div>
               <div class="pagination-controls">
-                <button 
-                  class="btn btn-pagination" 
-                  @click="prevPage" 
-                  :disabled="currentPage === 1"
-                >
+                <button class="btn btn-pagination" @click="prevPage" :disabled="currentPage === 1">
                   <i class="fas fa-chevron-left"></i>
                 </button>
-                
-                <button 
-                  v-for="page in pages" 
-                  :key="page" 
-                  class="btn btn-pagination"
-                  :class="{ active: page === currentPage }"
-                  @click="goToPage(page)"
-                  :disabled="page === '...'"
-                >
+
+                <button v-for="page in pages" :key="page" class="btn btn-pagination"
+                  :class="{ active: page === currentPage }" @click="goToPage(page)" :disabled="page === '...'">
                   {{ page }}
                 </button>
-                
-                <button 
-                  class="btn btn-pagination" 
-                  @click="nextPage" 
-                  :disabled="currentPage === totalPages"
-                >
+
+                <button class="btn btn-pagination" @click="nextPage" :disabled="currentPage === totalPages">
                   <i class="fas fa-chevron-right"></i>
                 </button>
               </div>
@@ -248,19 +270,10 @@
     </div>
 
     <!-- Modal Detalles Pedido -->
-    <TrabajoModal 
-      v-if="showTrabajoModal" 
-      :trabajo="selectedTrabajo"
-      @close="closeTrabajoModal"
-      @save="saveTrabajo"
-    />
+    <TrabajoModal v-if="showTrabajoModal" :trabajo="selectedTrabajo" @close="closeTrabajoModal" @save="saveTrabajo" />
 
     <!-- Modal Nuevo Pedido -->
-    <NuevoTrabajoModal 
-      v-if="showNuevoTrabajoModal"
-      @close="showNuevoTrabajoModal = false"
-      @save="addTrabajo"
-    />
+    <NuevoTrabajoModal v-if="showNuevoTrabajoModal" @close="showNuevoTrabajoModal = false" @save="addTrabajo" />
   </div>
 </template>
 
@@ -274,7 +287,7 @@ export default {
     TrabajoModal,
     NuevoTrabajoModal
   },
-  
+
   data() {
     return {
       activeTab: 'produccion',
@@ -303,10 +316,10 @@ export default {
       ]
     }
   },
-  
+
   computed: {
     trabajosProduccion() {
-      return this.pedidos.filter(pedido => 
+      return this.pedidos.filter(pedido =>
         pedido.estado !== 'completado' && pedido.estado !== 'entregado'
       ).sort((a, b) => {
         const order = {
@@ -318,30 +331,30 @@ export default {
         return order[a.estado] - order[b.estado];
       });
     },
-    
+
     filteredHistorial() {
-      return this.pedidos.filter(pedido => 
+      return this.pedidos.filter(pedido =>
         pedido.estado === 'completado' || pedido.estado === 'entregado'
       ).filter(pedido => {
         // Filtro por estado
-        const matchesEstado = this.estadoFilter === 'todos' || 
-                            pedido.estado === this.estadoFilter;
-        
+        const matchesEstado = this.estadoFilter === 'todos' ||
+          pedido.estado === this.estadoFilter;
+
         // Filtro por técnico
-        const matchesTecnico = this.tecnicoFilter === 'todos' || 
-                             pedido.supervisor_id == this.tecnicoFilter;
-        
+        const matchesTecnico = this.tecnicoFilter === 'todos' ||
+          pedido.supervisor_id == this.tecnicoFilter;
+
         // Filtro por fecha
         const matchesFecha = (!this.fechaInicio || new Date(pedido.fecha_solicitud) >= new Date(this.fechaInicio)) &&
-                           (!this.fechaFin || new Date(pedido.fecha_solicitud) <= new Date(this.fechaFin));
-        
+          (!this.fechaFin || new Date(pedido.fecha_solicitud) <= new Date(this.fechaFin));
+
         // Filtro por búsqueda
         const matchesSearch = this.searchQuery === '' ||
-                            pedido.codigo_pedido.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            pedido.solicitante_nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            (pedido.proyecto_asociado && pedido.proyecto_asociado.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-                            pedido.tipo_pedido_nombre.toLowerCase().includes(this.searchQuery.toLowerCase());
-        
+          pedido.codigo_pedido.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          pedido.solicitante_nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+          (pedido.proyecto_asociado && pedido.proyecto_asociado.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          pedido.tipo_pedido_nombre.toLowerCase().includes(this.searchQuery.toLowerCase());
+
         return matchesEstado && matchesTecnico && matchesFecha && matchesSearch;
       }).sort((a, b) => {
         const modifier = this.sortDirection === 'asc' ? 1 : -1;
@@ -350,55 +363,55 @@ export default {
         return 0;
       });
     },
-    
+
     trabajosHistorial() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredHistorial.slice(start, start + this.itemsPerPage);
     },
-    
+
     totalPages() {
       return Math.ceil(this.filteredHistorial.length / this.itemsPerPage);
     },
-    
+
     pages() {
       const pages = [];
       const maxVisiblePages = 5;
-      
+
       if (this.totalPages <= maxVisiblePages) {
         for (let i = 1; i <= this.totalPages; i++) pages.push(i);
         return pages;
       }
-      
+
       let start = Math.max(1, this.currentPage - 2);
       let end = Math.min(this.totalPages, start + maxVisiblePages - 1);
-      
+
       if (end - start + 1 < maxVisiblePages) {
         start = end - maxVisiblePages + 1;
       }
-      
+
       if (start > 1) pages.push(1, start > 2 ? '...' : null);
       for (let i = start; i <= end; i++) pages.push(i);
       if (end < this.totalPages) pages.push(end < this.totalPages - 1 ? '...' : null, this.totalPages);
-      
+
       return pages.filter(p => p);
     },
-    
+
     showingFrom() {
       return (this.currentPage - 1) * this.itemsPerPage + 1;
     },
-    
+
     showingTo() {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredHistorial.length);
     }
   },
-  
+
   methods: {
     // Métodos de API
     async loadPedidos() {
       try {
         this.loading = true;
         const response = await axios.get('/api/Pedido');
-        
+
         // Transformar los datos de la API
         this.pedidos = await Promise.all(response.data.map(async pedido => ({
           ...pedido,
@@ -408,7 +421,7 @@ export default {
           tipo_pedido_nombre: this.resolveTipoPedido(pedido.tipo_pedido_id),
           supervisor_id: pedido.supervisor_id
         })));
-        
+
       } catch (error) {
         console.error("Error cargando pedidos:", error);
         this.showToast('Error al cargar pedidos', 'error');
@@ -421,7 +434,7 @@ export default {
       try {
         this.loadingTecnicos = true;
         const response = await axios.get('/api/Usuario');
-        
+
         // Filtrar solo usuarios con rol empleado (ajusta según tu estructura)
         this.tecnicos = response.data
           .filter(usuario => usuario.puesto_id === 2) // Ajusta el ID según tu sistema
@@ -429,7 +442,7 @@ export default {
             id: usuario.id,
             nombre: usuario.nombre || `${usuario.firstName} ${usuario.lastName}`.trim()
           }));
-        
+
       } catch (error) {
         console.error("Error cargando técnicos:", error);
         this.showToast('Error al cargar técnicos', 'error');
@@ -443,7 +456,7 @@ export default {
       try {
         const response = await axios.get(`/api/Pedido/${id}`);
         const pedido = response.data;
-        
+
         // Enriquecer los datos con nombres
         return {
           ...pedido,
@@ -452,7 +465,7 @@ export default {
           supervisor_nombre: await this.resolveUsuario(pedido.supervisor_id),
           tipo_pedido_nombre: this.resolveTipoPedido(pedido.tipo_pedido_id)
         };
-        
+
       } catch (error) {
         console.error("Error obteniendo pedido:", error);
         this.showToast('Error al obtener pedido', 'error');
@@ -469,7 +482,7 @@ export default {
           tipo_pedido_id: this.resolveTipoPedidoId(pedidoData.tipo_pedido_nombre),
           supervisor_id: pedidoData.supervisor_id
         };
-        
+
         const response = await axios.post('/api/Pedido', apiData);
         return response.data;
       } catch (error) {
@@ -488,7 +501,7 @@ export default {
           tipo_pedido_id: this.resolveTipoPedidoId(pedidoData.tipo_pedido_nombre),
           supervisor_id: pedidoData.supervisor_id
         };
-        
+
         const response = await axios.put(`/api/Pedido/${id}`, apiData);
         return response.data;
       } catch (error) {
@@ -507,7 +520,7 @@ export default {
         throw error;
       }
     },
-    
+
     // Métodos de resolución
     resolveEstado(estadoId) {
       const estados = {
@@ -518,7 +531,7 @@ export default {
       };
       return estados[estadoId] || 'pendiente';
     },
-    
+
     resolveEstadoId(estado) {
       const estados = {
         'pendiente': 1,
@@ -528,15 +541,15 @@ export default {
       };
       return estados[estado] || 1;
     },
-    
+
     async resolveUsuario(usuarioId) {
       try {
         if (!usuarioId) return 'No asignado';
-        
+
         // Primero revisar si está en los técnicos ya cargados
         const tecnico = this.tecnicos.find(t => t.id == usuarioId);
         if (tecnico) return tecnico.nombre;
-        
+
         // Si no, hacer una llamada a la API
         const response = await axios.get(`/api/Usuario/${usuarioId}`);
         return response.data.nombre || `${response.data.firstName} ${response.data.lastName}`.trim() || `Usuario ${usuarioId}`;
@@ -544,22 +557,22 @@ export default {
         return `Usuario ${usuarioId}`;
       }
     },
-    
+
     resolveTipoPedido(tipoId) {
       const tipo = this.tiposPedido.find(t => t.id == tipoId);
       return tipo ? tipo.nombre : `Tipo ${tipoId}`;
     },
-    
+
     resolveTipoPedidoId(tipoNombre) {
       const tipo = this.tiposPedido.find(t => t.nombre === tipoNombre);
       return tipo ? tipo.id : 1; // Default al primer tipo si no se encuentra
     },
-    
+
     // Métodos de UI
     applyFilters() {
       this.currentPage = 1;
     },
-    
+
     resetFilters() {
       this.searchQuery = '';
       this.estadoFilter = 'todos';
@@ -568,7 +581,7 @@ export default {
       this.fechaFin = '';
       this.currentPage = 1;
     },
-    
+
     async verDetalles(pedido) {
       try {
         // Obtener datos actualizados del pedido
@@ -581,12 +594,12 @@ export default {
         this.showTrabajoModal = true;
       }
     },
-    
+
     editarTrabajo(pedido) {
       this.selectedTrabajo = { ...pedido };
       this.showTrabajoModal = true;
     },
-    
+
     async eliminarTrabajo(id) {
       if (!confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
         return;
@@ -595,10 +608,10 @@ export default {
       try {
         this.loadingDelete = id;
         await this.eliminarPedidoAPI(id);
-        
+
         // Remover del array local
         this.pedidos = this.pedidos.filter(p => p.id !== id);
-        
+
         this.showToast('Pedido eliminado correctamente', 'success');
       } catch (error) {
         // Error ya manejado en eliminarPedidoAPI
@@ -606,13 +619,13 @@ export default {
         this.loadingDelete = null;
       }
     },
-    
+
     async saveTrabajo(pedidoData) {
       try {
         if (pedidoData.id) {
           // Actualizar pedido existente
           const pedidoActualizado = await this.actualizarPedido(pedidoData.id, pedidoData);
-          
+
           // Actualizar en el array local
           const index = this.pedidos.findIndex(p => p.id === pedidoData.id);
           if (index !== -1) {
@@ -625,7 +638,7 @@ export default {
               tipo_pedido_nombre: pedidoData.tipo_pedido_nombre
             };
           }
-          
+
           this.showToast('Pedido actualizado correctamente', 'success');
         }
         this.closeTrabajoModal();
@@ -633,7 +646,7 @@ export default {
         // Error ya manejado en actualizarPedido
       }
     },
-    
+
     async addTrabajo(nuevoPedido) {
       try {
         // Preparar datos del pedido
@@ -644,9 +657,9 @@ export default {
           tipo_pedido_id: this.resolveTipoPedidoId(nuevoPedido.tipo_pedido_nombre),
           supervisor_id: nuevoPedido.supervisor_id
         };
-        
+
         const pedidoCreado = await this.crearPedido(pedidoData);
-        
+
         // Enriquecer el pedido creado con los nombres
         const pedidoEnriquecido = {
           ...pedidoCreado,
@@ -655,22 +668,22 @@ export default {
           supervisor_nombre: await this.resolveUsuario(pedidoCreado.supervisor_id),
           tipo_pedido_nombre: this.resolveTipoPedido(pedidoCreado.tipo_pedido_id)
         };
-        
+
         // Agregar al array local
         this.pedidos.unshift(pedidoEnriquecido);
-        
+
         this.showNuevoTrabajoModal = false;
         this.showToast('Nuevo pedido creado correctamente', 'success');
       } catch (error) {
         // Error ya manejado en crearPedido
       }
     },
-    
+
     closeTrabajoModal() {
       this.showTrabajoModal = false;
       this.selectedTrabajo = null;
     },
-    
+
     formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
@@ -680,7 +693,7 @@ export default {
         day: '2-digit'
       });
     },
-    
+
     formatDateTime(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
@@ -692,7 +705,7 @@ export default {
         minute: '2-digit'
       });
     },
-    
+
     formatEstado(estado) {
       const estados = {
         'pendiente': 'Pendiente',
@@ -702,7 +715,7 @@ export default {
       };
       return estados[estado] || estado;
     },
-    
+
     estadoClass(estado) {
       return {
         'pendiente': 'badge-pendiente',
@@ -711,30 +724,30 @@ export default {
         'entregado': 'badge-entregado'
       }[estado] || '';
     },
-    
+
     prevPage() {
       if (this.currentPage > 1) this.currentPage--;
     },
-    
+
     nextPage() {
       if (this.currentPage < this.totalPages) this.currentPage++;
     },
-    
+
     goToPage(page) {
       if (page !== '...') this.currentPage = page;
     },
-    
+
     toggleFilters() {
       this.showFilters = !this.showFilters;
     },
-    
+
     showToast(message, type = 'success') {
       // Implementar un sistema de notificaciones más sofisticado si es necesario
       const alertType = type === 'success' ? 'Éxito' : 'Error';
       alert(`${alertType}: ${message}`);
     }
   },
-  
+
   async mounted() {
     // Cargar tanto pedidos como técnicos al montar el componente
     await Promise.all([
@@ -799,7 +812,7 @@ export default {
 .filters-panel {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
 
@@ -873,7 +886,8 @@ export default {
   gap: 10px;
 }
 
-.apply-btn, .reset-btn {
+.apply-btn,
+.reset-btn {
   padding: 8px 16px;
 }
 
@@ -885,10 +899,25 @@ export default {
   text-transform: uppercase;
 }
 
-.badge-pendiente { background-color: #ffc107; color: #212529; }
-.badge-en_proceso { background-color: #17a2b8; color: white; }
-.badge-completado { background-color: #28a745; color: white; }
-.badge-entregado { background-color: #6c757d; color: white; }
+.badge-pendiente {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-en_proceso {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-completado {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-entregado {
+  background-color: #6c757d;
+  color: white;
+}
 
 .table-responsive {
   overflow-x: auto;
@@ -906,7 +935,8 @@ export default {
   white-space: nowrap;
 }
 
-.table td, .table th {
+.table td,
+.table th {
   padding: 12px 15px;
   vertical-align: middle;
   border-top: 1px solid #dee2e6;
@@ -1031,8 +1061,8 @@ export default {
   font-size: 1rem;
   line-height: 1.5;
   border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, 
-              border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .btn-primary {
@@ -1058,6 +1088,11 @@ export default {
   border-color: #6c757d;
 }
 
-.mr-1 { margin-right: 0.25rem; }
-.mr-2 { margin-right: 0.5rem; }
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
 </style>
