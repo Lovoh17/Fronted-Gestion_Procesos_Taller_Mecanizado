@@ -35,16 +35,29 @@ export const useAuthStore = defineStore('auth', () => {
     },
     {
       username: 'operario',
-      password: 'oper123',
+      password: 'operario',
       userData: {
         id: 3,
         name: 'Operario de Producción',
         email: 'operario@taller.com',
-        role: 'operator', // Usamos 'operator' para consistencia con el router
+        role: 'operator',
         puestoId: 3, // ID de puesto para operario
         avatar: '/avatars/operator.jpg'
       },
       token: 'mock-token-operator'
+    },
+    {
+      username: 'tecnico',
+      password: 'tecnico',
+      userData: {
+        id: 4,
+        name: 'Técnico de Mantenimiento',
+        email: 'tecnico@taller.com',
+        role: 'technician',
+        puestoId: 4, // ID de puesto para técnico
+        avatar: '/avatars/tecnico.jpg'
+      },
+      token: 'mock-token-tecnico'
     }
   ];
 
@@ -54,6 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => userRole.value === 'admin');
   const isCoordinator = computed(() => userRole.value === 'coordinator');
   const isOperator = computed(() => userRole.value === 'operator');
+  const isTechnician = computed(() => userRole.value === 'technician');
 
   const login = async ({ username, password }) => {
     try {
@@ -68,7 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Usuario o contraseña incorrectos');
       }
 
-      // Corrección: usar userData en lugar de user para consistencia
       user.value = foundUser.userData || foundUser.user;
       token.value = foundUser.token;
 
@@ -103,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isCoordinator,
     isOperator,
+    isTechnician, // Nueva propiedad para técnico
     login,
     logout,
     setMockUser

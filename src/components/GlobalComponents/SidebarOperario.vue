@@ -30,15 +30,6 @@
     </nav>
     
     <div class="sidebar-footer" v-if="!isCollapsed">
-      <div class="user-info">
-        <div class="user-avatar">
-          <span class="material-icons">person</span>
-        </div>
-        <div class="user-details">
-          <div class="user-name">{{ userName }}</div>
-          <div class="user-role">Operario</div>
-        </div>
-      </div>
       <button class="logout-btn" @click="handleLogout">
         <span class="material-icons">logout</span>
         <span>Cerrar Sesión</span>
