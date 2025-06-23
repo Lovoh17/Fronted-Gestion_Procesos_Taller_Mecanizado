@@ -1,9 +1,9 @@
 <template>
   <aside class="sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-header">
-      <a href="#" class="sidebar-logo">
-        <span class="material-icons sidebar-logo-icon sidebar-collapse-control" @click="toggleSidebar">build</span>
-        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Técnico</span></span>
+      <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
+        <span class="material-icons sidebar-logo-icon">factory</span>
+        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial</span></span>
       </a>
       <div class="sidebar-collapse-control" @click="toggleSidebar">
         <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
@@ -74,34 +74,6 @@ export default {
         path: '/tech-dashboard',
         badge: null,
         badgeType: null
-      },
-      { 
-        icon: 'assignment',  
-        text: 'Órdenes de Trabajo', 
-        path: '/tech/work-orders',
-        badge: 5,
-        badgeType: 'danger'
-      },
-      { 
-        icon: 'engineering', 
-        text: 'Mantenimientos', 
-        path: '/tech/maintenance',
-        badge: 3,
-        badgeType: 'warning'
-      },
-      { 
-        icon: 'report_problem', 
-        text: 'Reportes de Fallas', 
-        path: '/tech/fault-reports',
-        badge: 2,
-        badgeType: 'danger'
-      },
-      { 
-        icon: 'precision_manufacturing', 
-        text: 'Equipos Asignados', 
-        path: '/tech/assigned-equipment',
-        badge: 12,
-        badgeType: 'success'
       },
       { 
         icon: 'schedule', 

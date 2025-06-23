@@ -56,7 +56,15 @@ const routes = [
       layout: 'empty'
     }
   },
-
+  {
+    path: '/admin/reports',
+    name: 'admin-reports',
+    component: () => import('@/components/VistasAdmin/Reports.vue'),
+    meta: { 
+      requiresAuth: true,
+      layout: 'empty'
+    }
+  },
   // ================== RUTAS DE ADMIN ==================
   {
     path: '/admin',
@@ -94,12 +102,7 @@ const routes = [
     component: () => import('@/components/VistasAdmin/Ordenes.vue'),
     meta: { requiresAuth: true, requiredRoles: ['admin'] }
   },
-  {
-    path: '/admin/reports',
-    name: 'admin-reports',
-    component: () => import('@/components/VistasAdmin/Reports.vue'),
-    meta: { requiresAuth: true, requiredRoles: ['admin'] }
-  },
+  
 
   // ================== RUTAS DE COORDINADOR ==================
   {
@@ -136,6 +139,18 @@ const routes = [
     path: '/coordinator/maintenance',
     name: 'coordinator-maintenance',
     component: () => import('@/components/VistasCoordinador/Maintenance.vue'),
+    meta: { requiresAuth: true, requiredRoles: ['coordinator'] }
+  },
+  {
+    path: '/coordinator/movimientos',
+    name: 'coordinator-movimientos',
+    component: () => import('@/components/VistasCoordinador/Historial_de_Movimientos.vue'),
+    meta: { requiresAuth: true, requiredRoles: ['coordinator'] }
+  },
+  {
+    path: '/coordinator/planos-tools',
+    name: 'coordinator-Planos-herramientas',
+    component: () => import('@/components/VistasCoordinador/Planos_Herraminetas.vue'),
     meta: { requiresAuth: true, requiredRoles: ['coordinator'] }
   },
 
@@ -178,12 +193,12 @@ const routes = [
     component: () => import('@/components/VistasTecnico/DashboardTecnico.vue'),
     meta: { requiresAuth: true, requiredRoles: ['technician'] }
   },
-  /*{
-    path: '/technician/maintenance',
-    name: 'technician-maintenance',
-    component: () => import('@/components/VistasTecnico/Maintenance.vue'),
+  {
+    path: '/tech/schedule',
+    name: 'technician-schedule',
+    component: () => import('@/components/VistasTecnico/Programacion.vue'),
     meta: { requiresAuth: true, requiredRoles: ['technician'] }
-  },
+  },/*
   {
     path: '/technician/reports',
     name: 'technician-reports',

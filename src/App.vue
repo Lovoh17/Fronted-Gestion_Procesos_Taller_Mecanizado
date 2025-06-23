@@ -6,42 +6,28 @@
       <component :is="currentSidebar" v-if="authStore.isAuthenticated" />
 
       <main class="main-content">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <div class="content-container">
+          <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </div>
       </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent } from 'vue';
+import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import TopBar from '@/components/GlobalComponents/TopBar.vue';
 
-// Importación estándar de los sidebars (opción simple)
+// Importación estándar de los sidebars
 import SideBar from '@/components/GlobalComponents/Sidebar.vue';
 import SidebarCoordinator from '@/components/GlobalComponents/SidebarCoordinador.vue';
 import SidebarOperario from '@/components/GlobalComponents/SidebarOperario.vue';
 import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
-
-// Opción con carga diferida (descomentar si se prefiere)
-/*
-const SideBar = defineAsyncComponent(() => 
-  import('@/components/GlobalComponents/Sidebar.vue')
-);
-const SidebarCoordinator = defineAsyncComponent(() => 
-  import('@/components/GlobalComponents/SidebarCoordinador.vue')
-);
-const SidebarOperario = defineAsyncComponent(() => 
-  import('@/components/GlobalComponents/SidebarOperario.vue')
-);
-const SidebarTecnico = defineAsyncComponent(() => 
-  import('@/components/GlobalComponents/SidebarTecnico.vue')
-);
-*/
 
 const authStore = useAuthStore();
 
@@ -79,14 +65,40 @@ const currentSidebar = computed(() => {
   display: flex;
   flex: 1;
   margin-top: var(--header-height);
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-container {
+  flex: 1;
   padding: var(--content-padding);
   overflow-y: auto;
-  height: calc(100vh - var(--header-height));
-  transition: all 0.3s ease;
+  height: 100%;
+}
+
+/* Scrollbar personalizada */
+.content-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.content-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.content-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* Transición para cambios de ruta */
@@ -109,7 +121,11 @@ const currentSidebar = computed(() => {
   .main-content {
     height: auto;
     min-height: calc(100vh - var(--mobile-header-height));
-    padding: 15px;
+  }
+  
+  .content-container {
+    padding: 10px;
+    overflow-y: visible;
   }
 }
 </style>
