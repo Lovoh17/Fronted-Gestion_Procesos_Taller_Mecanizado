@@ -20,14 +20,20 @@ export const useAuthStore = defineStore('auth', () => {
       return null;
     }
 
-    // Convertir puesto_id a número si es string
-    const puestoId = parseInt(user.value.puesto_id);
+    // Primero intentar usar el role directo si existe
+    if (user.value.role) {
+      console.log('🎯 Using direct role:', user.value.role);
+      return user.value.role;
+    }
 
+    // Fallback: convertir puesto_id a rol
+    const puestoId = parseInt(user.value.puesto_id);
     let role;
     switch (puestoId) {
       case 1: role = 'admin'; break;
       case 2: role = 'coordinator'; break;
       case 3: role = 'operator'; break;
+      case 4: role = 'technician'; break;
       default: role = 'user';
     }
 
@@ -38,6 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => userRole.value === 'admin');
   const isCoordinator = computed(() => userRole.value === 'coordinator');
   const isOperator = computed(() => userRole.value === 'operator');
+  const isTechnician = computed(() => userRole.value === 'technician');
 
   const login = async ({ username, password, email }) => {
     loading.value = true;
@@ -48,11 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
       console.log('📧 Email/Username:', email || username);
       console.log('🔑 Password length:', password ? password.length : 0);
 
-      // Usar tu configuración existente de API
       const loginData = {
-        email: email || username, // El backend espera email
+        email: email || username,
         password
       };
+
 
       console.log('📤 Enviando datos de login:', { ...loginData, password: '***' });
 
@@ -66,41 +73,27 @@ export const useAuthStore = defineStore('auth', () => {
       });
 
       console.log('📥 Response status:', response.status);
-      console.log('📥 Response ok:', response.ok);
-
       const data = await response.json();
       console.log('📦 Response data:', data);
 
-      if (!response.ok) {
-        console.error('❌ Error en respuesta:', data);
-        throw new Error(data.message || 'Error en el servidor');
-      }
-
-      if (data.success) {
+      if (response.ok && data.success) {
         console.log('✅ Login exitoso!');
-        console.log('👤 Usuario recibido:', data.data.usuario);
-        console.log('🎫 Token recibido:', data.data.token ? 'SÍ' : 'NO');
-
+        
         // Almacenar datos del usuario y token
         user.value = data.data.usuario;
         token.value = data.data.token;
 
-        console.log('💾 Guardando en localStorage...');
-        // Opcional: guardar en localStorage para persistencia
+        // Guardar en localStorage para persistencia
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('authUser', JSON.stringify(data.data.usuario));
 
         console.log('🎯 Rol detectado:', userRole.value);
-        console.log('🔐 Autenticado:', isAuthenticated.value);
-
         return true;
       } else {
-        console.error('❌ Login falló:', data.message);
         throw new Error(data.message || 'Error en el login');
       }
     } catch (error) {
-      console.error('💥 Error completo en login:', error);
-      console.error('📋 Stack trace:', error.stack);
+      console.error('💥 Error en login:', error);
       error.value = error.message;
       throw error;
     } finally {
@@ -111,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const logout = () => {
     console.log('🚪 Cerrando sesión...');
-    console.log('👤 Usuario actual:', user.value?.nombre || 'N/A');
+    console.log('👤 Usuario actual:', user.value?.name || user.value?.nombre || 'N/A');
 
     user.value = null;
     token.value = null;
@@ -163,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isCoordinator,
     isOperator,
+    isTechnician,
     login,
     logout,
     restoreSession
