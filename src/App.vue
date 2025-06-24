@@ -3,7 +3,7 @@
     <TopBar />
 
     <div class="content-wrapper">
-      <component :is="currentSidebar" v-if="authStore.isAuthenticated" />
+      <component :is="currentSidebar" v-if="authStore.isAuthenticated && currentSidebar" />
 
       <main class="main-content">
         <div class="content-container">
@@ -40,9 +40,21 @@ const roleSidebars = {
 };
 
 const currentSidebar = computed(() => {
-  return authStore.isAuthenticated 
-    ? roleSidebars[authStore.user?.role] || null
-    : null;
+  if (!authStore.isAuthenticated) {
+    return null;
+  }
+
+  const userRole = authStore.user?.role || authStore.userRole;
+  console.log('🔄 Current role:', userRole);
+  
+  const sidebar = roleSidebars[userRole];
+  
+  if (!sidebar) {
+    console.warn('⚠️ Rol no reconocido:', userRole);
+    return null;
+  }
+  
+  return sidebar;
 });
 </script>
 

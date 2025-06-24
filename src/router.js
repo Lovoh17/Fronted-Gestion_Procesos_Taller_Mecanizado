@@ -14,7 +14,7 @@ const routes = [
   },
   {
     path: '/',
-    name: 'login', 
+    name: 'home', 
     component: () => import('@/components/LoginForm.vue'),
     meta: { 
       public: true,
@@ -65,6 +65,7 @@ const routes = [
       layout: 'empty'
     }
   },
+
   // ================== RUTAS DE ADMIN ==================
   {
     path: '/admin',
@@ -102,7 +103,6 @@ const routes = [
     component: () => import('@/components/VistasAdmin/Ordenes.vue'),
     meta: { requiresAuth: true, requiredRoles: ['admin'] }
   },
-  
 
   // ================== RUTAS DE COORDINADOR ==================
   {
@@ -185,7 +185,7 @@ const routes = [
     path: '/technician',
     name: 'technician',
     redirect: '/tech-dashboard',
-    mmeta: { requiresAuth: true, requiredRoles: ['technician'] }
+    meta: { requiresAuth: true, requiredRoles: ['technician'] }
   },
   {
     path: '/tech-dashboard',
@@ -198,13 +198,7 @@ const routes = [
     name: 'technician-schedule',
     component: () => import('@/components/VistasTecnico/Programacion.vue'),
     meta: { requiresAuth: true, requiredRoles: ['technician'] }
-  },/*
-  {
-    path: '/technician/reports',
-    name: 'technician-reports',
-    component: () => import('@/components/VistasTecnico/Reports.vue'),
-    meta: { requiresAuth: true, requiredRoles: ['technician'] }
-  }*/
+  }
 ]
 
 const router = createRouter({
@@ -215,29 +209,69 @@ const router = createRouter({
   }
 })
 
-// Guardia de navegación mejorado
+// Guardia de navegación unificado
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
   
-  // Rutas públicas
+  console.group('🚦 Navigation Guard');
+  console.log('📍 From:', from.path, '→ To:', to.path);
+  console.log('👤 User:', {
+    id: authStore.user?.id,
+    role: authStore.user?.role || authStore.userRole,
+    puesto_id: authStore.user?.puesto_id
+  });
+  console.log('🛣️ Route Requirements:', to.meta);
+
+  // 1. Rutas públicas (acceso libre)
   if (to.meta.public) {
-    return next()
+    console.log('ℹ️ Public route - access granted');
+    console.groupEnd();
+    return next();
   }
 
-  // Verificar autenticación
-  if (!authStore.isAuthenticated) {
-    return next('/')
+  // 2. Verificar autenticación
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    console.warn('⚠️ Unauthenticated - redirecting to login');
+    console.groupEnd();
+    return next('/login');
   }
 
-  // Verificar roles
+  // 3. Redirección automática por rol (solo para ruta raíz)
+  if (to.path === '/' && authStore.isAuthenticated) {
+    const targetRoute = getDefaultRouteForRole(authStore.user?.role || authStore.userRole);
+    console.log(`🔄 Auto-redirecting ${authStore.user?.role || authStore.userRole} to ${targetRoute}`);
+    console.groupEnd();
+    return next(targetRoute);
+  }
+
+  // 4. Control de acceso por roles
   if (to.meta.requiredRoles) {
-    const hasRequiredRole = to.meta.requiredRoles.includes(authStore.user?.role)
+    const userRole = authStore.user?.role || authStore.userRole;
+    const hasRequiredRole = to.meta.requiredRoles.includes(userRole);
+    
     if (!hasRequiredRole) {
-      return next('/unauthorized')
+      console.warn(`⛔ Access denied for ${userRole} to ${to.path}`);
+      const defaultRoute = getDefaultRouteForRole(userRole);
+      console.log(`🔀 Redirecting to default route: ${defaultRoute}`);
+      console.groupEnd();
+      return next(defaultRoute);
     }
   }
 
-  next()
-})
+  console.log('🟢 Access granted');
+  console.groupEnd();
+  next();
+});
+
+// Funciones auxiliares
+function getDefaultRouteForRole(role) {
+  switch(role) {
+    case 'admin': return '/admin-dashboard';
+    case 'coordinator': return '/dashboard-coordinador';
+    case 'operator': return '/dashboard-operario';
+    case 'technician': return '/tech-dashboard';
+    default: return '/unauthorized';
+  }
+}
 
 export default router
