@@ -1,25 +1,29 @@
 <template>
   <div class="transacciones-container">
     <!-- Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">
-          <i class="fas fa-money-bill-wave"></i>
-          Transacciones Financieras
-        </h1>
-        <p class="page-subtitle">Gestiona y monitorea todas tus transacciones financieras de CMS</p>
+<div class="header-section">
+  <div class="header-content">
+    <div class="header-info">
+      <div class="header-icon">
+        <i class="fas fa-money-bill-wave"></i>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-export" @click="exportData">
-          <i class="fas fa-download"></i>
-          Exportar
-        </button>
-        <button class="btn btn-primary" @click="showNuevaTransaccionModal = true">
-          <i class="fas fa-plus"></i>
-          Nueva Transacción
-        </button>
+      <div class="header-text">
+        <h1 class="header-title">Transacciones Financieras</h1>
+        <p class="header-subtitle">Gestiona y monitorea todas tus transacciones financieras de CMS</p>
       </div>
     </div>
+    <div class="header-actions">
+      <button class="btn-modern btn-secondary" @click="exportData">
+        <i class="fas fa-download"></i>
+        <span>Exportar</span>
+      </button>
+      <button class="btn-modern btn-primary" @click="showNuevaTransaccionModal = true">
+        <i class="fas fa-plus"></i>
+        <span>Nueva Transacción</span>
+      </button>
+    </div>
+  </div>
+</div>
 
     <!-- Loading Spinner -->
     <div v-if="loading" class="loading-container">
@@ -76,7 +80,7 @@
       </div>
     </div>
 
-    <!-- Advanced Filters Panel -->
+<!-- Advanced Filters Panel -->
     <div class="filters-panel" v-if="!loading">
       <div class="panel-header" @click="toggleFilters">
         <div class="panel-title">
@@ -91,7 +95,8 @@
 
       <transition name="slide-down">
         <div class="filters-content" v-if="showFilters">
-          <div class="filters-grid">
+          <!-- Grid responsivo para filtros en una sola fila -->
+          <div class="filters-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
             <div class="filter-group">
               <label class="filter-label">
                 <i class="fas fa-exchange-alt"></i>
@@ -117,68 +122,71 @@
               </select>
             </div>
 
-            <div class="filter-group">
+            <!-- Período ocupa 2 columnas en pantallas grandes para acomodar los dos inputs -->
+            <div class="filter-group xl:col-span-2">
               <label class="filter-label">
                 <i class="fas fa-calendar-alt"></i>
                 Período
               </label>
-              <div class="date-range-container">
-                <input type="date" v-model="fechaInicio" class="filter-input date-input" placeholder="Desde">
-                <span class="date-separator">hasta</span>
-                <input type="date" v-model="fechaFin" class="filter-input date-input" placeholder="Hasta">
+              <div class="date-range-container flex items-center space-x-2">
+                <input type="date" v-model="fechaInicio" class="filter-input date-input flex-1" placeholder="Desde">
+                <span class="date-separator text-sm text-gray-500">hasta</span>
+                <input type="date" v-model="fechaFin" class="filter-input date-input flex-1" placeholder="Hasta">
               </div>
             </div>
 
-            <div class="filter-group">
+            <!-- Rango de Monto ocupa 2 columnas en pantallas grandes -->
+            <div class="filter-group xl:col-span-2">
               <label class="filter-label">
                 <i class="fas fa-dollar-sign"></i>
                 Rango de Monto
               </label>
-              <div class="amount-range-container">
+              <div class="amount-range-container flex items-center space-x-2">
                 <input 
                   type="number" 
                   v-model="montoMin" 
-                  placeholder="Monto mínimo" 
-                  class="filter-input amount-input"
+                  placeholder="Mínimo" 
+                  class="filter-input amount-input flex-1"
                   step="0.01"
                 >
-                <span class="amount-separator">a</span>
+                <span class="amount-separator text-sm text-gray-500">a</span>
                 <input 
                   type="number" 
                   v-model="montoMax" 
-                  placeholder="Monto máximo" 
-                  class="filter-input amount-input"
+                  placeholder="Máximo" 
+                  class="filter-input amount-input flex-1"
                   step="0.01"
                 >
               </div>
             </div>
 
+            <!-- Búsqueda en una columna separada -->
             <div class="filter-group search-group">
               <label class="filter-label">
                 <i class="fas fa-search"></i>
                 Búsqueda
               </label>
-              <div class="search-container">
+              <div class="search-container relative">
                 <input 
                   v-model="searchQuery" 
-                  placeholder="Buscar por descripción, referencia..."
-                  class="filter-input search-input"
+                  placeholder="Buscar..."
+                  class="filter-input search-input pr-10"
                   @keyup.enter="applyFilters"
                 >
-                <button class="search-btn" @click="applyFilters">
+                <button class="search-btn absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500" @click="applyFilters">
                   <i class="fas fa-search"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="filter-actions">
-            <button class="btn btn-primary" @click="applyFilters">
-              <i class="fas fa-check"></i>
+          <div class="filter-actions flex justify-end space-x-2 pt-2">
+            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" @click="applyFilters">
+              <i class="fas fa-check mr-2"></i>
               Aplicar Filtros
             </button>
-            <button class="btn btn-secondary" @click="resetFilters">
-              <i class="fas fa-times"></i>
+            <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors" @click="resetFilters">
+              <i class="fas fa-times mr-2"></i>
               Limpiar Filtros
             </button>
           </div>
@@ -892,9 +900,164 @@ export default {
   --radius-lg: 0.75rem;
 }
 
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Botones */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1.8rem;
+  border: none;
+  border-radius: 0.8rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-modern i {
+  font-size: 1.1rem;
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: all 0.6s ease;
+}
+
+.btn-modern:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #003366, #003366);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #edf2f7;
+  color: #4a5568;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+  padding: 1.2rem 2.4rem;
+  font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .header-info {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-text {
+    align-items: center;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .btn-modern {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Container Principal */
 .transacciones-container {
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   padding: 2rem;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -962,33 +1125,6 @@ export default {
 .btn:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--primary-dark);
-}
-
-.btn-secondary {
-  background: var(--secondary-color);
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #475569;
-}
-
-.btn-export {
-  background: var(--success-color);
-  color: white;
-}
-
-.btn-export:hover {
-  background: #059669;
 }
 
 /* Loading */
