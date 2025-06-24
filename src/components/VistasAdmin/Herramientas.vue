@@ -1,10 +1,24 @@
 <template>
   <div class="herramientas-container">
-    <div class="header">
-      <h1><i class="fas fa-tools"></i> Gestión de Herramientas</h1>
-      <button @click="showForm = !showForm" class="btn-primary">
-        <i class="fas fa-plus"></i> {{ showForm ? 'Ocultar formulario' : 'Nueva herramienta' }}
-      </button>
+    <!-- Header con gradiente -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-tools"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Gestión de Herramientas</h1>
+            <p class="header-subtitle">Administra el inventario de herramientas</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-modern btn-primary" @click="showForm = !showForm">
+            <i class="fas fa-plus"></i>
+            <span>{{ showForm ? 'Ocultar formulario' : 'Nueva herramienta' }}</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Formulario para crear/editar herramienta -->
@@ -121,7 +135,8 @@
 
       <div v-for="herramienta in filteredHerramientas" :key="herramienta.id" class="tool-card">
         <div class="tool-header">
-          <div class="tool-image" :style="{ 'background-image': 'url(' + (herramienta.imagen_ruta || defaultImage) + ')' }"></div>
+          <div class="tool-image"
+            :style="{ 'background-image': 'url(' + (herramienta.imagen_ruta || defaultImage) + ')' }"></div>
           <div class="tool-title">
             <h3>{{ herramienta.nombre }}</h3>
             <span class="tool-model">{{ herramienta.modelo }}</span>
@@ -188,7 +203,8 @@
             </button>
           </div>
           <div class="modal-content">
-            <div class="modal-image" :style="{ 'background-image': 'url(' + (selectedHerramienta.imagen_ruta || defaultImage) + ')' }"></div>
+            <div class="modal-image"
+              :style="{ 'background-image': 'url(' + (selectedHerramienta.imagen_ruta || defaultImage) + ')' }"></div>
             <div class="modal-details">
               <h4>{{ selectedHerramienta.nombre }} - {{ selectedHerramienta.modelo }}</h4>
               <div class="detail-row">
@@ -223,7 +239,8 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">Uso:</span>
-                <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas || 'N/A' }} horas</span>
+                <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas ||
+                  'N/A' }} horas</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">Último mantenimiento:</span>
@@ -322,23 +339,23 @@ export default {
   computed: {
     filteredHerramientas() {
       let filtered = this.herramientas;
-      
+
       // Filtrar por búsqueda
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
-        filtered = filtered.filter(h => 
+        filtered = filtered.filter(h =>
           h.nombre.toLowerCase().includes(query) ||
           h.modelo.toLowerCase().includes(query) ||
           (h.fabricante && h.fabricante.toLowerCase().includes(query)) ||
           (h.codigo_inventario && h.codigo_inventario.toLowerCase().includes(query))
         );
       }
-      
+
       // Filtrar por estado
       if (this.filterEstado) {
         filtered = filtered.filter(h => h.estado_herramienta_id == this.filterEstado);
       }
-      
+
       return filtered;
     }
   },
@@ -362,7 +379,7 @@ export default {
       try {
         // Preparar datos para enviar
         const dataToSend = { ...this.herramienta };
-        
+
         // Convertir especificaciones técnicas si es un string
         if (typeof dataToSend.especificaciones_tecnicas === 'string') {
           try {
@@ -371,7 +388,7 @@ export default {
             dataToSend.especificaciones_tecnicas = {};
           }
         }
-        
+
         if (this.editing) {
           await axios.put(`/api/Herramienta/${this.currentId}`, dataToSend);
           this.$toast.success('Herramienta actualizada correctamente');
@@ -379,7 +396,7 @@ export default {
           await axios.post('/api/Herramienta', dataToSend);
           this.$toast.success('Herramienta creada correctamente');
         }
-        
+
         this.resetForm();
         this.fetchHerramientas();
       } catch (error) {
@@ -391,12 +408,12 @@ export default {
       try {
         const response = await axios.get(`/api/Herramienta/${id}`);
         this.herramienta = response.data;
-        
+
         // Convertir especificaciones técnicas a string si es objeto
         if (this.herramienta.especificaciones_tecnicas && typeof this.herramienta.especificaciones_tecnicas === 'object') {
           this.herramienta.especificaciones_tecnicas = JSON.stringify(this.herramienta.especificaciones_tecnicas, null, 2);
         }
-        
+
         this.editing = true;
         this.currentId = id;
         this.showForm = true;
@@ -482,7 +499,6 @@ export default {
 </script>
 
 <style scoped>
-/* Variables de colores */
 :root {
   --primary-color: #3498db;
   --secondary-color: #2ecc71;
@@ -495,9 +511,241 @@ export default {
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Botones modernos del header */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1.8rem;
+  border: none;
+  border-radius: 0.8rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+.btn-modern i {
+  font-size: 1.1rem;
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: all 0.6s ease;
+}
+
+.btn-modern:hover::before {
+  left: 100%;
+}
+
+.btn-modern.btn-primary {
+  background: linear-gradient(135deg, #003366, #003366);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-modern.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-modern.btn-secondary {
+  color: #4a5568;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-modern.btn-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+  padding: 1.2rem 2.4rem;
+  font-size: 1.2rem;
+}
+
+/* Botones del formulario y acciones principales */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9 !important;
+  transform: translateY(-1px);
+}
+
+.btn-edit {
+  background-color: #e67e22 !important;
+  color: white !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.btn-edit:hover {
+  background-color: #e67e22 !important;
+  transform: translateY(-1px);
+}
+
+.btn-info {
+  background-color: #2980b9  !important;
+  color: white !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.btn-info:hover {
+  background-color: #2980b9 !important;
+  transform: translateY(-1px);
+}
+
+.btn-delete {
+  background-color:  #c0392b !important;
+  color: white !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.btn-delete:hover {
+  background-color: #c0392b !important;
+  transform: translateY(-1px);
+}
+
+/* Responsive para botones modernos */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .header-info {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-text {
+    align-items: center;
+  }
+  
+  .btn-modern {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Estilos base */
 .herramientas-container {
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -567,6 +815,7 @@ export default {
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.3s;
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -586,100 +835,6 @@ export default {
   gap: 10px;
   padding-top: 15px;
   border-top: 1px solid var(--border-color);
-}
-
-/* Botones */
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary:hover {
-  background-color: #2980b9;
-}
-
-.btn-secondary {
-  background-color: var(--gray-color);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-secondary:hover {
-  background-color: #7f8c8d;
-}
-
-.btn-edit {
-  background-color: var(--warning-color);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.btn-edit:hover {
-  background-color: #e67e22;
-}
-
-.btn-info {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.btn-info:hover {
-  background-color: #2980b9;
-}
-
-.btn-delete {
-  background-color: var(--danger-color);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.btn-delete:hover {
-  background-color: #c0392b;
 }
 
 /* Filtros */
@@ -710,6 +865,7 @@ export default {
   border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .filter-group {
@@ -973,20 +1129,24 @@ export default {
 }
 
 /* Animaciones */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s, transform 0.3s;
 }
 
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
   transform: translateY(-20px);
 }
 
-.modal-enter-active, .modal-leave-active {
+.modal-enter-active,
+.modal-leave-active {
   transition: opacity 0.3s;
 }
 
-.modal-enter, .modal-leave-to {
+.modal-enter,
+.modal-leave-to {
   opacity: 0;
 }
 
@@ -1016,15 +1176,15 @@ export default {
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .tools-list {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     flex-direction: column;
   }
-  
+
   .modal-image {
     height: 150px;
     margin-bottom: 20px;
@@ -1036,6 +1196,7 @@ export default {
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

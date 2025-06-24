@@ -60,8 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
         password
       };
 
-      console.log('📤 Intentando login con API...');
-      const response = await fetch('http://localhost:3000/auth/login', {
+
+      console.log('📤 Enviando datos de login:', { ...loginData, password: '***' });
+
+      // Cambiar a la URL completa de tu backend
+      const response = await fetch('http://localhost:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

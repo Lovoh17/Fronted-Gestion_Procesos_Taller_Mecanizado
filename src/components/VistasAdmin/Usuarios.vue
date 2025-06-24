@@ -1,97 +1,94 @@
 <template>
   <div class="admin-container">
-    <!-- Header -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-users-cog mr-2"></i>Administración de Usuarios
-      </h1>
-      <button class="btn btn-primary" @click="showAddUserModal = true">
-        <i class="fas fa-plus mr-1"></i>Nuevo Usuario
-      </button>
-    </div>
-
-    <!-- Filtros -->
-<div class="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
-  <!-- Header del panel -->
-  <div 
-    class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50"
-    @click="toggleFilters"
-  >
-    <div class="flex items-center text-gray-700 font-medium">
-      <i class="fas fa-filter mr-2 text-gray-500"></i>
-      <span>Filtros de Búsqueda</span>
-    </div>
-    <button class="text-gray-500 hover:text-gray-700">
-      <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-    </button>
-  </div>
-
-  <!-- Contenido de filtros -->
-  <div v-if="showFilters" class="border-t border-gray-200 p-3">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <!-- Filtro Tipo de Usuario -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuario</label>
-        <select 
-          v-model="userTypeFilter" 
-          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">Todos</option>
-          <option value="coordinator">Coordinadores</option>
-          <option value="employee">Empleados</option>
-        </select>
-      </div>
-
-      <!-- Filtro Estado -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-        <select 
-          v-model="statusFilter" 
-          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="all">Todos</option>
-          <option value="active">Activos</option>
-          <option value="inactivo">Inactivos</option>
-        </select>
-      </div>
-
-      <!-- Filtro Búsqueda -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
-        <div class="relative">
-          <input 
-            v-model="searchQuery" 
-            placeholder="Nombre, email o ID..." 
-            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-            @keyup.enter="applyFilters"
-          >
-          <button 
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-500"
-            @click="applyFilters"
-          >
-            <i class="fas fa-search"></i>
+    <!-- Header con gradiente -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-users-cog"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Administración de Usuarios</h1>
+            <p class="header-subtitle">Gestiona los accesos y permisos del sistema</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-modern btn-primary" @click="showAddUserModal = true">
+            <i class="fas fa-plus"></i>
+            <span>Nuevo Usuario</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Acciones -->
-    <div class="flex justify-end space-x-2 mt-3">
-      <button 
-        class="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-        @click="applyFilters"
-      >
-        Aplicar Filtros
-      </button>
-      <button 
-        class="px-3 py-1.5 border border-gray-300 bg-white text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-        @click="resetFilters"
-      >
-        Limpiar
-      </button>
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
+      <!-- Header del panel -->
+      <div class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50" @click="toggleFilters">
+        <div class="flex items-center text-gray-700 font-medium">
+          <i class="fas fa-filter mr-2 text-gray-500"></i>
+          <span>Filtros de Búsqueda</span>
+        </div>
+        <button class="text-gray-500 hover:text-gray-700">
+          <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
+        </button>
+      </div>
+
+      <!-- Contenido de filtros -->
+      <div v-if="showFilters" class="border-t border-gray-200 p-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Filtro Tipo de Usuario -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuario</label>
+            <select v-model="userTypeFilter"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="all">Todos</option>
+              <option value="coordinator">Coordinadores</option>
+              <option value="employee">Empleados</option>
+            </select>
+          </div>
+
+          <!-- Filtro Estado -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <select v-model="statusFilter"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="all">Todos</option>
+              <option value="active">Activos</option>
+              <option value="inactivo">Inactivos</option>
+            </select>
+          </div>
+
+          <!-- Filtro Búsqueda -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+            <div class="relative">
+              <input v-model="searchQuery" placeholder="Nombre, email o ID..."
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                @keyup.enter="applyFilters">
+              <button class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-500"
+                @click="applyFilters">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex justify-end space-x-2 mt-3">
+          <button
+            class="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            @click="applyFilters">
+            Aplicar Filtros
+          </button>
+          <button
+            class="px-3 py-1.5 border border-gray-300 bg-white text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
+            @click="resetFilters">
+            Limpiar
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- Tabla de usuarios -->
     <div class="card">
@@ -833,7 +830,159 @@ export default {
 
 <style scoped>
 .admin-container {
-  padding: 20px;
+  padding: 10px;
+}
+
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+/* Botones */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem 1.8rem;
+  border: none;
+  border-radius: 0.8rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-modern i {
+  font-size: 1.1rem;
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: all 0.6s ease;
+}
+
+.btn-modern:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #003366, #003366);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: #edf2f7;
+  color: #4a5568;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+  padding: 1.2rem 2.4rem;
+  font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .header-info {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-text {
+    align-items: center;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+  
+  .btn-modern {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .page-header {

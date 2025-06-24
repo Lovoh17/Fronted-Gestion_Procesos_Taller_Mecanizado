@@ -22,10 +22,10 @@ export default defineConfig({
     },
     fs: {
       allow: [
-        // Your project root
-        'C:/Users/linol/OneDrive/Documentos/GitHub/Fronted-Gestion_Procesos_Taller_Mecanizado/Fronted-Gestion_Procesos_Taller_Mecanizado',
-        // Add node_modules if needed
-        'C:/Users/linol/node_modules'
+        // Directorio del proyecto actual (usa process.cwd() para obtener la ruta dinámicamente)
+        process.cwd(),
+        // Directorio de node_modules
+        '/home/kev/Documents/GIT_HUB/Fronted-Gestion_Procesos_Taller_Mecanizado/node_modules'
       ]
     }
   },

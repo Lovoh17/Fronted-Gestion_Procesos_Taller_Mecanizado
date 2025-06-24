@@ -1,23 +1,76 @@
 <template>
   <div class="dashboard-content">
-    <!-- Contenido dinámico que se mostrará dentro del layout de App.vue -->
-    <StatsCards :stats="statsData" />
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1 class="dashboard-title">Panel de Control</h1>
+        <p class="dashboard-subtitle">Resumen de tu negocio en tiempo real</p>
+      </div>
+      <button @click="refreshData" class="refresh-btn" :disabled="isLoading">
+        <svg class="refresh-icon" :class="{ 'rotating': isLoading }" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22-4l-4.36 4.36A9 9 0 0 1 3.51 15"/>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+
+    <!-- Cards de Estadísticas Principales -->
+    <StatsCards :stats="statsData" :loading="loading.stats" />
     
     <div class="content-grid">
       <div class="content-column">
-        <DashboardSalesChart :sales-data="salesData" />
-        <RecentOrders 
-          :orders="recentOrders" 
-          @view-order="viewOrderDetails"
-        />
+        <!-- Gráfico de Ventas -->
+        <div class="dashboard-card chart-card">
+          <div class="card-header">
+            <h3 class="card-title">Ingresos Mensuales</h3>
+            <div class="card-actions">
+              <select class="period-selector">
+                <option value="6">Últimos 6 meses</option>
+                <option value="12">Último año</option>
+              </select>
+            </div>
+          </div>
+          <DashboardSalesChart :sales-data="salesData" :loading="loading.sales" />
+        </div>
+
+        <!-- Pedidos Recientes -->
+        <div class="dashboard-card orders-card">
+          <div class="card-header">
+            <h3 class="card-title">Pedidos Recientes</h3>
+            <span class="orders-count">{{ recentOrders.length }} pedidos</span>
+          </div>
+          <RecentOrders 
+            :orders="recentOrders" 
+            :loading="loading.orders"
+            @view-order="viewOrderDetails"
+          />
+        </div>
       </div>
       
       <div class="content-column">
-        <ActivityFeed :activities="recentActivities" />
-        <QuickStats :stats="quickStatsData" />
+        <!-- Feed de Actividades -->
+        <div class="dashboard-card activity-card">
+          <div class="card-header">
+            <h3 class="card-title">Actividad Reciente</h3>
+            <div class="activity-indicator">
+              <div class="pulse-dot"></div>
+              En vivo
+            </div>
+          </div>
+          <ActivityFeed :activities="recentActivities" :loading="loading.activities" />
+        </div>
+
+        <!-- Estadísticas Rápidas -->
+        <div class="dashboard-card stats-card">
+          <div class="card-header">
+            <h3 class="card-title">Estadísticas Rápidas</h3>
+          </div>
+          <QuickStats :stats="quickStatsData" :loading="loading.quickStats" />
+        </div>
       </div>
     </div>
     
+    <!-- Modal de Detalles del Pedido -->
     <OrderDetailsModal
       v-if="selectedOrder"
       :order="selectedOrder"
@@ -62,7 +115,16 @@ export default {
         datasets: [{
           label: 'Ingresos',
           data: [],
-          backgroundColor: '#3B82F6'
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          borderColor: '#6366f1',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#6366f1',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
         }]
       },
       
@@ -86,6 +148,12 @@ export default {
     }
   },
   
+  computed: {
+    isLoading() {
+      return Object.values(this.loading).some(loading => loading);
+    }
+  },
+  
   methods: {
     async loadStats() {
       try {
@@ -100,7 +168,6 @@ export default {
         
         const totalPedidos = pedidos.data.length;
         
-        // Contar pedidos pendientes y completados (asumiendo estructura básica)
         const pedidosPendientes = pedidos.data.filter(p => 
           p.estado && p.estado.toLowerCase().includes('pendiente')
         ).length;
@@ -109,7 +176,6 @@ export default {
           p.estado && p.estado.toLowerCase().includes('completado')
         ).length;
         
-        // Calcular ingresos del mes actual
         const mesActual = new Date().getMonth();
         const añoActual = new Date().getFullYear();
         const ingresosMes = transacciones.data
@@ -173,9 +239,16 @@ export default {
           datasets: [{
             label: 'Ingresos ($)',
             data: salesArray.map(s => s.amount),
-            backgroundColor: '#3B82F6',
-            borderColor: '#2563EB',
-            borderWidth: 2
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderColor: '#6366f1',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#6366f1',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
           }]
         };
         
@@ -210,7 +283,7 @@ export default {
             customerName: usuariosMap[pedido.usuario_id]?.nombre || 'Usuario desconocido',
             customerEmail: usuariosMap[pedido.usuario_id]?.email || '',
             serviceType: pedido.descripcion || 'Servicio',
-            status: pedido.estado || 'Pendiente', // Usa el estado directo del pedido
+            status: pedido.estado || 'Pendiente',
             totalAmount: parseFloat(pedido.total || 0),
             createdAt: pedido.fecha_pedido,
             estimatedCompletion: pedido.fecha_entrega
@@ -236,7 +309,6 @@ export default {
         
         const activities = [];
         
-        // Actividades de pedidos recientes
         pedidos.data
           .sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
           .slice(0, 5)
@@ -251,7 +323,6 @@ export default {
             });
           });
         
-        // Actividades de movimientos de stock
         historialStock.data
           .sort((a, b) => new Date(b.fecha_movimiento) - new Date(a.fecha_movimiento))
           .slice(0, 3)
@@ -266,7 +337,6 @@ export default {
             });
           });
         
-        // Actividades de herramientas en mantenimiento
         herramientas.data
           .filter(h => h.estado && h.estado.toLowerCase().includes('mantenimiento'))
           .sort((a, b) => new Date(b.fecha_ultimo_mantenimiento) - new Date(a.fecha_ultimo_mantenimiento))
@@ -364,3 +434,294 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Variables de Color - Colores oscuros y legibles */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #2563eb;
+  --secondary-color: #8b5cf6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-accent: #f1f5f9;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-content {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 2rem;
+}
+
+/* Header del Dashboard */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+.header-content h1.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.dashboard-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.refresh-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.refresh-icon.rotating {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Grid Layout */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.content-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Cards Base */
+.dashboard-card {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--bg-accent);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-actions .period-selector {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  background: var(--bg-accent);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.card-actions .period-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Chart Card */
+.chart-card {
+  min-height: 400px;
+}
+
+/* Orders Card */
+.orders-card {
+  flex: 1;
+}
+
+.orders-count {
+  background: var(--success-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Activity Card */
+.activity-card {
+  min-height: 300px;
+}
+
+.activity-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--success-color);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Stats Card */
+.stats-card {
+  min-height: 200px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .content-column {
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .header-content h1.dashboard-title {
+    font-size: 1.5rem;
+  }
+  
+  .content-grid {
+    gap: 1rem;
+  }
+  
+  .dashboard-card {
+    padding: 1rem;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}
+
+/* Loading States */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-light);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Smooth Transitions */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+</style>
