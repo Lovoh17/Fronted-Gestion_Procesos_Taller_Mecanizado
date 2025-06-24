@@ -158,31 +158,83 @@ const router = createRouter({
   }
 })
 
-// Guardia de navegación
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
   
+  console.group('🚦 Navigation Guard');
+  console.log('📍 From:', from.path, '→ To:', to.path);
+  console.log('👤 User:', {
+    id: authStore.user?.id,
+    role: authStore.userRole,
+    puesto_id: authStore.user?.puesto_id
+  });
+  console.log('🛣️ Route Requirements:', to.meta);
+
+  // 1. Rutas públicas (acceso libre)
   if (to.meta.public) {
-    return next()
+    console.log('ℹ️ Public route - access granted');
+    console.groupEnd();
+    return next();
   }
 
+  // 2. Verificar autenticación
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next('/')
+    console.warn('⚠️ Unauthenticated - redirecting to login');
+    console.groupEnd();
+    return next('/login');
   }
 
-  if (to.meta.requiresAdmin && authStore.user?.role !== 'admin') {
-    return next('/unauthorized')
+  // 3. Redirección automática por rol (solo para ruta raíz)
+  if (to.path === '/') {
+    const targetRoute = getDefaultRouteForRole(authStore.userRole);
+    console.log(`🔄 Auto-redirecting ${authStore.userRole} to ${targetRoute}`);
+    console.groupEnd();
+    return next(targetRoute);
   }
 
-  if (to.meta.requiresCoordinator && authStore.user?.role !== 'coordinator') {
-    return next('/unauthorized')
+  // 4. Control estricto de acceso por roles
+  const hasAccess = checkRoleAccess(authStore.userRole, to.meta);
+  
+  if (!hasAccess) {
+    console.warn(`⛔ Access denied for ${authStore.userRole} to ${to.path}`);
+    const defaultRoute = getDefaultRouteForRole(authStore.userRole);
+    console.log(`🔀 Redirecting to default route: ${defaultRoute}`);
+    console.groupEnd();
+    return next(defaultRoute);
   }
 
-  if (to.meta.requiresOperator && authStore.user?.role !== 'operator') {
-    return next('/unauthorized')
-  }
+  console.log('🟢 Access granted');
+  console.groupEnd();
+  next();
+});
 
-  next()
-})
+// Funciones auxiliares
+function getDefaultRouteForRole(role) {
+  switch(role) {
+    case 'admin': return '/admin-dashboard';
+    case 'coordinator': return '/dashboard-coordinador';
+    case 'operator': return '/dashboard-operario';
+    default: return '/unauthorized';
+  }
+}
+
+function checkRoleAccess(userRole, routeMeta) {
+  // Admin solo debe acceder a rutas de admin, no a rutas específicas de otros roles
+  if (userRole === 'admin') {
+    return !routeMeta.requiresOperator && !routeMeta.requiresCoordinator;
+  }
+  
+  // Coordinator no puede acceder a rutas de admin u operator
+  if (userRole === 'coordinator') {
+    return routeMeta.requiresCoordinator && !routeMeta.requiresAdmin && !routeMeta.requiresOperator;
+  }
+  
+  // Operator solo puede acceder a rutas de operator
+  if (userRole === 'operator') {
+    return routeMeta.requiresOperator && !routeMeta.requiresAdmin && !routeMeta.requiresCoordinator;
+  }
+  
+  return false;
+}
 
 export default router

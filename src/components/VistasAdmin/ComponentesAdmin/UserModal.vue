@@ -87,9 +87,9 @@
                 :class="{ 'is-invalid': errors.puesto_id }"
                 required
               >
-                <option value="1">Coordinador</option>
-                <option value="2">Empleado</option>
-                <option value="3">Administrador</option>
+                <option value="1">Administrador</option>
+                <option value="2">Coordinador</option>
+                <option value="3">Empleado</option>
               </select>
               <div v-if="errors.puesto_id" class="invalid-feedback">
                 {{ errors.puesto_id }}
