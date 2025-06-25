@@ -1,53 +1,19 @@
 <template>
   <div class="tool-usage-view">
-    <div class="header">
-      <div class="title-section">
-        <h2>
-          <i class="material-icons">construction</i> 
-          Historial de Uso de Herramientas
-        </h2>
-        <p class="subtitle">Registro completo de préstamos y devoluciones de herramientas</p>
+<div class="header-section">
+  <div class="header-content">
+    <div class="header-info">
+      <div class="header-icon">
+        <i class="fas fa-exchange-alt"></i>
       </div>
-      
-      <div class="controls">
-        <div class="filters-row">
-          <div class="filter-group">
-            <label>Estado de Devolución</label>
-            <select v-model="filterStatus" class="select-input">
-              <option value="all">Todos</option>
-              <option v-for="status in statusOptions" :value="status.id">
-                {{ status.nombre }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <label>Fecha de Uso</label>
-            <input type="date" v-model="filterUsageDate" class="date-input">
-          </div>
-          
-          <div class="filter-group">
-            <label>Rango de Fechas</label>
-            <div class="date-range">
-              <input type="date" v-model="dateFrom" class="date-input" placeholder="Desde">
-              <span class="date-separator">—</span>
-              <input type="date" v-model="dateTo" class="date-input" placeholder="Hasta">
-            </div>
-          </div>
-        </div>
-        
-        <div class="action-buttons">
-          <button class="btn-clear" @click="clearFilters" v-if="hasActiveFilters">
-            <i class="material-icons">clear_all</i>
-            Limpiar Filtros
-          </button>
-          <button class="btn-refresh" @click="fetchData">
-            <i class="material-icons">refresh</i>
-            Actualizar
-          </button>
-        </div>
+      <div class="header-text">
+        <h1 class="header-title">Gestión de Movimientos</h1>
+        <p class="header-subtitle">Registra y supervisa las transferencias, entradas y salidas del inventario</p>
       </div>
     </div>
+  </div>
+</div>
+
 
     <div class="stats-bar" v-if="!loading && !error">
       <div class="stat-card">
@@ -59,7 +25,7 @@
           <div class="stat-label">Usos Registrados</div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon">
           <i class="material-icons">timer</i>
@@ -69,7 +35,7 @@
           <div class="stat-label">Horas Totales</div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon">
           <i class="material-icons">check_circle</i>
@@ -192,21 +158,13 @@
         </div>
 
         <div class="pagination" v-if="totalPages > 1">
-          <button 
-            @click="prevPage" 
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
+          <button @click="prevPage" :disabled="currentPage === 1" class="pagination-btn">
             <i class="material-icons">chevron_left</i>
           </button>
-          
+
           <span class="page-info">Página {{ currentPage }} de {{ totalPages }}</span>
-          
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
+
+          <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn">
             <i class="material-icons">chevron_right</i>
           </button>
         </div>
@@ -234,7 +192,7 @@
             <i class="material-icons">close</i>
           </button>
         </div>
-        
+
         <div class="modal-body">
           <div class="detail-grid">
             <div class="detail-card">
@@ -247,16 +205,17 @@
                 </p>
               </div>
             </div>
-            
+
             <div class="detail-card">
               <h4><i class="material-icons">person</i> Usuario</h4>
               <div class="detail-content">
                 <p><strong>Nombre:</strong> {{ selectedItem.usuario?.nombre || 'N/A' }}</p>
                 <p><strong>Departamento:</strong> {{ selectedItem.usuario?.departamento || 'N/A' }}</p>
-                <p><strong>Contacto:</strong> {{ selectedItem.usuario?.email || selectedItem.usuario?.telefono || 'N/A' }}</p>
+                <p><strong>Contacto:</strong> {{ selectedItem.usuario?.email || selectedItem.usuario?.telefono || 'N/A'
+                  }}</p>
               </div>
             </div>
-            
+
             <div class="detail-card">
               <h4><i class="material-icons">assignment</i> Proyecto</h4>
               <div class="detail-content">
@@ -267,22 +226,22 @@
                 </p>
               </div>
             </div>
-            
+
             <div class="detail-card">
               <h4><i class="material-icons">schedule</i> Tiempo de Uso</h4>
               <div class="detail-content">
                 <p><strong>Fecha de préstamo:</strong> {{ formatDateTime(selectedItem.fecha_uso) }}</p>
-                <p><strong>Fecha de devolución:</strong> 
+                <p><strong>Fecha de devolución:</strong>
                   {{ selectedItem.fecha_devolucion ? formatDateTime(selectedItem.fecha_devolucion) : 'Pendiente' }}
                 </p>
                 <p><strong>Horas utilizadas:</strong> {{ selectedItem.horas_utilizada }} hrs</p>
               </div>
             </div>
-            
+
             <div class="detail-card">
               <h4><i class="material-icons">check_circle</i> Estado</h4>
               <div class="detail-content">
-                <p><strong>Estado de devolución:</strong> 
+                <p><strong>Estado de devolución:</strong>
                   <span class="status-badge" :class="selectedItem.estado_devolucion?.nombre.toLowerCase()">
                     {{ selectedItem.estado_devolucion?.nombre || 'N/A' }}
                   </span>
@@ -327,32 +286,32 @@ export default {
     hasActiveFilters() {
       return this.filterStatus !== 'all' || this.filterUsageDate || this.dateFrom || this.dateTo;
     },
-    
+
     filteredItems() {
       let filtered = [...this.usageHistory];
-      
+
       // Filtrar por estado
       if (this.filterStatus !== 'all') {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.estado_devolucion_id === this.filterStatus
         );
       }
-      
+
       // Filtrar por fecha de uso
       if (this.filterUsageDate) {
         const filterDateStr = new Date(this.filterUsageDate).toISOString().split('T')[0];
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
           item.fecha_uso.split('T')[0] === filterDateStr
         );
       }
-      
+
       // Filtrar por rango de fechas
       if (this.dateFrom || this.dateTo) {
         filtered = filtered.filter(item => {
           const usageDate = new Date(item.fecha_uso);
           const fromDate = this.dateFrom ? new Date(this.dateFrom) : null;
           const toDate = this.dateTo ? new Date(this.dateTo) : null;
-          
+
           if (fromDate && toDate) {
             return usageDate >= fromDate && usageDate <= toDate;
           } else if (fromDate) {
@@ -363,29 +322,29 @@ export default {
           return true;
         });
       }
-      
+
       // Ordenar
       return this.sortItems(filtered);
     },
-    
+
     paginatedItems() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + parseInt(this.itemsPerPage);
       return this.filteredItems.slice(start, end);
     },
-    
+
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.itemsPerPage);
     },
-    
+
     totalHours() {
       return this.filteredItems.reduce((sum, item) => sum + parseFloat(item.horas_utilizada || 0), 0).toFixed(1);
     },
-    
+
     completedReturns() {
       return this.filteredItems.filter(item => item.fecha_devolucion).length;
     },
-    
+
     statusOptions() {
       return this.returnStatuses;
     }
@@ -397,7 +356,7 @@ export default {
     async fetchData() {
       this.loading = true;
       this.error = null;
-      
+
       try {
         // Obtener todos los datos necesarios
         const [usageRes, toolsRes, usersRes, projectsRes, statusesRes] = await Promise.all([
@@ -437,15 +396,15 @@ export default {
         this.loading = false;
       }
     },
-    
+
     sortItems(items) {
       return items.sort((a, b) => {
         let valueA = this.getNestedValue(a, this.sortField);
         let valueB = this.getNestedValue(b, this.sortField);
-        
+
         if (typeof valueA === 'string') valueA = valueA.toLowerCase();
         if (typeof valueB === 'string') valueB = valueB.toLowerCase();
-        
+
         if (this.sortDirection === 'asc') {
           return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
         } else {
@@ -453,11 +412,11 @@ export default {
         }
       });
     },
-    
+
     getNestedValue(obj, path) {
       return path.split('.').reduce((current, key) => current?.[key], obj) || '';
     },
-    
+
     sortBy(field) {
       if (this.sortField === field) {
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -466,7 +425,7 @@ export default {
         this.sortDirection = 'desc';
       }
     },
-    
+
     clearFilters() {
       this.filterStatus = 'all';
       this.filterUsageDate = '';
@@ -474,29 +433,29 @@ export default {
       this.dateTo = '';
       this.currentPage = 1;
     },
-    
+
     viewDetails(item) {
       this.selectedItem = item;
     },
-    
+
     formatDateTime(dateString) {
       if (!dateString) return 'N/A';
-      const options = { 
-        year: 'numeric', 
-        month: 'short', 
+      const options = {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       };
       return new Date(dateString).toLocaleDateString('es-ES', options);
     },
-    
+
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
     },
-    
+
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -510,9 +469,71 @@ export default {
 /* Estilos generales */
 .tool-usage-view {
   padding: 24px;
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 /* Header */
@@ -568,7 +589,8 @@ export default {
   font-size: 14px;
 }
 
-.select-input, .date-input {
+.select-input,
+.date-input {
   padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -590,7 +612,8 @@ export default {
   gap: 12px;
 }
 
-.btn-refresh, .btn-clear {
+.btn-refresh,
+.btn-clear {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -707,12 +730,14 @@ export default {
   background: #f8f9fa;
 }
 
-.tool-info, .user-info {
+.tool-info,
+.user-info {
   display: flex;
   flex-direction: column;
 }
 
-.tool-info small, .user-info small {
+.tool-info small,
+.user-info small {
   font-size: 12px;
   color: #7f8c8d;
 }
@@ -733,8 +758,8 @@ export default {
   font-weight: 500;
 }
 
-.status-badge.completado, 
-.status-badge.bueno, 
+.status-badge.completado,
+.status-badge.bueno,
 .status-badge.aprobado {
   background: #d4edda;
   color: #155724;
@@ -745,7 +770,7 @@ export default {
   color: #856404;
 }
 
-.status-badge.danado, 
+.status-badge.danado,
 .status-badge.rechazado {
   background: #f8d7da;
   color: #721c24;
@@ -879,7 +904,9 @@ export default {
 }
 
 /* Estados de carga y error */
-.loading-state, .error-state, .empty-state {
+.loading-state,
+.error-state,
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -888,7 +915,9 @@ export default {
   text-align: center;
 }
 
-.loading-spinner, .error-icon, .empty-icon {
+.loading-spinner,
+.error-icon,
+.empty-icon {
   margin-bottom: 16px;
 }
 
@@ -897,8 +926,13 @@ export default {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-icon .material-icons {
@@ -944,15 +978,15 @@ export default {
   .filters-row {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-bar {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   .detail-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .usage-table {
     display: block;
     overflow-x: auto;
