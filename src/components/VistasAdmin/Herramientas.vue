@@ -1,6 +1,6 @@
 <template>
   <div class="herramientas-container">
-    <!-- Header con gradiente -->
+    <!-- Header con  -->
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">
@@ -507,7 +507,7 @@ export default {
   --dark-color: #34495e;
   --light-color: #ecf0f1;
   --gray-color: #95a5a6;
-  --border-color: #ddd;
+  --border-color: #003366;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -811,7 +811,7 @@ export default {
 .form-group textarea {
   width: 100%;
   padding: 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #003366;
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.3s;
