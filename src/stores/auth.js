@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
       console.log('📤 Enviando datos de login:', { ...loginData, password: '***' });
 
       // Cambiar a la URL completa de tu backend
-      const response = await fetch('https://production.up.railway.app/login', {
+      const response = await fetch('https://gestionprocesostallermecanizado-production.up.railway.app/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
