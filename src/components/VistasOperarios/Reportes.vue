@@ -1,4 +1,3 @@
-
 <template>
   <div class="reportar-problema-container">
     <!-- Encabezado -->
@@ -17,35 +16,18 @@
 
     <!-- Formulario -->
     <form @submit.prevent="submitForm" v-if="!submitSuccess && !loading" class="problema-form">
-      <!-- Selector de herramienta con búsqueda -->
-      <div class="form-group">
+      <!-- Selector de herramienta -->
+      <div class="form-group" :class="{ 'has-error': errors.herramienta_id }">
         <label>Herramienta:</label>
-        <div class="search-select">
-          <input
-            type="text"
-            v-model="herramientaSearch"
-            @input="searchHerramientas"
-            placeholder="Buscar herramienta..."
-          />
-          <select
-            v-model="formData.herramienta_id"
-            @change="selectHerramienta"
-            required
-            size="5"
-            v-show="showHerramientasList"
-          >
-            <option 
-              v-for="herramienta in herramientasFiltradas" 
-              :key="herramienta.id" 
-              :value="herramienta.id"
-            >
-              {{ herramienta.nombre }} ({{ herramienta.codigo }})
-            </option>
-          </select>
-          <div v-if="selectedHerramienta" class="selected-item">
-            Seleccionado: <strong>{{ selectedHerramienta.nombre }}</strong>
-          </div>
-        </div>
+        <select v-model="formData.herramienta_id" required>
+          <option value="">Seleccione una herramienta</option>
+          <option v-for="herramienta in allHerramientas" :key="herramienta.id" :value="herramienta.id">
+            {{ herramienta.nombre }} ({{ herramienta.codigo }})
+          </option>
+        </select>
+        <span class="error-message" v-if="errors.herramienta_id">
+          Este campo es requerido
+        </span>
       </div>
 
       <!-- Resto del formulario -->
@@ -53,12 +35,8 @@
         <label>Tipo de Alerta:</label>
         <select v-model="formData.tipo_alerta_id" required>
           <option value="">Seleccione un tipo</option>
-          <option 
-            v-for="tipo in tiposAlerta" 
-            :key="tipo.id" 
-            :value="tipo.id"
-          >
-            {{ tipo.nombre }}
+          <option v-for="tipo in tiposAlerta" :key="tipo.id" :value="tipo.id">
+            {{ tipo.nombre_alertas }}
           </option>
         </select>
         <span class="error-message" v-if="errors.tipo_alerta_id">
@@ -70,12 +48,8 @@
         <label>Prioridad:</label>
         <select v-model="formData.prioridad_id" required>
           <option value="">Seleccione prioridad</option>
-          <option 
-            v-for="prioridad in prioridades" 
-            :key="prioridad.id" 
-            :value="prioridad.id"
-          >
-            {{ prioridad.nombre }}
+          <option v-for="prioridad in prioridades" :key="prioridad.id" :value="prioridad.id">
+            {{ prioridad.nombre_prioridad }}
           </option>
         </select>
         <span class="error-message" v-if="errors.prioridad_id">
@@ -85,12 +59,7 @@
 
       <div class="form-group" :class="{ 'has-error': errors.fecha_limite }">
         <label>Fecha Límite:</label>
-        <input 
-          type="date" 
-          v-model="formData.fecha_limite" 
-          required
-          :min="minDate"
-        />
+        <input type="date" v-model="formData.fecha_limite" required :min="minDate" />
         <span class="error-message" v-if="errors.fecha_limite">
           Este campo es requerido
         </span>
@@ -98,11 +67,7 @@
 
       <div class="form-group" :class="{ 'has-error': errors.descripcion }">
         <label>Descripción del Problema:</label>
-        <textarea 
-          v-model="formData.descripcion" 
-          required
-          placeholder="Describa el problema con detalle..."
-        ></textarea>
+        <textarea v-model="formData.descripcion" required placeholder="Describa el problema con detalle..."></textarea>
         <span class="error-message" v-if="errors.descripcion">
           Este campo es requerido
         </span>
@@ -140,11 +105,8 @@ export default {
         descripcion: false
       },
       tiposAlerta: [],
+      prioridades: [],
       allHerramientas: [],
-      herramientasFiltradas: [],
-      selectedHerramienta: null,
-      herramientaSearch: '',
-      showHerramientasList: false,
       loading: true,
       error: null,
       submitting: false,
@@ -159,47 +121,37 @@ export default {
     async loadInitialData() {
       try {
         this.loading = true;
-        const [tiposRes, herramientasRes] = await Promise.all([
+        console.log('🔄 Iniciando carga de datos...');
+
+        const [tiposRes, herramientasRes, prioridadesRes] = await Promise.all([
           axios.get('/api/Tipos_Alertas'),
-          axios.get('/api/Herramienta')
+          axios.get('/api/Herramienta'),
+          axios.get('/api/prioridad_mantenimiento')
         ]);
-        
+
+        console.log('📊 Tipos de Alerta recibidos:', tiposRes.data);
+        console.log('🔧 Herramientas recibidas:', herramientasRes.data);
+        console.log('⚡ Prioridades recibidas:', prioridadesRes.data);
+        console.log('📈 Total herramientas:', herramientasRes.data?.length || 0);
+        console.log('📈 Total tipos alerta:', tiposRes.data?.length || 0);
+        console.log('📈 Total prioridades:', prioridadesRes.data?.length || 0);
+
         this.tiposAlerta = tiposRes.data;
         this.allHerramientas = herramientasRes.data;
-        this.herramientasFiltradas = [...this.allHerramientas];
+        this.prioridades = prioridadesRes.data;
+
+        console.log('✅ Datos cargados exitosamente');
       } catch (error) {
-        console.error('Error al cargar datos:', error);
+        console.error('❌ Error al cargar datos:', error);
+        console.error('📝 Detalles del error:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
         this.error = 'Error al cargar los datos necesarios';
       } finally {
         this.loading = false;
-      }
-    },
-
-    searchHerramientas() {
-      if (this.herramientaSearch.trim() === '') {
-        this.herramientasFiltradas = [...this.allHerramientas];
-        this.showHerramientasList = false;
-      } else {
-        this.herramientasFiltradas = this.allHerramientas.filter(herramienta =>
-          herramienta.nombre.toLowerCase().includes(this.herramientaSearch.toLowerCase()) ||
-          herramienta.codigo.toLowerCase().includes(this.herramientaSearch.toLowerCase())
-        );
-        this.showHerramientasList = true;
-      }
-    },
-
-    async selectHerramienta() {
-      if (this.formData.herramienta_id) {
-        try {
-          const response = await axios.get(`/api/Herramienta/${this.formData.herramienta_id}`);
-          this.selectedHerramienta = response.data;
-          this.herramientaSearch = this.selectedHerramienta.nombre;
-          this.showHerramientasList = false;
-          this.errors.herramienta_id = false; // Clear error when selection is made
-        } catch (error) {
-          console.error('Error al obtener herramienta:', error);
-          this.error = 'Error al cargar los datos de la herramienta';
-        }
       }
     },
 
@@ -211,46 +163,70 @@ export default {
         fecha_limite: !this.formData.fecha_limite,
         descripcion: !this.formData.descripcion.trim()
       };
-      
+
       return !Object.values(this.errors).some(error => error);
     },
 
-    async submitForm() {
-      // Clear previous errors
-      this.error = null;
-      
-      // Validate form
-      if (!this.validateForm()) {
-        return;
-      }
+async submitForm() {
+  console.log('📤 Iniciando envío del formulario...');
+  console.log('📋 Datos del formulario:', this.formData);
 
-      this.submitting = true;
-      try {
-        // Validar que se haya seleccionado una herramienta
-        if (!this.formData.herramienta_id || !this.selectedHerramienta) {
-          throw new Error('Debe seleccionar una herramienta válida');
-        }
+  this.error = null;
 
-        const alertaData = {
-          herramienta_id: this.formData.herramienta_id,
-          tipo_alerta_id: this.formData.tipo_alerta_id,
-          prioridad_id: this.formData.prioridad_id,
-          fecha_limite: this.formData.fecha_limite,
-          descripcion: this.formData.descripcion,
-          estado_reparacion: 1 // Estado inicial (Pendiente)
-        };
+  if (!this.validateForm()) {
+    console.log('❌ Validación fallida, errores:', this.errors);
+    return;
+  }
 
-        await axios.post('/api/AlertaReparacion', alertaData);
-        this.submitSuccess = true;
-      } catch (error) {
-        console.error('Error al enviar el formulario:', error);
-        this.error = error.response?.data?.message || error.message || 'Error al enviar el reporte';
-      } finally {
-        this.submitting = false;
-      }
-    },
+  console.log('✅ Validación exitosa');
+
+  this.submitting = true;
+  try {
+    if (!this.formData.herramienta_id) {
+      throw new Error('Debe seleccionar una herramienta válida');
+    }
+
+    const alertaData = {
+      herramienta_id: parseInt(this.formData.herramienta_id),
+      tipo_alerta_id: parseInt(this.formData.tipo_alerta_id),
+      prioridad_id: parseInt(this.formData.prioridad_id),
+      fecha_limite: this.formData.fecha_limite,
+      descripcion: this.formData.descripcion.trim(),
+      estado_reparacion: 1
+    };
+
+    console.log('📡 Enviando datos de alerta:', alertaData);
+
+    const response = await axios.post('/api/AlertaReparacion', alertaData);
+
+    console.log('✅ Alerta creada exitosamente:', response.data);
+    this.submitSuccess = true;
+  } catch (error) {
+    console.error('❌ Error al enviar el formulario:', error);
+    console.error('📝 Detalles completos del error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      // Información adicional para debugging
+      config: error.config?.data
+    });
+    
+    // Mostrar mensaje específico del servidor
+    if (error.response?.data?.error) {
+      this.error = error.response.data.error;
+    } else {
+      this.error = error.message || 'Error al enviar el reporte';
+    }
+  } finally {
+    this.submitting = false;
+  }
+}
+    ,
 
     resetForm() {
+      console.log('🔄 Reseteando formulario...');
+
       this.formData = {
         herramienta_id: '',
         tipo_alerta_id: '',
@@ -265,11 +241,10 @@ export default {
         fecha_limite: false,
         descripcion: false
       };
-      this.selectedHerramienta = null;
-      this.herramientaSearch = '';
-      this.showHerramientasList = false;
       this.submitSuccess = false;
       this.error = null;
+
+      console.log('✅ Formulario reseteado');
     }
   }
 }
@@ -277,7 +252,7 @@ export default {
 
 <style scoped>
 .reportar-problema-container {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
   background-color: #fff;
@@ -326,6 +301,52 @@ export default {
   border-radius: 4px;
   font-size: 16px;
   transition: border-color 0.3s;
+  background-color: #fff;
+  color: #2c3e50;
+}
+
+/* Estilos específicos para select */
+.form-group select {
+  /* Remover estilos del navegador */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Color de fondo y texto */
+  background-color: #f8f9fa;
+  color: #495057;
+
+  /* Flecha personalizada */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* Estados de focus y hover para select */
+.form-group select:focus {
+  outline: none;
+  border-color: #6c757d;
+  background-color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+}
+
+.form-group select:hover {
+  border-color: #6c757d;
+  background-color: #fff;
+}
+
+/* Estilos para opciones del select */
+.form-group select option {
+  background-color: #fff;
+  color: #495057;
+  padding: 8px 12px;
+}
+
+.form-group select option:checked {
+  background-color: #6c757d;
+  color: #fff;
 }
 
 .form-group textarea {
@@ -333,11 +354,11 @@ export default {
   resize: vertical;
 }
 
-.form-group select:focus,
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #42b983;
+  border-color: #6c757d;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
 }
 
 .form-group.has-error select,
@@ -346,10 +367,30 @@ export default {
   border-color: #e74c3c;
 }
 
+.form-group.has-error select:focus,
+.form-group.has-error input:focus,
+.form-group.has-error textarea:focus {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 0.2rem rgba(231, 76, 60, 0.25);
+}
+
 .error-message {
   display: block;
   margin-top: 5px;
   color: #e74c3c;
+  font-size: 14px;
+}
+
+.search-select {
+  position: relative;
+}
+
+.selected-item {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  color: #495057;
   font-size: 14px;
 }
 
