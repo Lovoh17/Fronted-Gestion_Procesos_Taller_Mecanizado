@@ -433,17 +433,19 @@ export default {
 
 <style scoped>
 .maintenance-calendar {
+  max-width: auto;
   min-height: 100vh;
   background-color: #f8fafc;
   padding: 24px;
 }
+
 
 .header {
   margin-bottom: 32px;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: auto;
   margin: 0 auto;
 }
 

@@ -609,7 +609,7 @@ onUnmounted(() => {
 /* Estilos base mejorados */
 .dashboard-tecnico {
   padding: 24px;
-  max-width: 1600px;
+  max-width: auto;
   margin: 0 auto;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   min-height: 100vh;
