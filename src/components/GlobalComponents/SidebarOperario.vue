@@ -67,7 +67,7 @@ export default {
       },
       { 
         icon: 'warning', 
-        text: 'Reportes', 
+        text: 'Reportar Problema', 
         path: '/operario/reportes',
         badge: pendingIssues.value
       },
