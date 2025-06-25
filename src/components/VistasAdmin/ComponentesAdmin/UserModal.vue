@@ -90,6 +90,7 @@
                 <option value="1">Administrador</option>
                 <option value="2">Coordinador</option>
                 <option value="3">Empleado</option>
+                <option value="4">Tecnico</option>
               </select>
               <div v-if="errors.puesto_id" class="invalid-feedback">
                 {{ errors.puesto_id }}
