@@ -12,12 +12,7 @@
             <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
           </div>
         </div>
-        <div class="header-actions">
-          <button class="btn-modern btn-primary" @click="showAddUserModal = true">
-            <i class="fas fa-plus"></i>
-            <span>Nuevo Usuario</span>
-          </button>
-        </div>
+
       </div>
     </div>
 

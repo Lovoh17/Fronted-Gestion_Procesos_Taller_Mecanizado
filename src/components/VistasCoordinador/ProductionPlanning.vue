@@ -8,6 +8,8 @@
       </div>
     </div>
 
+
+
     <!-- Error -->
     <div v-else-if="error" class="error-container">
       <div class="error-content">
@@ -20,9 +22,26 @@
       </div>
     </div>
 
+
     <!-- Calendario -->
     <div v-else>
       <!-- Header -->
+
+      <div class="header-section">
+        <div class="header-content">
+          <div class="header-info">
+            <div class="header-icon">
+              <i class="fas fa-boxes-stacked"></i>
+            </div>
+            <div class="header-text">
+              <h1 class="header-title">Calendario de produccion</h1>
+              <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
+            </div>
+          </div>
+
+        </div>
+        
+      </div>
       <div class="header">
         <div class="header-left">
           <h1>Calendario de Pedidos</h1>
@@ -73,30 +92,20 @@
 
         <!-- Días del mes -->
         <div class="dias-mes">
-          <div 
-            v-for="(day, index) in diasCalendario" 
-            :key="index"
-            class="dia"
-            :class="{ 
-              'dia-vacio': !day, 
-              'dia-hoy': esHoy(day),
-              'dia-con-pedidos': day && getPedidosDelDia(day).length > 0
-            }"
-          >
+          <div v-for="(day, index) in diasCalendario" :key="index" class="dia" :class="{
+            'dia-vacio': !day,
+            'dia-hoy': esHoy(day),
+            'dia-con-pedidos': day && getPedidosDelDia(day).length > 0
+          }">
             <div v-if="day" class="dia-contenido">
               <div class="dia-numero" :class="{ 'hoy': esHoy(day) }">
                 {{ day }}
                 <span v-if="esHoy(day)" class="hoy-label">(Hoy)</span>
               </div>
-              
+
               <div class="pedidos-dia">
-                <div 
-                  v-for="pedido in getPedidosDelDia(day)" 
-                  :key="pedido.id"
-                  class="pedido-item"
-                  :class="estados[pedido.estado_id]?.class || 'estado-default'"
-                  :title="obtenerTooltip(pedido)"
-                >
+                <div v-for="pedido in getPedidosDelDia(day)" :key="pedido.id" class="pedido-item"
+                  :class="estados[pedido.estado_id]?.class || 'estado-default'" :title="obtenerTooltip(pedido)">
                   <div class="pedido-header">
                     <span class="pedido-codigo">{{ pedido.codigo_pedido }}</span>
                     <i :class="obtenerIconoEstado(pedido.estado_id)"></i>
@@ -104,8 +113,7 @@
                   <div class="pedido-proyecto">
                     {{ pedido.proyecto_asociado }}
                   </div>
-                  <div v-if="pedido.prioridad" class="pedido-prioridad"
-                       :class="prioridades[pedido.prioridad]?.class">
+                  <div v-if="pedido.prioridad" class="pedido-prioridad" :class="prioridades[pedido.prioridad]?.class">
                     Prioridad: {{ prioridades[pedido.prioridad]?.nombre }}
                   </div>
                 </div>
@@ -179,17 +187,17 @@ export default {
     const diasCalendario = computed(() => {
       const days = []
       const totalDays = ultimoDiaDelMes.value.getDate()
-      
+
       // Días vacíos al inicio
       for (let i = 0; i < primerDiaDeLaSemana.value; i++) {
         days.push(null)
       }
-      
+
       // Días del mes
       for (let day = 1; day <= totalDays; day++) {
         days.push(day)
       }
-      
+
       return days
     })
 
@@ -198,12 +206,12 @@ export default {
       try {
         loading.value = true
         error.value = null
-        
+
         const response = await fetch('/api/Pedido')
         if (!response.ok) {
           throw new Error(`Error al cargar los pedidos: ${response.status}`)
         }
-        
+
         const data = await response.json()
         pedidos.value = data
       } catch (err) {
@@ -216,8 +224,8 @@ export default {
 
     const navegarMes = (direccion) => {
       currentDate.value = new Date(
-        currentDate.value.getFullYear(), 
-        currentDate.value.getMonth() + direccion, 
+        currentDate.value.getFullYear(),
+        currentDate.value.getMonth() + direccion,
         1
       )
     }
@@ -229,33 +237,33 @@ export default {
     const esHoy = (day) => {
       if (!day) return false
       const today = new Date()
-      return day === today.getDate() && 
-             currentDate.value.getMonth() === today.getMonth() && 
-             currentDate.value.getFullYear() === today.getFullYear()
+      return day === today.getDate() &&
+        currentDate.value.getMonth() === today.getMonth() &&
+        currentDate.value.getFullYear() === today.getFullYear()
     }
 
     const getPedidosDelDia = (day) => {
       if (!day) return []
-      
+
       const fecha = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), day)
       const fechaStr = fecha.toISOString().split('T')[0]
-      
+
       return pedidos.value.filter(pedido => {
         const fechaSolicitud = new Date(pedido.fecha_solicitud).toISOString().split('T')[0]
         const fechaRequerida = pedido.fecha_requerida
         const fechaEstimada = pedido.fecha_estimada_entrega
-        const fechaCompletado = pedido.fecha_completado ? 
+        const fechaCompletado = pedido.fecha_completado ?
           new Date(pedido.fecha_completado).toISOString().split('T')[0] : null
-        
-        return fechaSolicitud === fechaStr || 
-               fechaRequerida === fechaStr || 
-               fechaEstimada === fechaStr ||
-               fechaCompletado === fechaStr
+
+        return fechaSolicitud === fechaStr ||
+          fechaRequerida === fechaStr ||
+          fechaEstimada === fechaStr ||
+          fechaCompletado === fechaStr
       })
     }
 
     const obtenerIconoEstado = (estadoId) => {
-      switch(estadoId) {
+      switch (estadoId) {
         case 1: return 'fas fa-clock'
         case 2: return 'fas fa-box'
         case 3: return 'fas fa-check-circle'
@@ -307,27 +315,93 @@ export default {
   box-sizing: border-box;
 }
 
+
 .calendario-container {
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   padding: 24px;
   background: white;
   min-height: 100vh;
 }
 
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
 /* Loading y Error */
-.loading-container, .error-container {
+.loading-container,
+.error-container {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 400px;
 }
 
-.loading-content, .error-content {
+.loading-content,
+.error-content {
   text-align: center;
 }
 
-.loading-icon, .error-icon {
+.loading-icon,
+.error-icon {
   font-size: 48px;
   margin-bottom: 16px;
 }
@@ -382,7 +456,8 @@ export default {
 }
 
 /* Botones */
-.btn, .btn-nav {
+.btn,
+.btn-nav {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
@@ -667,7 +742,8 @@ export default {
     align-items: stretch;
   }
 
-  .header-left, .header-right {
+  .header-left,
+  .header-right {
     justify-content: center;
     flex-wrap: wrap;
   }
@@ -685,7 +761,7 @@ export default {
   .resumen {
     grid-template-columns: 1fr;
   }
-  
+
   .estados-container {
     flex-direction: column;
     gap: 8px;

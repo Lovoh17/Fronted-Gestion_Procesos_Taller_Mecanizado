@@ -1,23 +1,22 @@
 <template>
   <div class="tool-blueprints-view">
-    <div class="header">
-      <div class="title-section">
-        <h2>
-          <i class="material-icons">architecture</i> 
-          Planos de Herramientas
-        </h2>
-        <p class="subtitle">Gestiona y visualiza los planos de herramientas del sistema</p>
+<div class="header-section">
+  <div class="header-content">
+    <div class="header-info">
+      <div class="header-icon">
+        <i class="fas fa-drafting-compass"></i>
       </div>
-      <div class="search-bar">
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          placeholder="Buscar por nombre de herramienta o código de plano..."
-          class="search-input"
-        >
-        <i class="material-icons search-icon">search</i>
+      <div class="header-text">
+        <h1 class="header-title">Planos del Taller</h1>
+        <p class="header-subtitle">Consulta y organiza los planos técnicos de proyectos y maquinados</p>
       </div>
     </div>
+    <div class="header-actions">
+      <!-- Puedes agregar botones como subir plano, ver historial, etc. -->
+    </div>
+  </div>
+</div>
+
 
     <div class="loading-state" v-if="loading">
       <div class="loading-spinner">
@@ -318,29 +317,71 @@ export default {
 /* Estilos base */
 .tool-blueprints-view {
   padding: 24px;
-  max-width: 1400px;
+  max-width: auto;
   margin: 0 auto;
   background-color: var(--background-color);
   min-height: 100vh;
 }
-
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  gap: 24px;
+.header-section {
+  margin-bottom: 2rem;
 }
 
-.title-section h2 {
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 2rem;
-  font-weight: 700;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 .title-section h2 .material-icons {
