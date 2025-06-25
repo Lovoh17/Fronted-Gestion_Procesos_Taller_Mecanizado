@@ -179,7 +179,7 @@ export default {
     // Configurar axios si no existe $api
     if (!this.$api) {
       this.api = axios.create({
-        baseURL: 'https://production.up.railway.app/',
+        baseURL: 'https://gestionprocesostallermecanizado-production.up.railway.app/',
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',
