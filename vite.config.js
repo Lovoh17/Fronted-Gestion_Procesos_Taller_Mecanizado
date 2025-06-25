@@ -20,6 +20,7 @@ export default defineConfig({
         secure: false
       }
     },
+    allowedHosts: ['fronted-gestionprocesostallermecanizado-production.up.railway.app'],
     fs: {
       allow: [
         // Directorio del proyecto actual (usa process.cwd() para obtener la ruta dinámicamente)
