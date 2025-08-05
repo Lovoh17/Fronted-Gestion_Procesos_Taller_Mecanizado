@@ -14,7 +14,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://gestionprocesostallermecanizado-production.up.railway.app.app', // URL de tu backend
+        //https://gestionprocesostallermecanizado-production.up.railway.app
+        target: 'http://localhost:3000/', // URL de tu backend
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false

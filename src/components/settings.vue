@@ -31,36 +31,36 @@
 
         <!-- Tabla de configuración para tipos -->
         <ConfigTable
-          :columns="currentColumns"
-          :data="currentData"
+          :columns="currentConfig.columns"
+          :data="currentConfig.data"
           :loading="loading"
-          @create="(data) => handleCreateTipo(activeTipoTab, data)"
-          @update="(data) => handleUpdateTipo(activeTipoTab, data)"
-          @delete="(id) => handleDeleteTipo(activeTipoTab, id)"
+          @create="(data) => handleGenericCRUD('create', activeTipoTab, data)"
+          @update="(data) => handleGenericCRUD('update', activeTipoTab, data)"
+          @delete="(id) => handleGenericCRUD('delete', activeTipoTab, id)"
         />
       </div>
 
       <!-- Contenido de Alertas -->
       <div v-if="activeTab === 'alertas'" class="alertas-section">
         <ConfigTable
-          :columns="columnsAlertas"
-          :data="alertas"
+          :columns="entityConfigs.alertas.columns"
+          :data="entityConfigs.alertas.data"
           :loading="loading"
-          @create="handleCreateAlerta"
-          @update="handleUpdateAlerta"
-          @delete="handleDeleteAlerta"
+          @create="(data) => handleGenericCRUD('create', 'alertas', data)"
+          @update="(data) => handleGenericCRUD('update', 'alertas', data)"
+          @delete="(id) => handleGenericCRUD('delete', 'alertas', id)"
         />
       </div>
 
       <!-- Contenido de Métodos de Pago -->
       <div v-if="activeTab === 'metodos-pago'" class="metodos-pago-section">
         <ConfigTable
-          :columns="columnsMetodosPago"
-          :data="metodosPago"
+          :columns="entityConfigs['metodos-pago'].columns"
+          :data="entityConfigs['metodos-pago'].data"
           :loading="loading"
-          @create="handleCreateMetodoPago"
-          @update="handleUpdateMetodoPago"
-          @delete="handleDeleteMetodoPago"
+          @create="(data) => handleGenericCRUD('create', 'metodos-pago', data)"
+          @update="(data) => handleGenericCRUD('update', 'metodos-pago', data)"
+          @delete="(id) => handleGenericCRUD('delete', 'metodos-pago', id)"
         />
       </div>
     </div>
@@ -82,195 +82,293 @@ export default {
     return {
       loading: false,
       activeTab: 'tipos',
+      activeTipoTab: 'tipo-herramientas',
+      
       tabs: [
         { key: 'tipos', label: 'Tipos' },
         { key: 'alertas', label: 'Alertas' },
         { key: 'metodos-pago', label: 'Métodos de Pago' }
       ],
       
-      // Subtabs para tipos
-      activeTipoTab: 'herramientas',
       tipoSubtabs: [
-        { key: 'herramientas', label: 'Herramientas' },
-        { key: 'mantenimiento', label: 'Mantenimiento' },
-        { key: 'transaccion', label: 'Transacción' },
-        { key: 'telefono', label: 'Teléfono' },
-        { key: 'unidad-medida', label: 'Unidad Medida' },
+        { key: 'tipo-herramientas', label: 'Tipos de Herramientas' },
+        { key: 'tipo-mantenimiento', label: 'Tipos de Mantenimiento' },
+        { key: 'tipo-transaccion', label: 'Tipos de Transacción' },
+        { key: 'tipo-telefono', label: 'Tipos de Teléfono' },
+        { key: 'unidad-medida', label: 'Unidades de Medida' },
         { key: 'turno', label: 'Turnos' }
       ],
       
-      // Datos
-      tiposHerramientas: [],
-      tiposMantenimiento: [],
-      tiposTransaccion: [],
-      tiposTelefono: [],
-      unidadesMedida: [],
-      turnos: [],
-      alertas: [],
-      metodosPago: [],
-      
-      // Endpoints API
-      apiEndpoints: {
-        herramientas: 'Tipo_Herramienta',
-        mantenimiento: 'Tipo_Mantenimiento',
-        transaccion: 'Tipos_Transaccion',
-        telefono: 'Tipo_Telefono',
-        'unidad-medida': 'Unidad_Medida',
-        turno: 'Turno',
-        alertas: 'AlertaReparacion',
-        'metodos-pago': 'MetodoPago'
-      },
-      
-      // Columnas actualizadas para incluir todos los campos necesarios
-      columnsHerramientas: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'caracteristicas_clave', label: 'Características Clave' }
-      ],
-      columnsMantenimiento: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' }
-      ],
-      columnsTransaccion: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'afecta_ingresos', label: 'Afecta Ingresos', type: 'boolean' },
-        { field: 'afecta_gastos', label: 'Afecta Gastos', type: 'boolean' },
-        { field: 'es_interno', label: 'Es Interno', type: 'boolean' }
-      ],
-      columnsTelefono: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' }
-      ],
-      columnsUnidadMedida: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'abreviatura', label: 'Abreviatura', required: true },
-        { field: 'tipo', label: 'Tipo' }
-      ],
-      columnsTurnos: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'hora_inicio', label: 'Hora Inicio', type: 'time', required: true },
-        { field: 'hora_fin', label: 'Hora Fin', type: 'time', required: true },
-        { field: 'dias_semana', label: 'Días de la Semana' }
-      ],
-      columnsAlertas: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'activo', label: 'Activo', type: 'boolean' },
-        { field: 'umbral', label: 'Umbral', type: 'number' }
-      ],
-      columnsMetodosPago: [
-        { field: 'id', label: 'ID', readonly: true },
-        { field: 'nombre', label: 'Nombre', required: true },
-        { field: 'descripcion', label: 'Descripción' },
-        { field: 'requiere_referencia', label: 'Requiere Referencia', type: 'boolean' }
-      ]
-    }
-  },
-  created() {
-    // Configurar axios si no existe $api
-    if (!this.$api) {
-      this.api = axios.create({
-        baseURL: 'https://gestionprocesostallermecanizado-production.up.railway.app/',
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json',
-          // Agregar token de autenticación si existe
-          ...(localStorage.getItem('token') && {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+      // Configuración centralizada para todas las entidades
+      entityConfigs: {
+        'tipo-herramientas': {
+          endpoint: 'Tipo_Herramienta',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' },
+            { field: 'caracteristicas_clave', label: 'Características Clave' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data, isCreate = false) => {
+            console.log('PrepareData para tipo-herramientas recibió:', data)
+            
+            // Create the base result object with required fields
+            const result = {
+              nombre: data.nombre,
+              descripcion: data.descripcion || '',
+              caracteristicas_clave: data.caracteristicas_clave || ''
+            }
+
+            // Only include ID if it exists and this is an update operation
+            if (!isCreate && data.id && data.id !== '' && data.id !== 0) {
+              result.id = data.id
+              console.log('Incluyendo ID para actualización:', data.id)
+            } else {
+              console.log('Omisión de ID para nuevo registro')
+            }
+
+            console.log('PrepareData para tipo-herramientas devuelve:', result)
+            return result
+          }
+        },
+        
+        'tipo-mantenimiento': {
+          endpoint: 'Tipo_Mantenimiento',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data, isCreate = false) => {
+            console.log('PrepareData para tipo-telefono recibió:', data)
+            
+            // Create the base result object with required fields
+            const result = {
+              nombre: data.nombre,
+              descripcion: data.descripcion || ''
+            }
+
+            // Para tipo-telefono, NUNCA incluir ID en creaciones porque
+            // el backend lo ignora y puede causar problemas
+            if (!isCreate && data.id && data.id !== '' && data.id !== 0) {
+              result.id = data.id
+              console.log('Incluyendo ID para actualización:', data.id)
+            } else {
+              console.log('Omisión de ID - el backend lo generará automáticamente')
+            }
+
+            console.log('PrepareData para tipo-telefono devuelve:', result)
+            return result
+          }
+        },
+        
+        'tipo-transaccion': {
+          endpoint: 'Tipos_Transaccion',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' },
+            { field: 'afecta_ingresos', label: 'Afecta Ingresos', type: 'boolean' },
+            { field: 'afecta_gastos', label: 'Afecta Gastos', type: 'boolean' },
+            { field: 'es_interno', label: 'Es Interno', type: 'boolean' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            descripcion: data.descripcion || '',
+            afecta_ingresos: Boolean(data.afecta_ingresos),
+            afecta_gastos: Boolean(data.afecta_gastos),
+            es_interno: Boolean(data.es_interno)
+          })
+        },
+        
+        'tipo-telefono': {
+          endpoint: 'Tipo_Telefono',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            descripcion: data.descripcion || ''
+          })
+        },
+        
+        'unidad-medida': {
+          endpoint: 'Unidad_Medida',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'abreviatura', label: 'Abreviatura', required: true },
+            { field: 'tipo', label: 'Tipo' }
+          ],
+          requiredFields: ['nombre', 'abreviatura'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            abreviatura: data.abreviatura,
+            tipo: data.tipo || ''
+          })
+        },
+        
+        turno: {
+          endpoint: 'Turno',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' },
+            { field: 'hora_inicio', label: 'Hora Inicio', type: 'time', required: true },
+            { field: 'hora_fin', label: 'Hora Fin', type: 'time', required: true },
+            { field: 'dias_semana', label: 'Días de la Semana' }
+          ],
+          requiredFields: ['nombre', 'hora_inicio', 'hora_fin'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            descripcion: data.descripcion || '',
+            hora_inicio: data.hora_inicio,
+            hora_fin: data.hora_fin,
+            dias_semana: data.dias_semana || ''
+          })
+        },
+        
+        alertas: {
+          endpoint: 'AlertaReparacion',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' },
+            { field: 'activo', label: 'Activo', type: 'boolean' },
+            { field: 'umbral', label: 'Umbral', type: 'number' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            descripcion: data.descripcion || '',
+            activo: Boolean(data.activo),
+            umbral: parseInt(data.umbral) || 0
+          })
+        },
+        
+        'metodos-pago': {
+          endpoint: 'MetodoPago',
+          data: [],
+          columns: [
+            { field: 'id', label: 'ID', readonly: true },
+            { field: 'nombre', label: 'Nombre', required: true },
+            { field: 'descripcion', label: 'Descripción' },
+            { field: 'requiere_referencia', label: 'Requiere Referencia', type: 'boolean' }
+          ],
+          requiredFields: ['nombre'],
+          prepareData: (data) => ({
+            nombre: data.nombre,
+            descripcion: data.descripcion || '',
+            requiere_referencia: Boolean(data.requiere_referencia)
           })
         }
-      })
-    } else {
-      this.api = this.$api
+      }
     }
-    
+  },
+  
+  created() {
+    this.initializeApi()
     this.loadAllData()
   },
+  
   computed: {
-    // Obtener las columnas correctas según el tipo seleccionado
-    currentColumns() {
-      switch (this.activeTipoTab) {
-        case 'herramientas':
-          return this.columnsHerramientas
-        case 'mantenimiento':
-          return this.columnsMantenimiento
-        case 'transaccion':
-          return this.columnsTransaccion
-        case 'telefono':
-          return this.columnsTelefono
-        case 'unidad-medida':
-          return this.columnsUnidadMedida
-        case 'turno':
-          return this.columnsTurnos
-        default:
-          return []
-      }
-    },
-    
-    // Obtener los datos actuales según el tipo seleccionado
-    currentData() {
-      switch (this.activeTipoTab) {
-        case 'herramientas':
-          return this.tiposHerramientas
-        case 'mantenimiento':
-          return this.tiposMantenimiento
-        case 'transaccion':
-          return this.tiposTransaccion
-        case 'telefono':
-          return this.tiposTelefono
-        case 'unidad-medida':
-          return this.unidadesMedida
-        case 'turno':
-          return this.turnos
-        default:
-          return []
-      }
+    currentConfig() {
+      return this.entityConfigs[this.activeTipoTab] || { columns: [], data: [] }
     }
   },
+  
   methods: {
+    initializeApi() {
+      if (!this.$api) {
+        this.api = axios.create({
+          baseURL: 'http://localhost:3000/',
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(localStorage.getItem('token') && {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            })
+          }
+        })
+      } else {
+        this.api = this.$api
+      }
+    },
+
+    // Nuevo método para generar ID consecutivo
+    generateNextId(entityKey) {
+      console.log('=== GENERANDO PRÓXIMO ID ===')
+      const config = this.entityConfigs[entityKey]
+      
+      if (!config || !config.data || config.data.length === 0) {
+        console.log('No hay datos existentes, retornando ID: 1')
+        return 1
+      }
+      
+      // Obtener todos los IDs existentes y encontrar el máximo
+      const existingIds = config.data
+        .map(item => parseInt(item.id))
+        .filter(id => !isNaN(id))
+        .sort((a, b) => b - a) // Ordenar descendente
+      
+      const maxId = existingIds.length > 0 ? existingIds[0] : 0
+      const nextId = maxId + 1
+      
+      console.log('IDs existentes:', existingIds)
+      console.log('ID máximo encontrado:', maxId)
+      console.log('Próximo ID a usar:', nextId)
+      
+      return nextId
+    },
+
+    // Método para verificar si el backend maneja IDs automáticamente
+    shouldGenerateId(entityKey) {
+      // Lista de entidades que manejan IDs automáticamente en el backend
+      // Basado en tu controlador, el backend NO usa el ID que enviamos,
+      // por lo que es mejor omitirlo y dejar que el backend/DB lo genere
+      const autoIdEntities = [
+        'tipo-telefono', 
+        'tipo-herramientas', 
+        'tipo-mantenimiento',
+        'tipo-transaccion',
+        'unidad-medida',
+        'turno',
+        'alertas',
+        'metodos-pago'
+      ]
+      
+      // Si está en la lista, el backend genera el ID automáticamente
+      return !autoIdEntities.includes(entityKey)
+    },
+    
     async loadAllData() {
       this.loading = true
       try {
-        const promises = [
-          this.api.get(this.apiEndpoints.herramientas),
-          this.api.get(this.apiEndpoints.mantenimiento),
-          this.api.get(this.apiEndpoints.transaccion),
-          this.api.get(this.apiEndpoints.telefono),
-          this.api.get(this.apiEndpoints['unidad-medida']),
-          this.api.get(this.apiEndpoints.turno),
-          this.api.get(this.apiEndpoints.alertas),
-          this.api.get(this.apiEndpoints['metodos-pago'])
-        ]
+        const promises = Object.keys(this.entityConfigs).map(async (key) => {
+          const config = this.entityConfigs[key]
+          try {
+            const response = await this.api.get(config.endpoint)
+            config.data = response.data || []
+          } catch (error) {
+            console.error(`Error cargando ${key}:`, error)
+            config.data = []
+          }
+        })
         
-        const [
-          herramientasRes, 
-          mantenimientoRes,
-          transaccionRes,
-          telefonoRes,
-          unidadMedidaRes,
-          turnoRes,
-          alertasRes,
-          metodosRes
-        ] = await Promise.all(promises)
-        
-        this.tiposHerramientas = herramientasRes.data || []
-        this.tiposMantenimiento = mantenimientoRes.data || []
-        this.tiposTransaccion = transaccionRes.data || []
-        this.tiposTelefono = telefonoRes.data || []
-        this.unidadesMedida = unidadMedidaRes.data || []
-        this.turnos = turnoRes.data || []
-        this.alertas = alertasRes.data || []
-        this.metodosPago = metodosRes.data || []
-        
+        await Promise.all(promises)
       } catch (error) {
         console.error('Error cargando configuración:', error)
         toast.error('Error al cargar la configuración')
@@ -279,96 +377,15 @@ export default {
       }
     },
     
-    // Preparar datos según el tipo antes de enviar
-    prepareDataForType(tipo, data) {
-      // Crear una copia del objeto para no modificar el original
-      const preparedData = { ...data }
-
-      if (!data.id || data.id === 0) {
-        delete preparedData.id
+    validateData(entityKey, data) {
+      const config = this.entityConfigs[entityKey]
+      if (!config) {
+        throw new Error(`Configuración no encontrada para ${entityKey}`)
       }
       
-      switch (tipo) {
-        case 'herramientas':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || '',
-            caracteristicas_clave: preparedData.caracteristicas_clave || ''
-          }
-        
-        case 'mantenimiento':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || ''
-          }
-        
-        case 'transaccion':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || '',
-            afecta_ingresos: Boolean(preparedData.afecta_ingresos),
-            afecta_gastos: Boolean(preparedData.afecta_gastos),
-            es_interno: Boolean(preparedData.es_interno)
-          }
-        
-        case 'telefono':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || ''
-          }
-        
-        case 'unidad-medida':
-          return {
-            nombre: preparedData.nombre,
-            abreviatura: preparedData.abreviatura,
-            tipo: preparedData.tipo || ''
-          }
-        
-        case 'turno':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || '',
-            hora_inicio: preparedData.hora_inicio,
-            hora_fin: preparedData.hora_fin,
-            dias_semana: preparedData.dias_semana || ''
-          }
-        
-        case 'alertas':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || '',
-            activo: Boolean(preparedData.activo),
-            umbral: parseInt(preparedData.umbral) || 0
-          }
-        
-        case 'metodos-pago':
-          return {
-            nombre: preparedData.nombre,
-            descripcion: preparedData.descripcion || '',
-            requiere_referencia: Boolean(preparedData.requiere_referencia)
-          }
-        
-        default:
-          return preparedData
-      }
-    },
-    
-    // Validar datos antes de enviar
-    validateData(tipo, data) {
-      const requiredFields = {
-        'herramientas': ['nombre'],
-        'mantenimiento': ['nombre'],
-        'transaccion': ['nombre'],
-        'telefono': ['nombre'],
-        'unidad-medida': ['nombre', 'abreviatura'],
-        'turno': ['nombre', 'hora_inicio', 'hora_fin'],
-        'alertas': ['nombre'],
-        'metodos-pago': ['nombre']
-      }
+      const requiredFields = config.requiredFields || ['nombre']
       
-      const required = requiredFields[tipo] || ['nombre']
-      
-      for (const field of required) {
+      for (const field of requiredFields) {
         if (!data[field] || data[field].toString().trim() === '') {
           throw new Error(`El campo ${field} es requerido`)
         }
@@ -376,194 +393,218 @@ export default {
       return true
     },
     
-    // Métodos para Tipos (CRUD completo)
-    async handleCreateTipo(tipo, data) {
+    prepareDataForEntity(entityKey, data, isCreate = false) {
+      console.log('=== PrepareDataForEntity ===')
+      console.log('EntityKey:', entityKey)
+      console.log('IsCreate:', isCreate)
+      console.log('Data original:', data)
+      
+      const config = this.entityConfigs[entityKey]
+      if (!config || !config.prepareData) {
+        throw new Error(`Configuración no encontrada para ${entityKey}`)
+      }
+      
+      const preparedData = { ...data }
+      
+      // Si es creación, decidir si generar ID o dejarlo al backend
+      if (isCreate) {
+        if (this.shouldGenerateId(entityKey)) {
+          const nextId = this.generateNextId(entityKey)
+          preparedData.id = nextId
+          console.log('ID generado para creación:', nextId)
+        } else {
+          // Eliminar ID para que el backend lo genere automáticamente
+          delete preparedData.id
+          console.log('ID omitido - el backend lo generará automáticamente')
+        }
+      } else {
+        // Para actualizar: mantener el ID solo si existe y no es 0
+        if (!data.id || data.id === 0 || data.id === '') {
+          delete preparedData.id
+          console.log('ID eliminado del preparedData para actualización')
+        }
+      }
+      
+      console.log('PreparedData antes de config.prepareData:', preparedData)
+      const result = config.prepareData(preparedData, isCreate)
+      console.log('Resultado final de prepareDataForEntity:', result)
+      
+      return result
+    },
+    
+    async loadDataForEntity(entityKey) {
       try {
-        this.validateData(tipo, data)
-        const preparedData = this.prepareDataForType(tipo, data)
+        const config = this.entityConfigs[entityKey]
+        if (!config) return
         
-        const endpoint = this.apiEndpoints[tipo]
-        const response = await this.api.post(endpoint, preparedData)
+        const response = await this.api.get(config.endpoint)
+        config.data = response.data || []
+      } catch (error) {
+        console.error(`Error cargando datos para ${entityKey}:`, error)
+      }
+    },
+    
+    // Método genérico para CRUD
+    async handleGenericCRUD(operation, entityKey, dataOrId) {
+      console.log(`=== CRUD ${operation.toUpperCase()} ===`)
+      console.log('EntityKey:', entityKey)
+      console.log('Data/ID:', dataOrId)
+      
+      try {
+        const config = this.entityConfigs[entityKey]
+        if (!config) {
+          throw new Error(`Configuración no encontrada para ${entityKey}`)
+        }
         
-        toast.success('Tipo creado correctamente')
-        await this.loadDataForType(tipo)
+        let result
+        switch (operation) {
+          case 'create':
+            result = await this.handleCreate(entityKey, dataOrId)
+            break
+          case 'update':
+            result = await this.handleUpdate(entityKey, dataOrId)
+            break
+          case 'delete':
+            result = await this.handleDelete(entityKey, dataOrId)
+            break
+        }
+        return result
+      } catch (error) {
+        console.error(`=== ERROR EN ${operation.toUpperCase()} ===`)
+        console.error('EntityKey:', entityKey)
+        console.error('Error completo:', error)
+        console.error('Response status:', error.response?.status)
+        console.error('Response data:', error.response?.data)
         
+        let errorMessage = `Error al ${this.getOperationLabel(operation)}`
+        
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        // Mensajes específicos para errores comunes
+        if (errorMessage.includes('llave duplicada') || errorMessage.includes('duplicate key')) {
+          errorMessage = 'Ya existe un registro con esos datos. Verifica que el nombre no esté repetido.'
+        } else if (errorMessage.includes('violates foreign key')) {
+          errorMessage = 'Error de relación con otros datos. Verifica que todos los campos sean válidos.'
+        } else if (error.response?.status === 500) {
+          errorMessage = 'Error interno del servidor. Revisa la consola del backend para más detalles.'
+        }
+        
+        toast.error(errorMessage)
+        throw error
+      }
+    },
+    
+    getOperationLabel(operation) {
+      const labels = {
+        'create': 'crear',
+        'update': 'actualizar', 
+        'delete': 'eliminar'
+      }
+      return labels[operation] || operation
+    },
+    
+    async handleCreate(entityKey, data) {
+      console.log('=== DEBUG CREAR ===')
+      console.log('1. Datos originales recibidos:', data)
+      console.log('2. EntityKey:', entityKey)
+      
+      // Refrescar los datos antes de crear para asegurar que tenemos la info más actualizada
+      await this.loadDataForEntity(entityKey)
+      
+      this.validateData(entityKey, data)
+      const preparedData = this.prepareDataForEntity(entityKey, data, true)
+      const config = this.entityConfigs[entityKey]
+      
+      console.log('3. Datos después de prepareData:', preparedData)
+      console.log('4. Endpoint a usar:', config.endpoint)
+      console.log('5. URL completa:', `${this.api.defaults.baseURL}${config.endpoint}`)
+      
+      // Crear los datos finales
+      const finalData = { ...preparedData }
+      console.log('6. Datos finales a enviar:', finalData)
+      console.log('7. JSON stringify:', JSON.stringify(finalData))
+      
+      try {
+        const response = await this.api.post(config.endpoint, finalData)
+        console.log('8. Respuesta exitosa:', response.data)
+        
+        const successMessage = finalData.id 
+          ? `${this.getEntityLabel(entityKey)} creado correctamente con ID ${finalData.id}`
+          : `${this.getEntityLabel(entityKey)} creado correctamente`
+        
+        toast.success(successMessage)
+        await this.loadDataForEntity(entityKey)
         return response
       } catch (error) {
-        console.error('Error creando tipo:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al crear tipo'
-        toast.error(errorMessage)
+        console.error('=== ERROR DETALLADO ===')
+        console.error('Status:', error.response?.status)
+        console.error('Status Text:', error.response?.statusText)
+        console.error('Response Data:', error.response?.data)
+        console.error('Response Headers:', error.response?.headers)
+        console.error('Request Config:', error.config)
+        console.error('Request Data:', error.config?.data)
+        console.error('Network Error:', error.code)
+        
+        // Información adicional para debugging
+        if (error.response?.status === 500) {
+          console.error('=== INFORMACIÓN ADICIONAL PARA ERROR 500 ===')
+          console.error('Esto es un error del servidor. Posibles causas:')
+          console.error('1. Campo requerido faltante en la base de datos')
+          console.error('2. Violación de constraint (unique, foreign key, etc.)')
+          console.error('3. Tipo de dato incorrecto')
+          console.error('4. Tabla no existe o estructura incorrecta')
+          console.error('5. Error en el endpoint del backend')
+          console.error('Datos enviados al servidor:', finalData)
+          console.error('Revisar logs del backend para más detalles')
+        }
+        
+        // Re-lanzar el error para que lo maneje el método padre
         throw error
       }
     },
     
-    async handleUpdateTipo(tipo, data) {
-      try {
-        this.validateData(tipo, data)
-        const preparedData = this.prepareDataForType(tipo, data)
-        
-        const endpoint = `${this.apiEndpoints[tipo]}/${data.id}`
-        const response = await this.api.put(endpoint, preparedData)
-        
-        toast.success('Tipo actualizado correctamente')
-        await this.loadDataForType(tipo)
-        
-        return response
-      } catch (error) {
-        console.error('Error actualizando tipo:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar tipo'
-        toast.error(errorMessage)
-        throw error
-      }
+    async handleUpdate(entityKey, data) {
+      this.validateData(entityKey, data)
+      const preparedData = this.prepareDataForEntity(entityKey, data, false) // Pasar false para indicar que es actualización
+      const config = this.entityConfigs[entityKey]
+      
+      console.log('Datos preparados para actualizar:', preparedData) // Debug
+      
+      const response = await this.api.put(`${config.endpoint}/${data.id}`, preparedData)
+      toast.success(`${this.getEntityLabel(entityKey)} actualizado correctamente`)
+      await this.loadDataForEntity(entityKey)
+      return response
     },
     
-    async handleDeleteTipo(tipo, id) {
-      try {
-        if (!confirm('¿Estás seguro de que deseas eliminar este tipo?')) {
-          return
-        }
-        
-        const endpoint = `${this.apiEndpoints[tipo]}/${id}`
-        await this.api.delete(endpoint)
-        
-        toast.success('Tipo eliminado correctamente')
-        await this.loadDataForType(tipo)
-      } catch (error) {
-        console.error('Error eliminando tipo:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar tipo'
-        toast.error(errorMessage)
-        throw error
+    async handleDelete(entityKey, id) {
+      if (!confirm(`¿Estás seguro de que deseas eliminar este ${this.getEntityLabel(entityKey).toLowerCase()}?`)) {
+        return
       }
+      
+      const config = this.entityConfigs[entityKey]
+      await this.api.delete(`${config.endpoint}/${id}`)
+      toast.success(`${this.getEntityLabel(entityKey)} eliminado correctamente`)
+      await this.loadDataForEntity(entityKey)
     },
     
-    // Cargar datos específicos por tipo
-    async loadDataForType(tipo) {
-      try {
-        const response = await this.api.get(this.apiEndpoints[tipo])
-        
-        switch (tipo) {
-          case 'herramientas':
-            this.tiposHerramientas = response.data || []
-            break
-          case 'mantenimiento':
-            this.tiposMantenimiento = response.data || []
-            break
-          case 'transaccion':
-            this.tiposTransaccion = response.data || []
-            break
-          case 'telefono':
-            this.tiposTelefono = response.data || []
-            break
-          case 'unidad-medida':
-            this.unidadesMedida = response.data || []
-            break
-          case 'turno':
-            this.turnos = response.data || []
-            break
-          case 'alertas':
-            this.alertas = response.data || []
-            break
-          case 'metodos-pago':
-            this.metodosPago = response.data || []
-            break
-        }
-      } catch (error) {
-        console.error(`Error cargando datos para ${tipo}:`, error)
+    getEntityLabel(entityKey) {
+      const labels = {
+        'tipo-herramientas': 'Tipo de herramienta',
+        'tipo-mantenimiento': 'Tipo de mantenimiento',
+        'tipo-transaccion': 'Tipo de transacción',
+        'tipo-telefono': 'Tipo de teléfono',
+        'unidad-medida': 'Unidad de medida',
+        'turno': 'Turno',
+        'alertas': 'Alerta',
+        'metodos-pago': 'Método de pago'
       }
-    },
-    
-    // Métodos para Alertas
-    async handleCreateAlerta(data) {
-      try {
-        this.validateData('alertas', data)
-        const preparedData = this.prepareDataForType('alertas', data)
-        
-        await this.api.post(this.apiEndpoints.alertas, preparedData)
-        toast.success('Alerta creada correctamente')
-        await this.loadDataForType('alertas')
-      } catch (error) {
-        console.error('Error creando alerta:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al crear alerta'
-        toast.error(errorMessage)
-      }
-    },
-    
-    async handleUpdateAlerta(data) {
-      try {
-        this.validateData('alertas', data)
-        const preparedData = this.prepareDataForType('alertas', data)
-        
-        await this.api.put(`${this.apiEndpoints.alertas}/${data.id}`, preparedData)
-        toast.success('Alerta actualizada correctamente')
-        await this.loadDataForType('alertas')
-      } catch (error) {
-        console.error('Error actualizando alerta:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar alerta'
-        toast.error(errorMessage)
-      }
-    },
-    
-    async handleDeleteAlerta(id) {
-      try {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta alerta?')) {
-          return
-        }
-        
-        await this.api.delete(`${this.apiEndpoints.alertas}/${id}`)
-        toast.success('Alerta eliminada correctamente')
-        await this.loadDataForType('alertas')
-      } catch (error) {
-        console.error('Error eliminando alerta:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar alerta'
-        toast.error(errorMessage)
-      }
-    },
-    
-    // Métodos para Métodos de Pago
-    async handleCreateMetodoPago(data) {
-      try {
-        this.validateData('metodos-pago', data)
-        const preparedData = this.prepareDataForType('metodos-pago', data)
-        
-        await this.api.post(this.apiEndpoints['metodos-pago'], preparedData)
-        toast.success('Método de pago creado correctamente')
-        await this.loadDataForType('metodos-pago')
-      } catch (error) {
-        console.error('Error creando método de pago:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al crear método de pago'
-        toast.error(errorMessage)
-      }
-    },
-    
-    async handleUpdateMetodoPago(data) {
-      try {
-        this.validateData('metodos-pago', data)
-        const preparedData = this.prepareDataForType('metodos-pago', data)
-        
-        await this.api.put(`${this.apiEndpoints['metodos-pago']}/${data.id}`, preparedData)
-        toast.success('Método de pago actualizado correctamente')
-        await this.loadDataForType('metodos-pago')
-      } catch (error) {
-        console.error('Error actualizando método de pago:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al actualizar método de pago'
-        toast.error(errorMessage)
-      }
-    },
-    
-    async handleDeleteMetodoPago(id) {
-      try {
-        if (!confirm('¿Estás seguro de que deseas eliminar este método de pago?')) {
-          return
-        }
-        
-        await this.api.delete(`${this.apiEndpoints['metodos-pago']}/${id}`)
-        toast.success('Método de pago eliminado correctamente')
-        await this.loadDataForType('metodos-pago')
-      } catch (error) {
-        console.error('Error eliminando método de pago:', error)
-        const errorMessage = error.response?.data?.error || error.message || 'Error al eliminar método de pago'
-        toast.error(errorMessage)
-      }
+      return labels[entityKey] || entityKey
     }
   }
 }
@@ -572,72 +613,48 @@ export default {
 <style scoped>
 .configuracion-view {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.container h1 {
-  color: #2c3e50;
-  margin-bottom: 30px;
-  font-size: 2rem;
-  font-weight: 600;
 }
 
 .main-tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 30px;
-  border-bottom: 2px solid #e9ecef;
-  padding-bottom: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
 .tab-button {
-  padding: 12px 24px;
+  padding: 10px 20px;
   border: none;
   background: transparent;
-  color: #6c757d;
-  font-weight: 500;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.3s ease;
-  font-size: 16px;
-}
-
-.tab-button:hover {
-  color: #495057;
-  background-color: #f8f9fa;
 }
 
 .tab-button.active {
-  color: #007bff;
   border-bottom-color: #007bff;
-  background-color: #fff;
+  color: #007bff;
+  font-weight: bold;
 }
 
 .sub-tabs {
   display: flex;
-  gap: 5px;
-  margin-bottom: 20px;
-  background: #f8f9fa;
-  padding: 10px;
-  border-radius: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
 }
 
 .subtab-button {
   padding: 8px 16px;
   border: 1px solid #dee2e6;
   background: white;
-  color: #6c757d;
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   font-size: 14px;
-}
-
-.subtab-button:hover {
-  background: #e9ecef;
-  color: #495057;
 }
 
 .subtab-button.active {
@@ -646,61 +663,7 @@ export default {
   border-color: #007bff;
 }
 
-.tipos-section,
-.alertas-section,
-.metodos-pago-section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .configuracion-view {
-    padding: 10px;
-  }
-  
-  .main-tabs {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .tab-button {
-    text-align: left;
-    padding: 10px 15px;
-  }
-  
-  .sub-tabs {
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .container h1 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-  }
-  
-  .tipos-section,
-  .alertas-section,
-  .metodos-pago-section {
-    padding: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .configuracion-view {
-    padding: 5px;
-  }
-  
-  .container h1 {
-    font-size: 1.3rem;
-  }
-  
-  .tipos-section,
-  .alertas-section,
-  .metodos-pago-section {
-    padding: 10px;
-  }
+.subtab-button:hover:not(.active) {
+  background: #e9ecef;
 }
 </style>

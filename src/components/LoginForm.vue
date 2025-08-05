@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+/*import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -86,5 +86,5 @@ const handleLogin = async () => {
   } finally {
     loading.value = false;
   }
-};
+};*/
 </script>
