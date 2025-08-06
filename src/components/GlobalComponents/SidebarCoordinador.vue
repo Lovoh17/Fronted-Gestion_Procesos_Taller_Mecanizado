@@ -121,18 +121,6 @@ export default {
 </script>
 
 <style scoped>
-/* Variables CSS - Asegúrate de tenerlas definidas en tu CSS global */
-:root {
-  --univo-primary-dark: #2c3e50;
-  --metal-light: #ecf0f1;
-  --gray-light: #bdc3c7;
-  --gray-lighter: #d5dbdb;
-  --gray-medium: #95a5a6;
-  --industrial-yellow: #ddaa11;
-  --danger: #e74c3c;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
 
 .sidebar {
   width: 240px;
