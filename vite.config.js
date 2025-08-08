@@ -1,11 +1,8 @@
 import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -23,11 +20,15 @@ export default defineConfig({
     },
     allowedHosts: ['fronted-gestionprocesostallermecanizado-production.up.railway.app'],
     fs: {
+      // Permitir acceso a archivos del proyecto
+      strict: false,
       allow: [
-        // Directorio del proyecto actual (usa process.cwd() para obtener la ruta dinámicamente)
-        process.cwd(),
-        // Directorio de node_modules
-        '/home/kev/Documents/GIT_HUB/Fronted-Gestion_Procesos_Taller_Mecanizado/node_modules'
+        // Directorio del proyecto actual
+        '.',
+        // Directorio padre (por si acaso)
+        '..',
+        // node_modules local
+        './node_modules'
       ]
     }
   },
