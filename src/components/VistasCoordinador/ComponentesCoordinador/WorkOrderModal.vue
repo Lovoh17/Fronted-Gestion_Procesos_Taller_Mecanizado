@@ -159,19 +159,12 @@
                     type="checkbox"
                     v-model="pedido.trabajadores_asignados"
                     :value="usuario.id"
-                    :disabled="!usuario.activo"
                   >
                   <span class="checkmark"></span>
                   <div class="worker-info">
                     <span class="worker-name">{{ usuario.nombres }} {{ usuario.apellidos }}</span>
                     <span class="worker-role">{{ usuario.puesto?.nombre || 'Sin puesto definido' }}</span>
                     <span class="worker-contact">{{ usuario.email }}</span>
-                    <span v-if="!usuario.activo" class="worker-status unavailable">
-                      No activo
-                    </span>
-                    <span v-else class="worker-status available">
-                      Disponible
-                    </span>
                   </div>
                 </label>
               </div>
@@ -224,60 +217,182 @@
                   <span class="material-icons">{{ getHerramientaIcon(herramienta.tipo) }}</span>
                   {{ herramienta.nombre }}
                 </span>
-                <span class="resource-details">
-                  ({{ herramienta.estado }})
-                  <span v-if="!herramienta.disponible" class="unavailable-text">No disponible</span>
-                </span>
               </label>
             </div>
           </div>
         </div>
         
-        <!-- Sección de materiales -->
+        <!-- Sección de materiales mejorada -->
         <div class="form-section">
           <h3 class="section-title">
             <span class="material-icons">inventory</span> Materiales Requeridos
           </h3>
           
-          <div class="materials-list">
-            <div class="material-item" v-for="(material, index) in pedido.materiales" :key="index">
-              <div class="material-row">
-                <select v-model="material.id" class="material-select">
-                  <option value="">Seleccionar material</option>
-                  <option v-for="mat in materialOptions" 
-                          :key="mat.id" 
-                          :value="mat.id"
-                          :disabled="isMaterialSelected(mat.id, index)">
-                    {{ mat.nombre }} ({{ mat.stock }} {{ mat.unidad }} disponibles)
-                  </option>
-                </select>
-                
+          <div class="loading-message" v-if="loadingMateriales">
+            Cargando materiales...
+          </div>
+          
+          <div v-else>
+            <!-- Filtros y búsqueda -->
+            <div class="materials-filter">
+              <div class="search-box">
                 <input 
-                  type="number" 
-                  v-model="material.cantidad" 
-                  min="1" 
-                  :max="getMaxQuantity(material.id)"
-                  placeholder="Cantidad"
-                  class="quantity-input"
+                  type="text" 
+                  v-model="searchMateriales" 
+                  placeholder="Buscar materiales..."
+                  class="search-input"
                 >
-                
-                <span class="material-unit">
-                  {{ getMaterialUnit(material.id) }}
-                </span>
-                
-                <button class="remove-btn" @click="removeMaterial(index)">
-                  <span class="material-icons">delete</span>
-                </button>
+                <span class="material-icons search-icon">search</span>
               </div>
               
-              <div v-if="materialError(material)" class="error-message">
-                {{ materialError(material) }}
+              <div class="filter-buttons">
+                <button 
+                  class="filter-btn"
+                  :class="{ active: filterStock === 'all' }"
+                  @click="filterStock = 'all'"
+                >
+                  Todos
+                </button>
+                <button 
+                  class="filter-btn"
+                  :class="{ active: filterStock === 'available' }"
+                  @click="filterStock = 'available'"
+                >
+                  Disponibles
+                </button>
+                <button 
+                  class="filter-btn"
+                  :class="{ active: filterStock === 'low' }"
+                  @click="filterStock = 'low'"
+                >
+                  Bajo stock
+                </button>
               </div>
             </div>
             
-            <button class="add-btn" @click="addMaterial">
-              <span class="material-icons">add</span> Agregar Material
-            </button>
+            <!-- Materiales disponibles -->
+            <div class="available-materials">
+              <div class="materials-grid">
+                <div 
+                  class="material-card" 
+                  v-for="material in filteredAvailableMaterials" 
+                  :key="material.id"
+                  :class="{ 
+                    'out-of-stock': material.stock <= 0,
+                    'low-stock': material.stock > 0 && material.stock <= material.stock_minimo,
+                    'selected': isMaterialSelected(material.id)
+                  }"
+                >
+                  <div class="material-info">
+                    <h5>{{ material.nombre }}</h5>
+                    <div class="material-meta">
+                      <span class="stock-info">
+                        <span class="material-icons" v-if="material.stock <= 0">block</span>
+                        <span class="material-icons" v-else-if="material.stock <= material.stock_minimo">warning</span>
+                        <span class="material-icons" v-else>check_circle</span>
+                        {{ material.stock }} {{ material.unidad }}
+                      </span>
+                      <span v-if="material.stock_minimo" class="min-stock">
+                        Mín: {{ material.stock_minimo }}
+                      </span>
+                    </div>
+                    <div class="material-description" v-if="material.descripcion">
+                      {{ truncateDescription(material.descripcion) }}
+                    </div>
+                  </div>
+                  
+                  <div class="material-actions" v-if="material.stock > 0">
+                    <div class="quantity-controls">
+                      <button 
+                        class="qty-btn" 
+                        @click="decrementMaterial(material)"
+                        :disabled="getAddedQuantity(material.id) <= 0"
+                      >
+                        -
+                      </button>
+                      <input 
+                        type="number" 
+                        :value="getAddedQuantity(material.id)"
+                        @input="updateMaterialQuantity(material, $event)"
+                        min="0"
+                        :max="material.stock"
+                        class="qty-input"
+                        :class="{ 'error': getAddedQuantity(material.id) > material.stock }"
+                      >
+                      <button 
+                        class="qty-btn" 
+                        @click="incrementMaterial(material)"
+                        :disabled="getAddedQuantity(material.id) >= material.stock"
+                      >
+                        +
+                      </button>
+                    </div>
+                    
+                    <button 
+                      class="add-material-btn"
+                      @click="toggleMaterial(material)"
+                      :class="{ 
+                        'added': isMaterialSelected(material.id),
+                        'disabled': getAddedQuantity(material.id) <= 0
+                      }"
+                    >
+                      {{ isMaterialSelected(material.id) ? 'Quitar' : 'Agregar' }}
+                    </button>
+                  </div>
+                  <div class="out-of-stock-message" v-else>
+                    <span class="material-icons">block</span> Agotado
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Lista de materiales seleccionados -->
+            <div class="selected-materials">
+              <div class="selected-header">
+                <h4>Materiales Seleccionados</h4>
+                <span class="total-items">{{ pedido.materiales.length }} material(es)</span>
+              </div>
+              
+              <div v-if="pedido.materiales.length === 0" class="empty-message">
+                <span class="material-icons">info</span>
+                <p>No hay materiales seleccionados</p>
+              </div>
+              
+              <div v-else class="selected-list">
+                <div 
+                  class="selected-item" 
+                  v-for="(material, index) in pedido.materiales" 
+                  :key="index"
+                >
+                  <div class="item-info">
+                    <span class="item-name">{{ getMaterialName(material.id) }}</span>
+                    <div class="item-details">
+                      <span class="item-qty">{{ material.cantidad }} {{ getMaterialUnit(material.id) }}</span>
+                      <span class="item-stock">
+                        (Stock: {{ getMaterialStock(material.id) }})
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="item-actions">
+                    <button 
+                      class="edit-btn"
+                      @click="editMaterialQuantity(material)"
+                      :title="`Editar cantidad de ${getMaterialName(material.id)}`"
+                    >
+                      <span class="material-icons">edit</span>
+                    </button>
+                    <button 
+                      class="remove-btn"
+                      @click="removeMaterial(index)"
+                      :title="`Eliminar ${getMaterialName(material.id)}`"
+                    >
+                      <span class="material-icons">delete</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -285,7 +400,7 @@
         <div class="form-section">
           <div class="form-group">
             <label>Notas Adicionales</label>
-            <textarea v-model="pedido.notas" rows="3"></textarea>
+            <textarea v-model="pedido.notas" rows="3" placeholder="Agregue cualquier información adicional relevante..."></textarea>
           </div>
         </div>
       </div>
@@ -321,7 +436,7 @@ export default {
         materiales: [],
         planos: [],
         notas: '',
-        estado_id: 1 // Estado inicial
+        estado_id: 1
       })
     },
     mode: {
@@ -341,12 +456,9 @@ export default {
         { id: 3, nombre: 'Mantenimiento' },
         { id: 4, nombre: 'Modificación' }
       ],
-      materialOptions: [
-        { id: 1, nombre: 'Acero inoxidable', stock: 150, unidad: 'kg' },
-        { id: 2, nombre: 'Tornillos M8', stock: 500, unidad: 'unidades' },
-        { id: 3, nombre: 'Pintura industrial', stock: 25, unidad: 'litros' },
-        { id: 4, nombre: 'Soldadura MIG', stock: 10, unidad: 'kg' }
-      ],
+      materialOptions: [],
+      loadingMateriales: false,
+      filterStock: 'all',
       
       // Estados de carga
       loadingUsuarios: false,
@@ -356,6 +468,7 @@ export default {
       // Búsqueda
       searchUsuarios: '',
       searchHerramientas: '',
+      searchMateriales: '',
       
       // Archivos nuevos
       newFiles: []
@@ -384,72 +497,83 @@ export default {
         herramienta.nombre.toLowerCase().includes(search) ||
         herramienta.tipo.toLowerCase().includes(search)
       );
+    },
+
+    filteredAvailableMaterials() {
+      let materials = this.materialOptions;
+      
+      // Aplicar filtro de búsqueda
+      if (this.searchMateriales) {
+        const search = this.searchMateriales.toLowerCase();
+        materials = materials.filter(material => 
+          material.nombre.toLowerCase().includes(search) ||
+          (material.descripcion && material.descripcion.toLowerCase().includes(search))
+        );
+      }
+      
+      // Aplicar filtro de stock
+      switch (this.filterStock) {
+        case 'available':
+          materials = materials.filter(m => m.stock > 0);
+          break;
+        case 'low':
+          materials = materials.filter(m => m.stock > 0 && m.stock <= (m.stock_minimo || 5));
+          break;
+        // 'all' no necesita filtro adicional
+      }
+      
+      return materials.sort((a, b) => {
+        // Ordenar primero los seleccionados
+        const aSelected = this.isMaterialSelected(a.id);
+        const bSelected = this.isMaterialSelected(b.id);
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        
+        // Luego por stock (disponibles primero)
+        if (a.stock > 0 && b.stock <= 0) return -1;
+        if (a.stock <= 0 && b.stock > 0) return 1;
+        
+        // Luego por stock bajo
+        const aLowStock = a.stock <= (a.stock_minimo || 5);
+        const bLowStock = b.stock <= (b.stock_minimo || 5);
+        if (aLowStock && !bLowStock) return -1;
+        if (!aLowStock && bLowStock) return 1;
+        
+        // Finalmente por nombre
+        return a.nombre.localeCompare(b.nombre);
+      });
     }
   },
   
   async mounted() {
-    // Probar diferentes endpoints hasta encontrar el correcto
     await this.loadUsuarios();
     await this.loadHerramientas();
+    await this.loadMateriales();
   },
   
   methods: {
     // Carga de datos desde API
     async loadUsuarios() {
       this.loadingUsuarios = true;
-      
-      // Lista de endpoints posibles a probar
-      const possibleEndpoints = [
-        '/Usuario/Puesto/3',
-        '/api/Usuario/Puesto/3', 
-        '/api/usuarios/puesto/3',
-        '/usuarios/puesto/3',
-        '/api/empleados',
-        '/empleados'
-      ];
-      
-      for (const endpoint of possibleEndpoints) {
-        try {
-          console.log(`Probando endpoint: ${endpoint}`);
-          
-          const response = await fetch(endpoint);
-          console.log(`${endpoint} - Status:`, response.status);
-          
-          if (response.ok) {
-            // Verificar que realmente sea JSON antes de parsearlo
-            const contentType = response.headers.get('content-type');
-            console.log(`${endpoint} - Content-Type:`, contentType);
-            
-            if (contentType && contentType.includes('application/json')) {
-              this.usuarios = await response.json();
-              console.log(`✅ Empleados cargados exitosamente desde ${endpoint}:`, this.usuarios);
-              this.loadingUsuarios = false;
-              return; // Salir del bucle si fue exitoso
-            } else {
-              console.warn(`${endpoint} - La respuesta no es JSON`);
-              const textResponse = await response.text();
-              console.log(`${endpoint} - Contenido:`, textResponse.substring(0, 100) + '...');
-            }
-          } else {
-            console.log(`${endpoint} - Error HTTP:`, response.status, response.statusText);
-          }
-        } catch (error) {
-          console.log(`${endpoint} - Error de conexión:`, error.message);
+      try {
+        const response = await fetch('/api/usuarios');
+        if (response.ok) {
+          this.usuarios = await response.json();
+        } else {
+          console.error('Error al cargar usuarios:', response.statusText);
+          // Datos de fallback
+          this.usuarios = this.getFallbackUsuarios();
         }
+      } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        this.usuarios = this.getFallbackUsuarios();
+      } finally {
+        this.loadingUsuarios = false;
       }
-      
-      // Si llegamos aquí, ningún endpoint funcionó
-      console.warn('🚨 Ningún endpoint de usuarios funcionó. Usando datos de fallback');
-      
-      // Mostrar notificación al usuario si existe el sistema de toast
-      if (this.$toast) {
-        this.$toast.warning('No se pudieron cargar los empleados desde el servidor. Usando datos de prueba.');
-      } else if (window.alert) {
-        console.warn('⚠️ API de empleados no disponible. Usando datos de prueba.');
-      }
-      
-      // Datos de fallback simulando empleados
-      this.usuarios = [
+    },
+    
+    getFallbackUsuarios() {
+      return [
         { 
           id: 1, 
           nombres: 'Juan Carlos', 
@@ -467,65 +591,86 @@ export default {
           puesto: { nombre: 'Mecánico Industrial' },
           telefono: '7890-5678',
           email: 'maria.gomez@empresa.com'
-        },
-        { 
-          id: 3, 
-          nombres: 'Carlos Alberto', 
-          apellidos: 'Ruiz Martínez', 
-          activo: false,
-          puesto: { nombre: 'Pintor Industrial' },
-          telefono: '7890-9012',
-          email: 'carlos.ruiz@empresa.com'
-        },
-        { 
-          id: 4, 
-          nombres: 'Ana Patricia', 
-          apellidos: 'López Hernández', 
-          activo: true,
-          puesto: { nombre: 'Montador de Estructuras' },
-          telefono: '7890-3456',
-          email: 'ana.lopez@empresa.com'
-        },
-        { 
-          id: 5, 
-          nombres: 'Roberto Miguel', 
-          apellidos: 'Vásquez Torres', 
-          activo: true,
-          puesto: { nombre: 'Operador CNC' },
-          telefono: '7890-7890',
-          email: 'roberto.vasquez@empresa.com'
         }
       ];
-      
-      this.loadingUsuarios = false;
     },
     
     async loadHerramientas() {
       this.loadingHerramientas = true;
       try {
-        const response = await fetch('/api/Herramienta');
+        const response = await fetch('/api/herramientas');
         if (response.ok) {
           this.herramientas = await response.json();
         } else {
           console.error('Error al cargar herramientas:', response.statusText);
-          // Datos de fallback
           this.herramientas = [
             { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true },
-            { id: 2, nombre: 'Equipo Soldadura MIG', tipo: 'Soldadura', estado: 'Operativo', disponible: true },
-            { id: 3, nombre: 'Horno Industrial', tipo: 'Horno', estado: 'Mantenimiento', disponible: false },
-            { id: 4, nombre: 'Taladro Industrial', tipo: 'Herramienta', estado: 'Operativo', disponible: true }
+            { id: 2, nombre: 'Equipo Soldadura MIG', tipo: 'Soldadura', estado: 'Operativo', disponible: true }
           ];
         }
       } catch (error) {
         console.error('Error al cargar herramientas:', error);
-        // Usar datos de fallback
         this.herramientas = [
-          { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true },
-          { id: 2, nombre: 'Equipo Soldadura', tipo: 'Soldadura', estado: 'Operativo', disponible: true }
+          { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true }
         ];
       } finally {
         this.loadingHerramientas = false;
       }
+    },
+    
+    async loadMateriales() {
+      this.loadingMateriales = true;
+      try {
+        const response = await fetch('/api/materiales');
+        if (response.ok) {
+          const data = await response.json();
+          this.materialOptions = data.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            descripcion: item.descripcion,
+            stock: item.cantidad_disponible || item.stock,
+            stock_minimo: item.stock_minimo || 5,
+            unidad: item.unidad_medida || 'unidades'
+          }));
+        } else {
+          console.error('Error al cargar materiales:', response.statusText);
+          this.materialOptions = this.getFallbackMateriales();
+        }
+      } catch (error) {
+        console.error('Error al cargar materiales:', error);
+        this.materialOptions = this.getFallbackMateriales();
+      } finally {
+        this.loadingMateriales = false;
+      }
+    },
+    
+    getFallbackMateriales() {
+      return [
+        { 
+          id: 1, 
+          nombre: 'Acero inoxidable 304', 
+          descripcion: 'Plancha de acero inoxidable grado 304 de 1/4" de espesor',
+          stock: 25, 
+          stock_minimo: 10,
+          unidad: 'planchas'
+        },
+        { 
+          id: 2, 
+          nombre: 'Tubo cuadrado 2x2', 
+          descripcion: 'Tubo cuadrado de acero al carbono 2"x2" calibre 14',
+          stock: 48, 
+          stock_minimo: 20,
+          unidad: 'metros'
+        },
+        { 
+          id: 3, 
+          nombre: 'Pintura epóxica negra', 
+          descripcion: 'Pintura industrial epóxica color negro, resistente a químicos',
+          stock: 0, 
+          stock_minimo: 5,
+          unidad: 'galones'
+        }
+      ];
     },
     
     // Métodos de validación y guardado
@@ -537,16 +682,14 @@ export default {
       if (this.validateForm()) {
         this.saving = true;
         try {
-          // Procesar archivos nuevos si los hay
           if (this.newFiles.length > 0) {
             await this.processNewFiles();
           }
           
-          // Emitir evento de guardado
           this.$emit('save', this.pedido);
         } catch (error) {
           console.error('Error al guardar:', error);
-          alert('Error al guardar la orden de trabajo');
+          this.showError('Error al guardar la orden de trabajo');
         } finally {
           this.saving = false;
         }
@@ -579,23 +722,29 @@ export default {
       
       // Validación de materiales
       this.pedido.materiales.forEach((mat, index) => {
-        if (!mat.id) {
-          errors.push(`Material #${index + 1}: Seleccione un material`);
+        const material = this.materialOptions.find(m => m.id === mat.id);
+        if (!material) {
+          errors.push(`Material #${index + 1}: Material no encontrado`);
         } else if (mat.cantidad <= 0) {
           errors.push(`Material #${index + 1}: Cantidad debe ser mayor a 0`);
-        } else {
-          const material = this.materialOptions.find(m => m.id === mat.id);
-          if (material && mat.cantidad > material.stock) {
-            errors.push(`Material #${index + 1}: Cantidad excede el stock disponible (${material.stock} ${material.unidad})`);
-          }
+        } else if (mat.cantidad > material.stock) {
+          errors.push(`Material #${index + 1}: Cantidad excede el stock disponible (${material.stock} ${material.unidad})`);
         }
       });
       
       if (errors.length > 0) {
-        alert('Errores de validación:\n' + errors.join('\n'));
+        this.showError('Errores de validación:\n' + errors.join('\n'));
         return false;
       }
       return true;
+    },
+    
+    showError(message) {
+      if (this.$toast) {
+        this.$toast.error(message);
+      } else {
+        alert(message);
+      }
     },
     
     // Métodos para archivos PDF
@@ -615,7 +764,7 @@ export default {
       );
       
       if (validFiles.length !== files.length) {
-        alert('Algunos archivos no son PDF o exceden el tamaño máximo de 10MB');
+        this.showError('Algunos archivos no son PDF o exceden el tamaño máximo de 10MB');
       }
       
       this.newFiles = [...this.newFiles, ...validFiles];
@@ -632,7 +781,7 @@ export default {
           nombre_archivo: file.name,
           tamaño: file.size,
           fecha_subida: new Date().toISOString(),
-          file: file // Mantener referencia para subir
+          file: file
         });
       });
       
@@ -644,7 +793,7 @@ export default {
     },
     
     async processNewFiles() {
-      // Aquí implementarías la subida real de archivos
+      // Implementación de subida de archivos
       const uploadPromises = this.pedido.planos
         .filter(plano => plano.file)
         .map(async (plano) => {
@@ -662,7 +811,7 @@ export default {
               const result = await response.json();
               plano.id = result.id;
               plano.url = result.url;
-              delete plano.file; // Remover referencia al archivo
+              delete plano.file;
             }
           } catch (error) {
             console.error('Error subiendo archivo:', error);
@@ -705,39 +854,122 @@ export default {
       return iconMap[tipo] || iconMap.default;
     },
     
-    // Métodos para materiales
-    addMaterial() {
-      this.pedido.materiales.push({ id: '', cantidad: 1 });
+    // Métodos para materiales (mejorados)
+    isMaterialSelected(materialId) {
+      return this.pedido.materiales.some(m => m.id === materialId);
+    },
+    
+    getAddedQuantity(materialId) {
+      const material = this.pedido.materiales.find(m => m.id === materialId);
+      return material ? material.cantidad : 0;
+    },
+    
+    incrementMaterial(material) {
+      const currentQty = this.getAddedQuantity(material.id);
+      if (currentQty < material.stock) {
+        this.updateMaterial(material, currentQty + 1);
+      }
+    },
+    
+    decrementMaterial(material) {
+      const currentQty = this.getAddedQuantity(material.id);
+      if (currentQty > 0) {
+        this.updateMaterial(material, currentQty - 1);
+      }
+    },
+    
+    updateMaterialQuantity(material, event) {
+      let newQty = parseInt(event.target.value) || 0;
+      newQty = Math.max(0, Math.min(newQty, material.stock));
+      this.updateMaterial(material, newQty);
+    },
+    
+    updateMaterial(material, quantity) {
+      const index = this.pedido.materiales.findIndex(m => m.id === material.id);
+      
+      if (index >= 0) {
+        if (quantity > 0) {
+          this.pedido.materiales[index].cantidad = quantity;
+        } else {
+          this.pedido.materiales.splice(index, 1);
+        }
+      } else if (quantity > 0) {
+        this.pedido.materiales.push({
+          id: material.id,
+          cantidad: quantity
+        });
+      }
+    },
+    
+    toggleMaterial(material) {
+      if (this.isMaterialSelected(material.id)) {
+        this.removeMaterialFromList(material.id);
+      } else {
+        this.addMaterialToList(material);
+      }
+    },
+    
+    addMaterialToList(material) {
+      const currentQty = this.getAddedQuantity(material.id);
+      if (currentQty <= 0) {
+        this.updateMaterial(material, 1);
+      }
+    },
+    
+    removeMaterialFromList(materialId) {
+      const index = this.pedido.materiales.findIndex(m => m.id === materialId);
+      if (index >= 0) {
+        this.pedido.materiales.splice(index, 1);
+      }
+    },
+    
+    editMaterialQuantity(material) {
+      const maxQty = this.getMaterialStock(material.id);
+      this.$prompt({
+        title: 'Editar cantidad',
+        message: `Ingrese la nueva cantidad para ${this.getMaterialName(material.id)} (máx: ${maxQty})`,
+        inputType: 'number',
+        inputValue: material.cantidad,
+        inputAttributes: {
+          min: 1,
+          max: maxQty
+        },
+        confirmText: 'Guardar',
+        cancelText: 'Cancelar'
+      }).then(newQty => {
+        newQty = parseInt(newQty);
+        if (newQty > 0 && newQty <= maxQty) {
+          this.updateMaterial(material, newQty);
+        } else {
+          this.showError(`La cantidad debe estar entre 1 y ${maxQty}`);
+        }
+      }).catch(() => {});
     },
     
     removeMaterial(index) {
       this.pedido.materiales.splice(index, 1);
     },
     
-    isMaterialSelected(materialId, currentIndex) {
-      return this.pedido.materiales.some((mat, index) => 
-        mat.id === materialId && index !== currentIndex
-      );
+    getMaterialName(materialId) {
+      const material = this.materialOptions.find(m => m.id === materialId);
+      return material ? material.nombre : 'Material desconocido';
     },
     
-    getMaxQuantity(materialId) {
+    getMaterialStock(materialId) {
       const material = this.materialOptions.find(m => m.id === materialId);
       return material ? material.stock : 0;
     },
     
     getMaterialUnit(materialId) {
       const material = this.materialOptions.find(m => m.id === materialId);
-      return material ? material.unidad : '';
+      return material ? material.unidad : 'unidades';
     },
     
-    materialError(material) {
-      if (material.id) {
-        const selectedMat = this.materialOptions.find(m => m.id === material.id);
-        if (selectedMat && material.cantidad > selectedMat.stock) {
-          return `Cantidad excede el stock disponible (${selectedMat.stock} ${selectedMat.unidad})`;
-        }
+    truncateDescription(text, maxLength = 60) {
+      if (text.length > maxLength) {
+        return text.substring(0, maxLength) + '...';
       }
-      return null;
+      return text;
     }
   }
 }
@@ -883,12 +1115,13 @@ export default {
 
 /* Estilos para búsqueda */
 .search-box {
+  position: relative;
   margin-bottom: 16px;
 }
 
 .search-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 40px;
   border: 1px solid #ced4da;
   border-radius: 6px;
   font-size: 14px;
@@ -899,6 +1132,14 @@ export default {
   outline: none;
   border-color: #42b983;
   background-color: white;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
 }
 
 /* Estilos para planos */
@@ -1099,29 +1340,10 @@ export default {
   margin-top: 2px;
 }
 
-.worker-status {
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-top: 4px;
-  display: inline-block;
-  width: fit-content;
-}
-
 .worker-contact {
   font-size: 0.8em;
   color: #6c757d;
   margin-top: 2px;
-}
-
-.worker-status.available {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.worker-status.unavailable {
-  background-color: #ffebee;
-  color: #c62828;
 }
 
 .assigned-preview {
@@ -1187,7 +1409,7 @@ export default {
 
 .resource-item {
   background-color: white;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e0e0e0;
   border-radius: 6px;
   padding: 12px;
   transition: all 0.2s;
@@ -1214,101 +1436,323 @@ export default {
   color: #495057;
 }
 
-.resource-details {
-  font-size: 0.8em;
-  color: #6c757d;
-  margin-top: 4px;
-  display: block;
-}
-
-.unavailable-text {
-  color: #dc3545;
-  font-weight: 500;
-}
-
-/* Estilos para materiales */
-.materials-list {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #fafafa;
-}
-
-.material-item {
+/* Estilos para la sección de materiales */
+.materials-filter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
-  background-color: white;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
+  gap: 16px;
 }
 
-.material-row {
+.filter-buttons {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.material-select {
-  flex: 2;
-  min-width: 0;
-}
-
-.quantity-input {
-  width: 100px;
-}
-
-.material-unit {
-  width: 80px;
-  font-size: 0.9em;
-  color: #6c757d;
-  text-align: center;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #dc3545;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.remove-btn:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 0.8em;
-  margin-left: 12px;
-  font-weight: 500;
-}
-
-.add-btn {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  background: none;
-  border: 2px dashed #42b983;
-  color: #42b983;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background-color: #f5f5f5;
+  border-radius: 4px;
   cursor: pointer;
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  width: 100%;
-  justify-content: center;
+  font-size: 0.85em;
   transition: all 0.2s;
 }
 
-.add-btn:hover {
-  background-color: rgba(66, 185, 131, 0.1);
-  border-style: solid;
+.filter-btn:hover {
+  background-color: #e9ecef;
+}
+
+.filter-btn.active {
+  background-color: #42b983;
+  color: white;
+  border-color: #42b983;
+}
+
+/* Materiales disponibles */
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.material-card {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.material-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.material-card.selected {
+  border-color: #42b983;
+  background-color: #f0f8f5;
+}
+
+.material-card.out-of-stock {
+  opacity: 0.7;
+  background-color: #f9f9f9;
+}
+
+.material-card.low-stock {
+  border-left: 4px solid #ffc107;
+}
+
+.material-info {
+  margin-bottom: 16px;
+}
+
+.material-info h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.05em;
+}
+
+.material-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85em;
+  margin-bottom: 8px;
+}
+
+.stock-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-info .material-icons {
+  font-size: 1.1em;
+}
+
+.min-stock {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.material-description {
+  font-size: 0.85em;
+  color: #666;
+  line-height: 1.4;
+}
+
+.material-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+}
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background-color: #f5f5f5;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 50px;
+  height: 32px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 0 5px;
+}
+
+.qty-input.error {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.add-material-btn {
+  padding: 8px 16px;
+  background-color: #42b983;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s;
+}
+
+.add-material-btn:hover:not(:disabled) {
+  background-color: #369870;
+  transform: translateY(-1px);
+}
+
+.add-material-btn.added {
+  background-color: #dc3545;
+}
+
+.add-material-btn.added:hover {
+  background-color: #c82333;
+}
+
+.add-material-btn.disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.out-of-stock-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc3545;
+  font-size: 0.9em;
+  margin-top: 12px;
+}
+
+/* Lista de materiales seleccionados */
+.selected-materials {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.selected-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.selected-header h4 {
+  margin: 0;
+  color: #333;
+}
+
+.total-items {
+  font-size: 0.9em;
+  color: #666;
+  background-color: #e9ecef;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+
+.empty-message .material-icons {
+  font-size: 2em;
+  margin-bottom: 8px;
+  color: #6c757d;
+}
+
+.selected-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  transition: all 0.2s;
+}
+
+.selected-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.item-details {
+  display: flex;
+  gap: 8px;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.item-stock {
+  color: #6c757d;
+}
+
+.item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-btn, .remove-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.edit-btn:hover {
+  background-color: #bbdefb;
+}
+
+.remove-btn {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.remove-btn:hover {
+  background-color: #ffcdd2;
 }
 
 /* Pie del modal */
@@ -1377,34 +1821,6 @@ export default {
     gap: 0;
   }
   
-  .resource-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .material-row {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .material-select {
-    width: 100%;
-    order: 1;
-  }
-  
-  .quantity-input {
-    width: 80px;
-    order: 2;
-  }
-  
-  .material-unit {
-    width: 60px;
-    order: 3;
-  }
-  
-  .remove-btn {
-    order: 4;
-  }
-  
   .workers-selection {
     flex-direction: column;
     gap: 16px;
@@ -1413,6 +1829,38 @@ export default {
   .workers-list,
   .assigned-preview {
     max-height: 250px;
+  }
+  
+  .materials-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-buttons {
+    justify-content: space-between;
+  }
+  
+  .filter-btn {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .materials-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .material-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .quantity-controls {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .add-material-btn {
+    width: 100%;
   }
 }
 
