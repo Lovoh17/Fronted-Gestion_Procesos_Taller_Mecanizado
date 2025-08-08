@@ -499,17 +499,7 @@ export default {
 </script>
 
 <style scoped>
-:root {
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
-  --danger-color: #e74c3c;
-  --warning-color: #f39c12;
-  --dark-color: #34495e;
-  --light-color: #ecf0f1;
-  --gray-color: #95a5a6;
-  --border-color: #003366;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+
 
 .header-section {
   margin-bottom: 2rem;

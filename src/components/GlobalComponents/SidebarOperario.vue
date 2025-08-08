@@ -119,19 +119,6 @@ export default {
 </script>
 
 <style scoped>
-/* Variables CSS para el tema UNIVO */
-:root {
-  --univo-primary-dark: #1a2332;
-  --metal-light: #e8eaed;
-  --gray-light: #aab4be;
-  --gray-lighter: #c4ccd4;
-  --gray-medium: #8a94a0;
-  --industrial-yellow: #ddaa11;
-  --danger: #e74c3c;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-dark: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
 .sidebar {
   width: 240px;
   height: 100vh;

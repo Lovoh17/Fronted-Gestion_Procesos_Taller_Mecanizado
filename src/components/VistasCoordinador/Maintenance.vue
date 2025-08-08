@@ -2,7 +2,7 @@
   <div class="container">
     <!-- Encabezado y controles -->
     <div class="header">
-      <h2>Gestión de Mantenimientos</h2>
+      <h2>Gestión de Mantenimientos</h2>sdsdsd
       <div class="controls">
         <input 
           type="text" 
