@@ -1,45 +1,81 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
-    <div class="sidebar-header">
-      <a href="#" class="sidebar-logo">
-        <span class="material-icons sidebar-logo-icon sidebar-collapse-control" @click="toggleSidebar">factory</span>
-        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial</span></span>
-      </a>
-      <div class="sidebar-collapse-control" @click="toggleSidebar">
-        <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
-      </div>
-    </div>
-    
-    <div class="sidebar-content">
-      <nav class="sidebar-nav">
-        <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
-        <router-link 
-          v-for="(item, index) in navItems" 
-          :key="index" 
-          :to="item.path" 
-          class="nav-item" 
-          :class="{ active: isRouteActive(item.path) }"
+  <VaSidebar 
+    v-model="isCollapsed"
+    :width="sidebarWidth"
+    :minimized-width="minimizedWidth"
+    color="primary"
+    class="univo-sidebar"
+  >
+    <!-- Header -->
+    <template #header>
+      <VaSidebarItem class="sidebar-header">
+        <div class="sidebar-logo" @click="toggleSidebar">
+          <VaIcon 
+            name="factory" 
+            size="2rem"
+            color="warning"
+            class="sidebar-logo-icon"
+          />
+          <div v-if="!isCollapsed" class="logo-text">
+            UNIVO<span class="logo-accent">Industrial</span>
+          </div>
+        </div>
+        <VaButton 
+          preset="plain"
+          :icon="isCollapsed ? 'menu' : 'chevron_left'"
+          color="secondary"
+          size="small"
+          class="collapse-button"
+          @click="toggleSidebar"
+        />
+      </VaSidebarItem>
+    </template>
+
+    <!-- Content -->
+    <template #content>
+      <VaSidebarItemGroup>
+        <VaSidebarItemTitle v-if="!isCollapsed" class="nav-title">
+          MENÚ PRINCIPAL
+        </VaSidebarItemTitle>
+        
+        <VaSidebarItem
+          v-for="(item, index) in navItems"
+          :key="index"
+          :to="item.path"
+          :active="isRouteActive(item.path)"
+          class="nav-item"
           @click="setActiveItem(index)"
-          :title="isCollapsed ? item.text : ''"
         >
-          <span class="material-icons icon-wrapper">{{ item.icon }}</span>
-          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-          <span 
-            v-if="!isCollapsed && item.badge !== null" 
-            class="nav-badge"
-            :class="{ 'badge-danger': item.badge > 0 }"
-          >
-            {{ item.badge > 0 ? item.badge : '' }}
-          </span>
-          <span v-if="isCollapsed && item.badge !== null" class="collapsed-badge">{{ item.badge }}</span>
-        </router-link>
-      </nav>
-      
-      <div class="sidebar-footer" v-if="!isCollapsed">
+          <template #icon>
+            <VaIcon 
+              :name="item.icon" 
+              size="1.4rem"
+              class="nav-icon"
+            />
+          </template>
+          
+          <template #default>
+            <span class="nav-text">{{ item.text }}</span>
+          </template>
+          
+          <template #append v-if="item.badge && item.badge > 0">
+            <VaBadge 
+              :text="item.badge.toString()"
+              color="danger"
+              class="nav-badge"
+            />
+          </template>
+        </VaSidebarItem>
+      </VaSidebarItemGroup>
+    </template>
+
+    <!-- Footer -->
+    <template #footer>
+      <VaSidebarItem v-if="!isCollapsed" class="sidebar-footer">
         <div class="company-brand">UNIVO INDUSTRIAL</div>
-      </div>
-    </div>
-  </aside>
+      </VaSidebarItem>
+    </template>
+  </VaSidebar>
 </template>
 
 <script>
@@ -103,13 +139,17 @@ export default {
       }
     ])
     
+    // Computed properties para las dimensiones del sidebar
+    const sidebarWidth = computed(() => '240px')
+    const minimizedWidth = computed(() => '80px')
+    
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
     }
     
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
-      // Opcional: Guardar preferencia en localStorage
+      // Guardar preferencia en localStorage
       localStorage.setItem('sidebarCollapsed', isCollapsed.value)
     }
     
@@ -132,6 +172,8 @@ export default {
       isCollapsed,
       activeItem,
       navItems,
+      sidebarWidth,
+      minimizedWidth,
       isRouteActive,
       toggleSidebar,
       setActiveItem
@@ -139,3 +181,123 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.univo-sidebar {
+  background: linear-gradient(180deg, var(--univo-primary-dark), var(--univo-primary-dark));
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-dark);
+}
+
+.sidebar-header {
+  padding: 1.8rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 80px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--metal-light);
+}
+
+.sidebar-logo:hover {
+  color: var(--industrial-yellow);
+  transform: translateX(3px);
+}
+
+.sidebar-logo-icon {
+  background: rgba(221, 170, 17, 0.1);
+  padding: 8px;
+  border-radius: 12px;
+  margin-right: 0.8rem;
+}
+
+.logo-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--metal-light);
+}
+
+.logo-accent {
+  color: var(--industrial-yellow);
+  font-weight: 700;
+}
+
+.collapse-button {
+  color: var(--metal-light);
+}
+
+.nav-title {
+  color: var(--gray-light);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  padding: 0.8rem 0;
+  margin-top: 1rem;
+}
+
+.nav-item {
+  margin: 0.3rem 0;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.nav-item:hover {
+  background: rgba(221, 170, 17, 0.1);
+  transform: translateX(5px);
+}
+
+.nav-item.active {
+  background: rgba(52, 152, 219, 0.2);
+  border-left: 4px solid var(--industrial-yellow);
+  font-weight: 500;
+}
+
+.nav-icon {
+  color: var(--gray-lighter);
+}
+
+.nav-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--gray-lighter);
+}
+
+.nav-badge {
+  background-color: var(--danger);
+  color: white;
+}
+
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.company-brand {
+  font-size: 0.8rem;
+  color: var(--gray-medium);
+  text-align: center;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .univo-sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .univo-sidebar:not(.va-sidebar--minimized) {
+    transform: translateX(0);
+    width: 280px;
+  }
+}
+</style>
