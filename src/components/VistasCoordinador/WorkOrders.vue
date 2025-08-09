@@ -1,6 +1,5 @@
 <template>
   <div class="work-orders-page" :class="{ 'dark-mode': $root.darkMode }">
-
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">

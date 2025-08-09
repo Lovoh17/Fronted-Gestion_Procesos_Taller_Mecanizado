@@ -1,235 +1,420 @@
 <template>
-  <div class="modal-overlay" @click.self="close">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3>{{ departamento.id ? 'Editar Departamento' : 'Detalles de Departamento' }}</h3>
-        <va-button  @click="close"    icon="times">
-        
-          
-        
-      </va-button>
+  <VaModal 
+    :model-value="true" 
+    :title="isEditing ? 'Editar Departamento' : 'Nuevo Departamento'" 
+    size="large"
+    :close-button="!loading" 
+    :no-outside-dismiss="loading" 
+    hide-default-actions 
+    @close="closeModal"
+  >
+    <form @submit.prevent="submitForm">
+      <div class="department-form">
+        <!-- Información Principal -->
+          <VaCardContent>
+            <div class="form-row">
+              <VaInput 
+                v-model="form.codigo" 
+                label="Código *" 
+                placeholder="Ej: TEC, ADM, PROD"
+                :error="!!errors.codigo"
+                :error-messages="errors.codigo"
+                class="form-field"
+                maxlength="10"
+                required 
+              />
+              
+              <VaInput 
+                v-model="form.nombre" 
+                label="Nombre *" 
+                placeholder="Nombre del departamento"
+                :error="!!errors.nombre"
+                :error-messages="errors.nombre"
+                class="form-field"
+                required 
+              />
+            </div>
+            
+            <div class="form-row">
+              <VaInput 
+                v-model="form.responsable" 
+                label="Responsable *" 
+                placeholder="Nombre del responsable"
+                :error="!!errors.responsable"
+                :error-messages="errors.responsable"
+                class="form-field"
+                required 
+              />
+              
+              <VaSelect 
+                v-model="form.estado" 
+                label="Estado *"
+                :options="estadoOptions"
+                class="form-field"
+                required
+              />
+            </div>
+            
+            <VaTextarea 
+              v-model="form.descripcion" 
+              label="Descripción" 
+              placeholder="Descripción del departamento (opcional)"
+              :error="!!errors.descripcion"
+              :error-messages="errors.descripcion"
+              :min-rows="3"
+              :max-rows="6"
+            />
+          </VaCardContent>
+
+        <!-- Información Adicional -->
+        <VaCard class="form-section" v-if="isEditing">
+          <VaCardTitle>Información Adicional</VaCardTitle>
+          <VaCardContent>
+            <div class="form-row info-row">
+              <div class="info-item">
+                <VaIcon name="calendar_today" color="primary" />
+                <div class="info-content">
+                  <span class="info-label">Fecha de Creación:</span>
+                  <span class="info-value">{{ formatDate(departamento.created_at) }}</span>
+                </div>
+              </div>
+              
+              <div class="info-item" v-if="departamento.updated_at">
+                <VaIcon name="update" color="info" />
+                <div class="info-content">
+                  <span class="info-label">Última Actualización:</span>
+                  <span class="info-value">{{ formatDate(departamento.updated_at) }}</span>
+                </div>
+              </div>
+            </div>
+          </VaCardContent>
+        </VaCard>
       </div>
-      
-      <div class="modal-body">
-        <form @submit.prevent="save">
-          <div class="form-group">
-            <label>Código</label>
-            <input type="text" v-model="formData.codigo" class="form-control" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Nombre</label>
-            <input type="text" v-model="formData.nombre" class="form-control" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Responsable</label>
-            <input type="text" v-model="formData.responsable" class="form-control" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Estado</label>
-            <select v-model="formData.estado" class="form-control" required>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>Descripción</label>
-            <textarea v-model="formData.descripcion" class="form-control" rows="3"></textarea>
-          </div>
-          
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="close">
-              Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="loading">
-              <span v-if="loading">
-                <i class="fas fa-spinner fa-spin"></i> Guardando...
-              </span>
-              <span v-else>
-                <i class="fas fa-save"></i> Guardar
-              </span>
-            </button>
-          </div>
-        </form>
+    </form>
+
+    <template #footer>
+      <div class="form-actions">
+        <VaButton preset="secondary" @click="closeModal" :disabled="loading">
+          <VaIcon name="close" class="mr-1" />
+          Cancelar
+        </VaButton>
+        
+        <VaButton 
+          @click="submitForm" 
+          :disabled="loading || !isFormValid" 
+          :loading="loading" 
+          color="primary"
+        >
+          <VaIcon :name="isEditing ? 'edit' : 'add'" class="mr-1" />
+          {{ isEditing ? 'Actualizar' : 'Crear' }} Departamento
+        </VaButton>
       </div>
-    </div>
-  </div>
+    </template>
+  </VaModal>
 </template>
 
-<script>
-export default {
-  props: {
-    departamento: {
-      type: Object,
-      default: () => ({})
-    }
+<script setup>
+import { ref, computed, watch } from 'vue'
+
+const props = defineProps({
+  departamento: {
+    type: Object,
+    default: () => ({})
   },
-  
-  data() {
-    return {
-      formData: {
-        codigo: '',
-        nombre: '',
-        responsable: '',
-        estado: 'activo',
-        descripcion: ''
-      },
-      loading: false
+  loading: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['close', 'save'])
+
+// Data
+const form = ref({
+  codigo: '',
+  nombre: '',
+  responsable: '',
+  estado: 'activo',
+  descripcion: ''
+})
+
+const errors = ref({})
+
+// Options para el select de estado
+const estadoOptions = [
+  { text: 'Activo', value: 'activo' },
+  { text: 'Inactivo', value: 'inactivo' }
+]
+
+// Computed
+const isEditing = computed(() => {
+  return props.departamento && props.departamento.id
+})
+
+const isFormValid = computed(() => {
+  return form.value.codigo.trim() &&
+         form.value.nombre.trim() &&
+         form.value.responsable.trim() &&
+         form.value.estado
+})
+
+// Watchers
+watch(() => props.departamento, (newDepartamento) => {
+  if (newDepartamento && newDepartamento.id) {
+    // Cargar datos para edición
+    form.value = {
+      codigo: newDepartamento.codigo || '',
+      nombre: newDepartamento.nombre || '',
+      responsable: newDepartamento.responsable || '',
+      estado: newDepartamento.estado || 'activo',
+      descripcion: newDepartamento.descripcion || ''
     }
-  },
+  } else {
+    // Resetear formulario para nuevo departamento
+    resetForm()
+  }
+}, { immediate: true })
+
+// Methods
+const validateForm = () => {
+  errors.value = {}
+
+  // Validar código
+  if (!form.value.codigo.trim()) {
+    errors.value.codigo = 'El código es requerido'
+  } else if (form.value.codigo.length > 10) {
+    errors.value.codigo = 'El código no puede exceder 10 caracteres'
+  } else if (!/^[A-Z0-9]+$/.test(form.value.codigo.trim())) {
+    errors.value.codigo = 'El código solo debe contener letras mayúsculas y números'
+  }
+
+  // Validar nombre
+  if (!form.value.nombre.trim()) {
+    errors.value.nombre = 'El nombre es requerido'
+  } else if (form.value.nombre.length > 100) {
+    errors.value.nombre = 'El nombre no puede exceder 100 caracteres'
+  }
+
+  // Validar responsable
+  if (!form.value.responsable.trim()) {
+    errors.value.responsable = 'El responsable es requerido'
+  } else if (form.value.responsable.length > 100) {
+    errors.value.responsable = 'El nombre del responsable no puede exceder 100 caracteres'
+  }
+
+  // Validar descripción (opcional pero con límite)
+  if (form.value.descripcion && form.value.descripcion.length > 500) {
+    errors.value.descripcion = 'La descripción no puede exceder 500 caracteres'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+
+const submitForm = () => {
+  if (!validateForm()) {
+    return
+  }
+
+  const departamentoData = {
+    codigo: form.value.codigo.trim().toUpperCase(),
+    nombre: form.value.nombre.trim(),
+    responsable: form.value.responsable.trim(),
+    estado: form.value.estado,
+    descripcion: form.value.descripcion.trim() || null
+  }
+
+  // Agregar ID si estamos editando
+  if (isEditing.value) {
+    departamentoData.id = props.departamento.id
+  }
+
+  emit('save', departamentoData)
+}
+
+const closeModal = () => {
+  emit('close')
+}
+
+const resetForm = () => {
+  form.value = {
+    codigo: '',
+    nombre: '',
+    responsable: '',
+    estado: 'activo',
+    descripcion: ''
+  }
+  errors.value = {}
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
   
-  watch: {
-    departamento: {
-      immediate: true,
-      handler(newVal) {
-        if (newVal && newVal.id) {
-          this.formData = {
-            codigo: newVal.codigo || '',
-            nombre: newVal.nombre || '',
-            responsable: newVal.responsable || '',
-            estado: newVal.estado || 'activo',
-            descripcion: newVal.descripcion || ''
-          };
-        }
-      }
-    }
-  },
-  
-  methods: {
-    close() {
-      this.$emit('close');
-    },
-    
-    save() {
-      this.loading = true;
-      this.$emit('save', this.formData);
-      this.loading = false;
-    }
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch (error) {
+    return 'Fecha inválida'
   }
 }
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+/* Estilos para el formulario de departamento */
+.department-form {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.modal-container {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.form-section {
+  border: 1px solid var(--va-background-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
-.modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  color: #6c757d;
-}
-
-.close-btn:hover {
-  color: #495057;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.form-control {
+.form-field {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 1rem;
 }
 
-.form-control:focus {
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+/* Estilos para la información adicional */
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
 }
 
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--va-background-element);
+  border-radius: 0.375rem;
+  border: 1px solid var(--va-background-border);
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--va-text-primary);
+  opacity: 0.7;
+}
+
+.info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--va-text-primary);
+}
+
+/* Estilos para las acciones del formulario */
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+/* Animaciones y transiciones */
+.form-section {
+  transition: all 0.3s ease;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-  color: white;
+.form-section:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary:hover {
-  background-color: #0069d9;
-  border-color: #0062cc;
+.info-item {
+  transition: all 0.2s ease;
 }
 
-.btn-primary:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+.info-item:hover {
+  background-color: var(--va-background-secondary);
+  transform: translateY(-1px);
 }
 
-.btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
-  color: white;
+/* Responsive design */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .form-actions .va-button {
+    width: 100%;
+  }
+  
+  .info-row {
+    gap: 0.5rem;
+  }
+  
+  .info-item {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
 }
 
-.btn-secondary:hover {
-  background-color: #5a6268;
-  border-color: #545b62;
+@media (max-width: 480px) {
+  .department-form {
+    gap: 1rem;
+  }
+  
+  .form-row {
+    gap: 0.75rem;
+  }
+}
+
+/* Estilos para campos con error */
+.form-field.va-input--error {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Mejoras visuales */
+.va-card__title {
+  font-weight: 600;
+  color: var(--va-primary);
+  border-bottom: 2px solid var(--va-background-border);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.va-modal__content {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Iconos en botones */
+.mr-1 {
+  margin-right: 0.25rem;
 }
 </style>

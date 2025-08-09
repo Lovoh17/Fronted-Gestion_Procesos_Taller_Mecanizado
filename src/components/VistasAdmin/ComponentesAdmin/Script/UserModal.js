@@ -11,6 +11,8 @@ export default {
       default: false
     }
   },
+  
+  emits: ['close', 'save'],
 
   data() {
     return {
@@ -108,6 +110,11 @@ export default {
         turno_id: this.form.turno_id,
         es_subcontratado: this.form.es_subcontratado
       };
+      
+      // Agregar id si estamos editando
+      if (this.isEditing) {
+        userData.id = this.user.id;
+      }
 
       // Solo incluir password si se está modificando o es un nuevo usuario
       if ((this.isEditing && this.isPasswordModified) || !this.isEditing) {
