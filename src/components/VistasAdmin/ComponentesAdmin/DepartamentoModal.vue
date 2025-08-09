@@ -3,9 +3,11 @@
     <div class="modal-container">
       <div class="modal-header">
         <h3>{{ departamento.id ? 'Editar Departamento' : 'Detalles de Departamento' }}</h3>
-        <button class="close-btn" @click="close">
-          <i class="fas fa-times"></i>
-        </button>
+        <va-button  @click="close"    icon="times">
+        
+          
+        
+      </va-button>
       </div>
       
       <div class="modal-body">

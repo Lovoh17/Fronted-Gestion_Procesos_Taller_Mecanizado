@@ -65,9 +65,17 @@
           <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
         </div>
 
-        <button type="submit" class="register-button" :disabled="isSubmitting">
-          <i class="fas fa-user-plus"></i> {{ isSubmitting ? 'Registrando...' : 'Completar Registro' }}
-        </button>
+        <va-button 
+          type="submit" 
+          class="register-button" 
+          :disabled="isSubmitting"
+          :loading="isSubmitting"
+          color="primary"
+          block
+          icon="user-plus"
+        >
+          {{ isSubmitting ? 'Registrando...' : 'Completar Registro' }}
+        </va-button>
       </form>
 
       <div class="register-footer">

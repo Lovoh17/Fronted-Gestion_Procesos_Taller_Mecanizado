@@ -3,9 +3,11 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>Nuevo Mantenimiento</h2>
-        <button class="close-btn" @click="close">
+        <va-button class="close-btn" @click="close"    >
+        
           <span class="material-icons">close</span>
-        </button>
+        
+      </va-button>
       </div>
 
       <form @submit.prevent="submitForm">
@@ -101,12 +103,12 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn secondary" @click="close">
-            Cancelar
-          </button>
-          <button type="submit" class="btn primary">
-            Guardar Mantenimiento
-          </button>
+          <va-button type="button" class="btn secondary" @click="close"   >
+        Cancelar
+      </va-button>
+          <va-button type="submit" class="btn primary"   >
+        Guardar Mantenimiento
+      </va-button>
         </div>
       </form>
     </div>

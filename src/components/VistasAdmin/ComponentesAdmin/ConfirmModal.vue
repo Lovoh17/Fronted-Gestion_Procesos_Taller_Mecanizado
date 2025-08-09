@@ -6,9 +6,11 @@
           <i class="fas fa-exclamation-triangle"></i>
         </div>
         <h3>{{ title }}</h3>
-        <button class="close-btn" @click="cancel" :disabled="loading">
-          <i class="fas fa-times"></i>
-        </button>
+        <va-button  @click="cancel" :disabled="loading"    icon="times">
+        
+          
+        
+      </va-button>
       </div>
 
       <div class="modal-body">
@@ -19,23 +21,23 @@
       </div>
 
       <div class="modal-footer">
-        <button
-          type="button"
+        <va-button type="button"
           class="btn btn-secondary"
           @click="cancel"
           :disabled="loading"
-        >
-          {{ cancelText }}
-        </button>
-        <button
-          type="button"
+         color="secondary"  >
+        {{ cancelText }}
+      </va-button>
+        <va-button type="button"
           class="btn btn-danger"
           @click="confirm"
           :disabled="loading"
-        >
+         color="danger"   >
+        
           <i v-if="loading" class="fas fa-spinner fa-spin mr-2"></i>
           {{ confirmText }}
-        </button>
+        
+      </va-button>
       </div>
     </div>
   </div>

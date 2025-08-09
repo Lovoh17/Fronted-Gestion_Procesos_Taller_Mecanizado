@@ -437,31 +437,6 @@ export default {
 
 <style scoped>
 /* Variables de Color - Colores oscuros y legibles */
-:root {
-  --primary-color: #3b82f6;
-  --primary-dark: #2563eb;
-  --secondary-color: #8b5cf6;
-  --success-color: #10b981;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-accent: #f1f5f9;
-  
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e1;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
 .dashboard-content {
   min-height: 100vh;
   background: var(--bg-primary);
@@ -499,8 +474,8 @@ export default {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: var(--primary-color);
   color: white;
+  background-color: var(--univo-primary);
   border: none;
   border-radius: 12px;
   font-weight: 600;

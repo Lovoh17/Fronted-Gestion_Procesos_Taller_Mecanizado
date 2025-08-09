@@ -3,29 +3,27 @@
     <div class="content-wrapper">
       <main>
         <!-- Encabezado -->
-<div class="header-section">
-  <div class="header-content">
-    <div class="header-info">
-      <div class="header-icon">
-        <i class="fas fa-chart-line"></i>
-      </div>
-      <div class="header-text">
-        <h1 class="header-title">Reportes</h1>
-        <p class="header-subtitle">Consulta el rendimiento, movimientos e indicadores clave del sistema</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-
+        <div class="header-section">
+          <div class="header-content">
+            <div class="header-info">
+              <div class="header-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="header-text">
+                <h1 class="header-title">Reportes</h1>
+                <p class="header-subtitle">Consulta el rendimiento, movimientos e indicadores clave del sistema</p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="reports-container">
           <!-- Panel de filtros -->
           <div class="filters-panel">
             <div class="panel-header">
               <h3><i class="fas fa-filter"></i> Filtros Avanzados</h3>
-              <button class="btn btn-link" @click="toggleFilters">
+              <va-button preset="plain" @click="toggleFilters" icon="filter">
                 {{ showFilters ? 'Ocultar' : 'Mostrar' }} filtros
-              </button>
+              </va-button>
             </div>
 
             <transition name="slide-fade">
@@ -40,11 +38,6 @@
                       <option value="herramientas">Herramientas</option>
                       <option value="incidentes">Incidentes</option>
                     </select>
-                  </div>
-
-                  <div class="filter-group">
-                    <label>Rango de Fechas:</label>
-                    <date-range-picker v-model="dateRange" />
                   </div>
                 </div>
 
@@ -72,12 +65,12 @@
 
                 <!-- Acciones de filtros -->
                 <div class="filter-actions">
-                  <button class="btn btn-primary" @click="applyFilters">
+                  <va-button color="primary" @click="applyFilters" icon="check">
                     Aplicar Filtros
-                  </button>
-                  <button class="btn btn-outline-secondary" @click="resetFilters">
+                  </va-button>
+                  <va-button preset="outline" color="secondary" @click="resetFilters" icon="refresh">
                     Restablecer
-                  </button>
+                  </va-button>
                 </div>
               </div>
             </transition>
@@ -116,12 +109,14 @@
           <!-- Controles de vista -->
           <div class="view-controls">
             <div class="view-options">
-              <button class="btn btn-sm" :class="{ 'btn-primary': viewMode === 'list' }" @click="viewMode = 'list'">
-                <i class="fas fa-list"></i> Lista
-              </button>
-              <button class="btn btn-sm" :class="{ 'btn-primary': viewMode === 'table' }" @click="viewMode = 'table'">
-                <i class="fas fa-table"></i> Tabla
-              </button>
+              <va-button size="small" :color="viewMode === 'list' ? 'primary' : 'secondary'" @click="viewMode = 'list'"
+                icon="list">
+                Lista
+              </va-button>
+              <va-button size="small" :color="viewMode === 'table' ? 'primary' : 'secondary'"
+                @click="viewMode = 'table'" icon="table">
+                Tabla
+              </va-button>
             </div>
           </div>
 
@@ -200,69 +195,4 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-.header-section {
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.header-content:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 70px;
-  height: 70px;
-  background: #003366;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.8rem;
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #003366, #003366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-</style>
+<style src="src/assets/EstiloBase.css"></style>

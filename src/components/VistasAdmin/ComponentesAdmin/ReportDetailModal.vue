@@ -3,7 +3,9 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2>{{ report.title }}</h2>
-        <button class="close-btn" @click="closeModal">×</button>
+        <va-button class="close-btn" @click="closeModal"   >
+        ×
+      </va-button>
       </div>
       
       <div class="modal-body">
@@ -94,23 +96,26 @@
               placeholder="Escribe tu comentario..."
               rows="3"
             ></textarea>
-            <button class="btn" @click="addComment">Agregar comentario</button>
+            <va-button class="btn" @click="addComment"   >
+        Agregar comentario
+      </va-button>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" @click="closeModal">Cerrar</button>
-        <button 
-          v-if="report.status !== 'resolved'" 
+        <va-button class="btn btn-secondary" @click="closeModal" color="secondary"  >
+        Cerrar
+      </va-button>
+        <va-button v-if="report.status !== 'resolved'" 
           class="btn btn-primary" 
           @click="resolveReport"
-        >
-          Marcar como resuelto
-        </button>
-        <button class="btn" @click="downloadReport">
-          Exportar a PDF
-        </button>
+         color="primary"  >
+        Marcar como resuelto
+      </va-button>
+        <va-button class="btn" @click="downloadReport"   >
+        Exportar a PDF
+      </va-button>
       </div>
     </div>
   </div>

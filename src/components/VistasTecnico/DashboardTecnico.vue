@@ -12,9 +12,11 @@
             <div class="current-date">{{ currentDate }}</div>
             <div class="current-time">{{ currentTime }}</div>
           </div>
-          <button @click="refreshData" class="refresh-btn" :class="{ 'refreshing': isRefreshing }">
+          <va-button @click="refreshData" class="refresh-btn" :class="{ 'refreshing': isRefreshing }"    >
+        
             <span class="material-icons">refresh</span>
-          </button>
+          
+      </va-button>
           <div class="notification-bell" @click="toggleNotifications">
             <span class="material-icons">notifications</span>
             <span v-if="unreadNotifications > 0" class="notification-badge">{{ unreadNotifications }}</span>
@@ -33,10 +35,12 @@
             @input="handleSearch"
           >
         </div>
-        <button class="filter-btn" @click="toggleFilters">
+        <va-button class="filter-btn" @click="toggleFilters"    >
+        
           <span class="material-icons">tune</span>
           Filtros
-        </button>
+        
+      </va-button>
       </div>
     </div>
 
@@ -78,17 +82,18 @@
           <div class="quick-actions-section">
             <h4>Acciones Rápidas</h4>
             <div class="quick-actions">
-              <button 
-                v-for="(action, index) in quickActions" 
+              <va-button v-for="(action, index) in quickActions" 
                 :key="index" 
                 @click="executeAction(action)"
                 class="action-btn"
                 :class="action.type"
-              >
+                  >
+        
                 <span class="material-icons">{{ action.icon }}</span>
                 <span class="action-text">{{ action.label }}</span>
                 <span class="action-shortcut">{{ action.shortcut }}</span>
-              </button>
+              
+      </va-button>
             </div>
           </div>
         </div>
@@ -101,22 +106,23 @@
           <h3>Centro de Alertas</h3>
           <div class="header-actions">
             <span class="badge priority-high">{{ urgentAlerts }}</span>
-            <button @click="markAllAsRead" class="mark-read-btn">
+            <va-button @click="markAllAsRead" class="mark-read-btn"    >
+        
               <span class="material-icons">done_all</span>
-            </button>
+            
+      </va-button>
           </div>
         </div>
         <div class="card-body">
           <div class="alert-filters">
-            <button 
-              v-for="filter in alertFilters" 
+            <va-button v-for="filter in alertFilters" 
               :key="filter.type"
               @click="setAlertFilter(filter.type)"
               class="filter-chip"
               :class="{ active: activeAlertFilter === filter.type }"
-            >
-              {{ filter.label }}
-            </button>
+               >
+        {{ filter.label }}
+      </va-button>
           </div>
           <div class="alerts-list">
             <div 
@@ -140,12 +146,16 @@
                 </div>
               </div>
               <div class="alert-actions">
-                <button @click="acknowledgeAlert(index)" class="alert-action-btn">
+                <va-button @click="acknowledgeAlert(index)" class="alert-action-btn"    >
+        
                   <span class="material-icons">check</span>
-                </button>
-                <button @click="viewAlertDetails(alert)" class="alert-action-btn">
+                
+      </va-button>
+                <va-button @click="viewAlertDetails(alert)" class="alert-action-btn"    >
+        
                   <span class="material-icons">visibility</span>
-                </button>
+                
+      </va-button>
               </div>
             </div>
           </div>
@@ -263,9 +273,11 @@
       <div class="notification-modal" @click.stop>
         <div class="modal-header">
           <h3>Todas las Notificaciones</h3>
-          <button @click="closeNotificationModal" class="close-btn">
+          <va-button @click="closeNotificationModal" class="close-btn"    >
+        
             <span class="material-icons">close</span>
-          </button>
+          
+      </va-button>
         </div>
         <div class="modal-body">
           <!-- Contenido del modal de notificaciones -->

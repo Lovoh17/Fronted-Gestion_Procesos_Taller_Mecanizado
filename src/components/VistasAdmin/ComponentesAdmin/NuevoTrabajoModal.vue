@@ -3,7 +3,9 @@
     <div class="modal-container">
       <div class="modal-header">
         <h3>{{ editing ? 'Editar' : 'Nuevo' }} Pedido</h3>
-        <button class="close-btn" @click="close">×</button>
+        <va-button class="close-btn" @click="close"   >
+        ×
+      </va-button>
       </div>
       
       <div class="modal-body">
@@ -157,8 +159,12 @@
       </div>
       
       <div class="modal-footer">
-        <button class="btn-secondary" @click="close">Cancelar</button>
-        <button class="btn-primary" @click="save">Guardar</button>
+        <va-button class="btn-secondary" @click="close" color="secondary"  >
+        Cancelar
+      </va-button>
+        <va-button class="btn-primary" @click="save" color="primary"  >
+        Guardar
+      </va-button>
       </div>
     </div>
   </div>

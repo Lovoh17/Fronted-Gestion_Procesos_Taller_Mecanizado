@@ -13,14 +13,18 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn-modern btn-secondary" @click="exportData">
-        <i class="fas fa-download"></i>
+      <va-button  @click="exportData" color="secondary"   icon="download">
+        
+        
         <span>Exportar</span>
-      </button>
-      <button class="btn-modern btn-primary" @click="showNuevaTransaccionModal = true">
-        <i class="fas fa-plus"></i>
+      
+      </va-button>
+      <va-button  @click="showNuevaTransaccionModal = true" color="primary"   icon="plus">
+        
+        
         <span>Nueva Transacción</span>
-      </button>
+      
+      </va-button>
     </div>
   </div>
 </div>
@@ -88,9 +92,11 @@
           <span>Filtros Avanzados</span>
           <span class="filter-count" v-if="activeFiltersCount > 0">{{ activeFiltersCount }}</span>
         </div>
-        <button class="panel-toggle">
+        <va-button class="panel-toggle"    >
+        
           <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        </button>
+        
+      </va-button>
       </div>
 
       <transition name="slide-down">
@@ -173,22 +179,28 @@
                   class="filter-input search-input pr-10"
                   @keyup.enter="applyFilters"
                 >
-                <button class="search-btn absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-500" @click="applyFilters">
-                  <i class="fas fa-search"></i>
-                </button>
+                <va-button  @click="applyFilters"    icon="search">
+        
+                  
+                
+      </va-button>
               </div>
             </div>
           </div>
 
           <div class="filter-actions flex justify-end space-x-2 pt-2">
-            <button class="btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" @click="applyFilters">
-              <i class="fas fa-check mr-2"></i>
+            <va-button  @click="applyFilters" color="primary"   icon="check">
+        
+              
               Aplicar Filtros
-            </button>
-            <button class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors" @click="resetFilters">
-              <i class="fas fa-times mr-2"></i>
+            
+      </va-button>
+            <va-button  @click="resetFilters" color="secondary"   icon="times">
+        
+              
               Limpiar Filtros
-            </button>
+            
+      </va-button>
           </div>
         </div>
       </transition>
@@ -205,20 +217,22 @@
         </div>
         <div class="table-actions">
           <div class="view-options">
-            <button 
-              class="view-btn" 
+            <va-button  
               :class="{ active: viewMode === 'table' }"
               @click="viewMode = 'table'"
-            >
-              <i class="fas fa-table"></i>
-            </button>
-            <button 
-              class="view-btn" 
+                icon="table">
+        
+              
+            
+      </va-button>
+            <va-button  
               :class="{ active: viewMode === 'cards' }"
               @click="viewMode = 'cards'"
-            >
-              <i class="fas fa-th-large"></i>
-            </button>
+                icon="th-large">
+        
+              
+            
+      </va-button>
           </div>
         </div>
       </div>
@@ -297,26 +311,28 @@
               </td>
               <td class="actions-cell" @click.stop>
                 <div class="action-buttons">
-                  <button 
-                    class="action-btn view-btn" 
+                  <va-button  
                     @click="verDetalles(transaccion)"
                     title="Ver detalles"
-                  >
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button 
-                    class="action-btn edit-btn" 
+                      icon="eye">
+        
+                    
+                  
+      </va-button>
+                  <va-button  
                     @click="editarTransaccion(transaccion)"
                     title="Editar"
-                  >
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button 
-                    class="action-btn delete-btn" 
+                      icon="edit">
+        
+                    
+                  
+      </va-button>
+                  <va-button  
                     @click="eliminarTransaccion(transaccion.id)"
                     :disabled="loadingDelete === transaccion.id"
                     title="Eliminar"
-                  >
+                      icon="inbox">
+        
                     <i v-if="loadingDelete === transaccion.id" class="fas fa-spinner fa-spin"></i>
                     <i v-else class="fas fa-trash"></i>
                   </button>
@@ -328,7 +344,7 @@
 
         <div v-if="filteredTransacciones.length === 0" class="empty-state">
           <div class="empty-icon">
-            <i class="fas fa-inbox"></i>
+            
           </div>
           <h3>No se encontraron transacciones</h3>
           <p>Intenta ajustar los filtros o crear una nueva transacción</p>
@@ -350,24 +366,23 @@
                 {{ formatTipo(transaccion.tipo) }}
               </span>
               <div class="card-actions" @click.stop>
-                <button class="action-btn edit-btn" @click="editarTransaccion(transaccion)">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button 
-                  class="action-btn delete-btn" 
+                <va-button class="action-btn edit-btn" @click="editarTransaccion(transaccion)"    icon="edit">
+        </va-button>
+                <va-button  
                   @click="eliminarTransaccion(transaccion.id)"
                   :disabled="loadingDelete === transaccion.id"
-                >
+                    icon="calendar-alt">
+        
                   <i v-if="loadingDelete === transaccion.id" class="fas fa-spinner fa-spin"></i>
                   <i v-else class="fas fa-trash"></i>
-                </button>
+      </va-button>
               </div>
             </div>
             <div class="card-content">
               <h4 class="transaction-description">{{ transaccion.descripcion }}</h4>
               <div class="transaction-details">
                 <div class="detail-item">
-                  <i class="fas fa-calendar-alt"></i>
+                  
                   {{ formatDate(transaccion.fecha) }}
                 </div>
                 <div class="detail-item">
@@ -410,35 +425,33 @@
         </div>
         
         <div class="pagination-controls">
-          <button 
-            class="pagination-btn" 
+          <va-button class="pagination-btn" 
             @click="goToPage(1)" 
             :disabled="currentPage === 1"
             title="Primera página"
-          >
-            <i class="fas fa-angle-double-left"></i>
-          </button>
+              icon="angle-double-left">
+        </va-button>
           
-          <button 
-            class="pagination-btn" 
+          <va-button  
             @click="prevPage" 
             :disabled="currentPage === 1"
             title="Página anterior"
-          >
-            <i class="fas fa-angle-left"></i>
-          </button>
+              icon="angle-left">
+        
+            
+          
+      </va-button>
           
           <div class="page-numbers">
-            <button 
-              v-for="page in pages" 
+            <va-button v-for="page in pages" 
               :key="page" 
-              class="page-btn"
               :class="{ active: page === currentPage, ellipsis: page === '...' }"
               @click="goToPage(page)"
               :disabled="page === '...'"
-            >
+                icon="angle-right">
+        
               {{ page }}
-            </button>
+      </va-button>
           </div>
           
           <button 
@@ -447,17 +460,19 @@
             :disabled="currentPage === totalPages"
             title="Página siguiente"
           >
-            <i class="fas fa-angle-right"></i>
-          </button>
+            
           
-          <button 
-            class="pagination-btn" 
+      </va-button>
+          
+          <va-button  
             @click="goToPage(totalPages)" 
             :disabled="currentPage === totalPages"
             title="Última página"
-          >
-            <i class="fas fa-angle-double-right"></i>
-          </button>
+              icon="angle-double-right">
+        
+            
+          
+      </va-button>
         </div>
       </div>
     </div>

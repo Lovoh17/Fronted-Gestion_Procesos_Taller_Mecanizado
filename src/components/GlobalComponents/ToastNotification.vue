@@ -7,9 +7,8 @@
         <div class="toast-content">
           <p class="toast-message">{{ message }}</p>
         </div>
-        <button class="toast-close" @click="$emit('close')">
-          <i class="fas fa-times"></i>
-        </button>
+        <va-button class="toast-close" @click="$emit('close')"    icon="times">
+      </va-button>
       </div>
     </transition>
   </template>

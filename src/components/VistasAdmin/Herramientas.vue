@@ -13,10 +13,12 @@
           </div>
         </div>
         <div class="header-actions">
-          <button class="btn-modern btn-primary" @click="showForm = !showForm">
-            <i class="fas fa-plus"></i>
+          <va-button  @click="showForm = !showForm" color="primary"   icon="plus">
+        
+            
             <span>{{ showForm ? 'Ocultar formulario' : 'Nueva herramienta' }}</span>
-          </button>
+          
+      </va-button>
         </div>
       </div>
     </div>
@@ -94,12 +96,16 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary">
-              <i class="fas fa-save"></i> {{ editing ? 'Actualizar' : 'Guardar' }}
-            </button>
-            <button type="button" @click="resetForm" class="btn-secondary">
-              <i class="fas fa-times"></i> Cancelar
-            </button>
+            <va-button type="submit" color="primary"   icon="save">
+        
+               {{ editing ? 'Actualizar' : 'Guardar' }}
+            
+      </va-button>
+            <va-button type="button" @click="resetForm" color="secondary"   icon="times">
+        
+               Cancelar
+            
+      </va-button>
           </div>
         </form>
       </div>
@@ -179,15 +185,21 @@
         </div>
 
         <div class="tool-actions">
-          <button @click="editHerramienta(herramienta.id)" class="btn-edit">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button @click="showDetails(herramienta)" class="btn-info">
-            <i class="fas fa-info-circle"></i> Detalles
-          </button>
-          <button @click="confirmDelete(herramienta.id)" class="btn-delete">
-            <i class="fas fa-trash-alt"></i> Eliminar
-          </button>
+          <va-button @click="editHerramienta(herramienta.id)"    icon="edit">
+        
+             Editar
+          
+      </va-button>
+          <va-button @click="showDetails(herramienta)" color="info"   icon="info-circle">
+        
+             Detalles
+          
+      </va-button>
+          <va-button @click="confirmDelete(herramienta.id)"    icon="trash-alt">
+        
+             Eliminar
+          
+      </va-button>
         </div>
       </div>
     </div>
@@ -198,9 +210,8 @@
         <div class="modal-container">
           <div class="modal-header">
             <h3>Detalles completos</h3>
-            <button @click="selectedHerramienta = null" class="modal-close">
-              <i class="fas fa-times"></i>
-            </button>
+            <va-button @click="selectedHerramienta = null" class="modal-close"    icon="times">
+      </va-button>
           </div>
           <div class="modal-content">
             <div class="modal-image"
@@ -261,12 +272,16 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button @click="editHerramienta(selectedHerramienta.id)" class="btn-primary">
-              <i class="fas fa-edit"></i> Editar
-            </button>
-            <button @click="selectedHerramienta = null" class="btn-secondary">
-              <i class="fas fa-times"></i> Cerrar
-            </button>
+            <va-button @click="editHerramienta(selectedHerramienta.id)" color="primary"   icon="edit">
+        
+               Editar
+            
+      </va-button>
+            <va-button @click="selectedHerramienta = null" color="secondary"   icon="times">
+        
+               Cerrar
+            
+      </va-button>
           </div>
         </div>
       </div>
@@ -284,12 +299,16 @@
             <p>Esta acción no se puede deshacer.</p>
           </div>
           <div class="modal-footer">
-            <button @click="deleteHerramienta" class="btn-delete">
-              <i class="fas fa-trash-alt"></i> Eliminar
-            </button>
-            <button @click="showDeleteModal = false" class="btn-secondary">
-              <i class="fas fa-times"></i> Cancelar
-            </button>
+            <va-button @click="deleteHerramienta"    icon="trash-alt">
+        
+               Eliminar
+            
+      </va-button>
+            <va-button @click="showDeleteModal = false" color="secondary"   icon="times">
+        
+               Cancelar
+            
+      </va-button>
           </div>
         </div>
       </div>

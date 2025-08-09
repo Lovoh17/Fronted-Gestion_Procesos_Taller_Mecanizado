@@ -3,7 +3,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>Detalles del Pedido #{{ order.id }}</h3>
-        <button @click="close" class="close-btn">×</button>
+        <va-button @click="close" class="close-btn"   >
+        ×
+      </va-button>
       </div>
       
       <div class="order-details">
@@ -56,9 +58,9 @@
       </div>
       
       <div class="modal-footer">
-        <button @click="close" class="btn-primary">
-          Cerrar
-        </button>
+        <va-button @click="close" class="btn-primary" color="primary"  >
+        Cerrar
+      </va-button>
       </div>
     </div>
   </div>

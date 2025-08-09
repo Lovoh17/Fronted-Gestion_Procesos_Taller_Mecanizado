@@ -5,28 +5,26 @@
       
       <!-- Tabs principales -->
       <div class="main-tabs">
-        <button 
-          v-for="tab in tabs" 
+        <va-button v-for="tab in tabs" 
           :key="tab.key"
           @click="activeTab = tab.key"
           :class="['tab-button', { active: activeTab === tab.key }]"
-        >
-          {{ tab.label }}
-        </button>
+           >
+        {{ tab.label }}
+      </va-button>
       </div>
 
       <!-- Contenido de Tipos -->
       <div v-if="activeTab === 'tipos'" class="tipos-section">
         <!-- Sub-tabs para tipos -->
         <div class="sub-tabs">
-          <button 
-            v-for="subtab in tipoSubtabs" 
+          <va-button v-for="subtab in tipoSubtabs" 
             :key="subtab.key"
             @click="activeTipoTab = subtab.key"
             :class="['subtab-button', { active: activeTipoTab === subtab.key }]"
-          >
-            {{ subtab.label }}
-          </button>
+             >
+        {{ subtab.label }}
+      </va-button>
         </div>
 
         <!-- Tabla de configuración para tipos -->

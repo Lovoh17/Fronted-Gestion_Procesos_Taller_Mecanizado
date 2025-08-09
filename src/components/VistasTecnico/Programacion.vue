@@ -22,7 +22,9 @@
       <div class="error-message">
         <i class="material-icons">error</i>
         <p>{{ error }}</p>
-        <button @click="fetchMaintenances" class="retry-button">Reintentar</button>
+        <va-button @click="fetchMaintenances" class="retry-button"   >
+        Reintentar
+      </va-button>
       </div>
     </div>
 
@@ -32,17 +34,21 @@
         <div class="calendar-card">
           <!-- Controles del calendario -->
           <div class="calendar-header">
-            <button @click="changeMonth(-1)" class="nav-button">
+            <va-button @click="changeMonth(-1)" class="nav-button"    >
+        
               <i class="material-icons">chevron_left</i>
-            </button>
+            
+      </va-button>
             
             <h2 class="month-title">
               {{ months[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}
             </h2>
             
-            <button @click="changeMonth(1)" class="nav-button">
+            <va-button @click="changeMonth(1)" class="nav-button"    >
+        
               <i class="material-icons">chevron_right</i>
-            </button>
+            
+      </va-button>
           </div>
 
           <!-- Días de la semana -->
@@ -165,9 +171,11 @@
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>Detalles del Mantenimiento</h3>
-          <button @click="closeModal" class="close-button">
+          <va-button @click="closeModal" class="close-button"    >
+        
             <i class="material-icons">close</i>
-          </button>
+          
+      </va-button>
         </div>
 
         <div class="modal-body">
@@ -249,14 +257,17 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-primary">Editar</button>
-          <button class="btn btn-secondary" @click="closeModal">Cerrar</button>
+          <va-button class="btn btn-primary" color="primary"  >
+        Editar
+      </va-button>
+          <va-button class="btn btn-secondary" @click="closeModal" color="secondary"  >
+        Cerrar
+      </va-button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <script src ="./script/Programacion.js"></script>
 <style src="./style/Programacion.css" scoped></style>

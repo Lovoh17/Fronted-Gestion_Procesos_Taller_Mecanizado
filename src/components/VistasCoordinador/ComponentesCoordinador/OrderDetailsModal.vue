@@ -7,9 +7,11 @@
             <span class="status-badge" :class="order.status">{{ statusLabels[order.status] }}</span>
             <span class="priority-badge" :class="order.priority">{{ priorityLabels[order.priority] }}</span>
           </div>
-          <button class="close-btn" @click="close">
+          <va-button class="close-btn" @click="close"    >
+        
             <span class="material-icons">close</span>
-          </button>
+          
+      </va-button>
         </div>
         
         <div class="modal-body">
@@ -126,10 +128,14 @@
         </div>
         
         <div class="modal-footer">
-          <button class="btn secondary" @click="close">Cerrar</button>
-          <button class="btn primary" @click="printOrder" v-if="!isMobile">
+          <va-button class="btn secondary" @click="close"   >
+        Cerrar
+      </va-button>
+          <va-button class="btn primary" @click="printOrder" v-if="!isMobile"    >
+        
             <span class="material-icons">print</span> Imprimir
-          </button>
+          
+      </va-button>
         </div>
       </div>
     </div>

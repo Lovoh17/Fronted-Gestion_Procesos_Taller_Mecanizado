@@ -30,10 +30,12 @@
     </nav>
     
     <div class="sidebar-footer" v-if="!isCollapsed">
-      <button class="logout-btn" @click="handleLogout">
+      <va-button class="logout-btn" @click="handleLogout"    >
+        
         <span class="material-icons">logout</span>
         <span>Cerrar Sesión</span>
-      </button>
+      
+      </va-button>
     </div>
   </aside>
 </template>

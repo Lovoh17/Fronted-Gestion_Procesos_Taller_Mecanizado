@@ -3,9 +3,11 @@
       <div class="feed-header">
         <h3 class="feed-title">Registro de Actividades</h3>
         <div class="feed-actions">
-          <button class="btn-refresh" @click="refreshFeed">
+          <va-button class="btn-refresh" @click="refreshFeed"    >
+        
             <span class="material-icons">refresh</span>
-          </button>
+          
+      </va-button>
           <div class="filter-dropdown">
             <select v-model="filterType" @change="filterActivities">
               <option value="all">Todas</option>

@@ -7,9 +7,11 @@
             <span class="status-badge" :class="maintenance.status">{{ statusLabels[maintenance.status] }}</span>
             <span class="priority-badge" :class="maintenance.priority">{{ priorityLabels[maintenance.priority] }}</span>
           </div>
-          <button class="close-btn" @click="close">
+          <va-button class="close-btn" @click="close"    >
+        
             <span class="material-icons">close</span>
-          </button>
+          
+      </va-button>
         </div>
         
         <div class="modal-body">
@@ -161,13 +163,19 @@
         </div>
         
         <div class="modal-footer">
-          <button class="btn secondary" @click="close">Cerrar</button>
-          <button class="btn primary" @click="printMaintenance" v-if="!isMobile">
+          <va-button class="btn secondary" @click="close"   >
+        Cerrar
+      </va-button>
+          <va-button class="btn primary" @click="printMaintenance" v-if="!isMobile"    >
+        
             <span class="material-icons">print</span> Imprimir
-          </button>
-          <button class="btn action" @click="openEditModal" v-if="canEdit">
+          
+      </va-button>
+          <va-button class="btn action" @click="openEditModal" v-if="canEdit"    >
+        
             <span class="material-icons">edit</span> Editar
-          </button>
+          
+      </va-button>
         </div>
       </div>
     </div>
@@ -175,9 +183,11 @@
     <!-- Modal para imagen ampliada -->
     <div class="image-modal-overlay" v-if="showImageModal" @click.self="closeImageModal">
       <div class="image-modal-content">
-        <button class="close-btn" @click="closeImageModal">
+        <va-button class="close-btn" @click="closeImageModal"    >
+        
           <span class="material-icons">close</span>
-        </button>
+        
+      </va-button>
         <img :src="currentImage" alt="Evidencia de mantenimiento">
       </div>
     </div>

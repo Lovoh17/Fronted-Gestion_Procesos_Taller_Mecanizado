@@ -14,7 +14,9 @@
         <div v-if="showNotifications" class="notifications-dropdown">
           <div class="notification-header">
             <h4>Notificaciones</h4>
-            <button @click="markAllAsRead" class="btn-link">Marcar todas como leídas</button>
+            <va-button @click="markAllAsRead" class="btn-link"   preset="plain">
+        Marcar todas como leídas
+      </va-button>
           </div>
           <div class="notification-list">
             <div v-for="notification in notifications" :key="notification.id" class="notification-item"
@@ -56,10 +58,12 @@
               <span>Ajustes</span>
             </router-link>
             <div class="divider"></div>
-            <button @click="logout" class="menu-item logout">
+            <va-button @click="logout" class="menu-item logout"    >
+        
               <span class="material-icons">logout</span>
               <span>Cerrar sesión</span>
-            </button>
+            
+      </va-button>
           </div>
         </div>
       </div>

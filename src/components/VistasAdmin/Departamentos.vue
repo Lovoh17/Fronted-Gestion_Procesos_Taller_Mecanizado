@@ -13,10 +13,9 @@
           </div>
         </div>
         <div class="header-actions">
-          <button class="btn-modern btn-primary" @click="showNuevoDepartamentoModal = true">
-            <i class="fas fa-plus"></i>
-            <span>Nuevo Departamento</span>
-          </button>
+          <va-button color="#003366" @click="showNuevoDepartamentoModal = true" icon="building">
+            Nuevo Departamento
+          </va-button>
         </div>
       </div>
     </div>
@@ -478,152 +477,13 @@ export default {
   }
 }
 </script>
-
+<style src="src/assets/EstiloBase.css"></style>
 <style scoped>
 /* Estilos completos para la vista de Departamentos Universitarios */
 .departamentos-container {
   min-height: 100vh;
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Header Section */
-.header-section {
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.header-content:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 70px;
-  height: 70px;
-  background: #003366;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.8rem;
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #003366, #003366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-/* Botones */
-.btn-modern {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.9rem 1.8rem;
-  border: none;
-  border-radius: 0.8rem;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-modern i {
-  font-size: 1.1rem;
-}
-
-.btn-modern::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: all 0.6s ease;
-}
-
-.btn-modern:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #003366, #003366);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-  background: #edf2f7;
-  color: #4a5568;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.btn-large {
-  padding: 1.2rem 2.4rem;
-  font-size: 1.2rem;
-}
-
-/* Loading */
-.modern-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 1rem;
-  margin: 1.5rem 0;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
 }
 
 .loading-spinner {
@@ -654,183 +514,6 @@ export default {
   color: #718096;
   font-weight: 600;
   font-size: 1.1rem;
-}
-
-/* Filtros */
-.filters-card {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-}
-
-.filters-header {
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.filters-header:hover {
-  background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
-}
-
-.filters-title {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 700;
-  color: #2d3748;
-  font-size: 1.1rem;
-}
-
-.filters-title i {
-  color: #667eea;
-  font-size: 1.2rem;
-}
-
-.filter-badge {
-  background: #667eea;
-  color: white;
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 0.3rem 0.7rem;
-  border-radius: 50px;
-  min-width: 25px;
-  text-align: center;
-  margin-left: 0.5rem;
-}
-
-.filters-toggle {
-  color: #718096;
-  font-size: 1.1rem;
-  transition: all 0.3s ease;
-}
-
-.filters-content {
-  padding: 2rem;
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.filter-label {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 0.95rem;
-}
-
-.filter-label i {
-  color: #667eea;
-  font-size: 1rem;
-}
-
-.modern-select,
-.modern-input {
-  padding: 0.9rem 1.2rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.8rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: white;
-  width: 100%;
-  font-family: inherit;
-}
-
-.modern-select:focus,
-.modern-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-}
-
-.search-container {
-  position: relative;
-}
-
-.search-button {
-  position: absolute;
-  right: 0.3rem;
-  top: 0.3rem;
-  bottom: 0.3rem;
-  padding: 0 1.2rem;
-  background: linear-gradient(135deg, #003366, #003366);
-  color: white;
-  border: none;
-  border-radius: 0.6rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-button:hover {
-  background: linear-gradient(135deg, #003366, #003366);
-}
-
-.filters-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-/* Estado vacío */
-.empty-state {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 3rem 2rem;
-  text-align: center;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-  margin: 1.5rem 0;
-}
-
-.empty-icon {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 2rem;
-  font-size: 2.5rem;
-  color: #718096;
-  box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.05);
-}
-
-.empty-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 1rem;
-}
-
-.empty-description {
-  color: #718096;
-  font-size: 1.15rem;
-  margin-bottom: 2rem;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
 }
 
 /* Grid de departamentos */
@@ -1159,3 +842,4 @@ export default {
   }
 }
 </style>
+

@@ -66,9 +66,8 @@
                   <input v-model="filters.search" placeholder="Buscar..."
                     class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
                     @keyup.enter="applyFilters">
-                  <button class="absolute right-2 top-2 text-gray-500 hover:text-blue-500" @click="applyFilters">
-                    <i class="fas fa-search"></i>
-                  </button>
+                  <va-button class="absolute right-2 top-2 text-gray-500 hover:text-blue-500" @click="applyFilters"    icon="search">
+      </va-button>
                 </div>
               </div>
 
@@ -124,18 +123,14 @@
             </div>
 
             <div class="flex justify-end space-x-2 pt-2">
-              <button
-                class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                @click="applyFilters">
-                <i class="fas fa-check mr-2"></i>
-                Aplicar Filtros
-              </button>
-              <button
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-                @click="resetFilters">
-                <i class="fas fa-undo mr-2"></i>
-                Limpiar Todo
-              </button>
+              <va-button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                @click="applyFilters"    icon="check">
+        Aplicar Filtros
+      </va-button>
+              <va-button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                @click="resetFilters"    icon="undo">
+        Limpiar Todo
+      </va-button>
             </div>
           </div>
         </transition>
@@ -146,27 +141,39 @@
         <span class="filter-label">Filtros activos:</span>
         <span v-if="filters.search" class="filter-tag">
           Búsqueda: "{{ filters.search }}"
-          <button @click="filters.search = ''" class="remove-filter">×</button>
+          <va-button @click="filters.search = ''" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
         <span v-if="filters.stockStatus" class="filter-tag">
           Estado: {{ getStockStatusLabel(filters.stockStatus) }}
-          <button @click="filters.stockStatus = ''" class="remove-filter">×</button>
+          <va-button @click="filters.stockStatus = ''" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
         <span v-if="filters.priceMin" class="filter-tag">
           Precio min: ${{ filters.priceMin }}
-          <button @click="filters.priceMin = null" class="remove-filter">×</button>
+          <va-button @click="filters.priceMin = null" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
         <span v-if="filters.priceMax" class="filter-tag">
           Precio max: ${{ filters.priceMax }}
-          <button @click="filters.priceMax = null" class="remove-filter">×</button>
+          <va-button @click="filters.priceMax = null" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
         <span v-if="filters.unit" class="filter-tag">
           Unidad: {{ units[filters.unit]?.nombre }}
-          <button @click="filters.unit = ''" class="remove-filter">×</button>
+          <va-button @click="filters.unit = ''" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
         <span v-if="filters.supplier" class="filter-tag">
           Proveedor: {{ filters.supplier }}
-          <button @click="filters.supplier = ''" class="remove-filter">×</button>
+          <va-button @click="filters.supplier = ''" class="remove-filter"   >
+        ×
+      </va-button>
         </span>
       </div>
 
@@ -221,23 +228,23 @@
 
       <!-- Paginación -->
       <div v-if="totalPages > 1" class="pagination">
-        <button @click="currentPage = 1" :disabled="currentPage === 1" class="pagination-btn">
-          « Primera
-        </button>
-        <button @click="currentPage--" :disabled="currentPage === 1" class="pagination-btn">
-          ‹ Anterior
-        </button>
+        <va-button @click="currentPage = 1" :disabled="currentPage === 1" class="pagination-btn"   >
+        « Primera
+      </va-button>
+        <va-button @click="currentPage--" :disabled="currentPage === 1" class="pagination-btn"   >
+        ‹ Anterior
+      </va-button>
 
         <span class="pagination-info">
           Página {{ currentPage }} de {{ totalPages }}
         </span>
 
-        <button @click="currentPage++" :disabled="currentPage === totalPages" class="pagination-btn">
-          Siguiente ›
-        </button>
-        <button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="pagination-btn">
-          Última »
-        </button>
+        <va-button @click="currentPage++" :disabled="currentPage === totalPages" class="pagination-btn"   >
+        Siguiente ›
+      </va-button>
+        <va-button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="pagination-btn"   >
+        Última »
+      </va-button>
       </div>
 
       <!-- Total de items -->

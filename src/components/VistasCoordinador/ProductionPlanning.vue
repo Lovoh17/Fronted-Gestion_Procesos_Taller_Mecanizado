@@ -39,7 +39,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="header">
             <div class="header-left">
               <h1>Calendario de Pedidos</h1>
@@ -79,6 +79,13 @@
             </div>
           </div>
 
+          <!-- Estilo de calendario -->
+          <div class="leyenda">
+            <h3>Estilo del calendario:</h3>
+              <VaBadge text="Calendario" color="success" class="mr-2" />
+              <VaBadge text="Linea de tiempo" color="info" class="mr-2" />
+          </div>
+
           <!-- Calendario -->
           <div class="calendario">
             <!-- Días de la semana -->
@@ -111,7 +118,8 @@
                       <div class="pedido-proyecto">
                         {{ pedido.proyecto_asociado }}
                       </div>
-                      <div v-if="pedido.prioridad" class="pedido-prioridad" :class="prioridades[pedido.prioridad]?.class">
+                      <div v-if="pedido.prioridad" class="pedido-prioridad"
+                        :class="prioridades[pedido.prioridad]?.class">
                         Prioridad: {{ prioridades[pedido.prioridad]?.nombre }}
                       </div>
                     </div>
@@ -139,5 +147,5 @@
 </template>
 
 <script src="./scripts/PedidosCalendario.js"></script>
-
+<style src="src/assets/EstiloBase.css"></style>
 <style src="./styles/PedidosCalendario.css" scoped></style>
