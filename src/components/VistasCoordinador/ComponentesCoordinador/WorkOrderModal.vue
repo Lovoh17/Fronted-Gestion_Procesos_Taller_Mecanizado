@@ -50,20 +50,43 @@
             </div>
             
             <div class="form-group">
-              <label>Proyecto Asociado</label>
-              <input type="text" v-model="pedido.proyecto_asociado">
+              <label>Proyecto Asociado *</label>
+              <select v-model="pedido.proyecto_asociado" required>
+                <option value="">Seleccionar proyecto</option>
+                <option v-for="proyecto in proyectos" :key="proyecto.id" :value="proyecto.id">
+                  {{ proyecto.nombre }} - {{ proyecto.cliente }}
+                </option>
+              </select>
             </div>
           </div>
           
           <div class="form-row">
             <div class="form-group">
-              <label>Fecha Requerida *</label>
-              <input type="date" v-model="pedido.fecha_requerida" required>
+              <label>Fecha Inicio *</label>
+              <input type="datetime-local" v-model="pedido.fecha_inicio" required @change="checkConflicts">
             </div>
             
             <div class="form-group">
-              <label>Fecha Estimada de Entrega</label>
-              <input type="date" v-model="pedido.fecha_estimada_entrega">
+              <label>Fecha Fin *</label>
+              <input type="datetime-local" v-model="pedido.fecha_fin" required @change="checkConflicts">
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Horas Estimadas *</label>
+              <input 
+                type="number" 
+                v-model="pedido.horas_estimadas" 
+                required
+                min="1"
+                @input="calculateWorkload"
+              >
+            </div>
+            
+            <div class="form-group">
+              <label>Fecha Requerida *</label>
+              <input type="date" v-model="pedido.fecha_requerida" required>
             </div>
           </div>
           
@@ -88,6 +111,30 @@
                 required
               >
             </div>
+          </div>
+        </div>
+
+        <!-- Alertas Contextuales -->
+        <div class="alerts-section" v-if="alertas.length > 0">
+          <div 
+            v-for="alerta in alertas" 
+            :key="alerta.id" 
+            class="alert-card"
+            :class="alerta.tipo"
+          >
+            <div class="alert-icon">
+              <span class="material-icons">{{ getAlertIcon(alerta.tipo) }}</span>
+            </div>
+            <div class="alert-content">
+              <h4>{{ alerta.titulo }}</h4>
+              <p>{{ alerta.mensaje }}</p>
+              <div class="alert-details" v-if="alerta.detalles">
+                <small>{{ alerta.detalles }}</small>
+              </div>
+            </div>
+            <button class="alert-dismiss" @click="dismissAlert(alerta.id)">
+              <span class="material-icons">close</span>
+            </button>
           </div>
         </div>
         
@@ -132,18 +179,50 @@
           </div>
         </div>
         
-        <!-- Sección de asignación de trabajadores -->
+        <!-- Sección de asignación de trabajadores mejorada -->
         <div class="form-section">
           <h3 class="section-title">
             <span class="material-icons">engineering</span> Asignación de Trabajadores
           </h3>
           
+          <!-- Resumen de capacidad vs demanda -->
+          <div class="workload-summary" v-if="pedido.horas_estimadas">
+            <div class="workload-card">
+              <div class="workload-item">
+                <span class="material-icons">schedule</span>
+                <div>
+                  <span class="workload-label">Horas Requeridas</span>
+                  <span class="workload-value">{{ pedido.horas_estimadas }}h</span>
+                </div>
+              </div>
+              <div class="workload-item">
+                <span class="material-icons">group</span>
+                <div>
+                  <span class="workload-label">Capacidad Disponible</span>
+                  <span class="workload-value" :class="{ 'insufficient': capacidadDisponible < pedido.horas_estimadas }">
+                    {{ capacidadDisponible }}h
+                  </span>
+                </div>
+              </div>
+              <div class="workload-item">
+                <span class="material-icons">trending_up</span>
+                <div>
+                  <span class="workload-label">Estado</span>
+                  <span class="workload-status" :class="getWorkloadStatusClass()">
+                    {{ getWorkloadStatus() }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="loading-message" v-if="loadingUsuarios">
             Cargando usuarios...
           </div>
           
-          <div class="workers-selection" v-else>
-            <div class="workers-list">
+          <div class="workers-section" v-else>
+            <!-- Filtros y búsqueda -->
+            <div class="workers-filters">
               <div class="search-box">
                 <input 
                   type="text" 
@@ -151,34 +230,203 @@
                   placeholder="Buscar trabajadores..."
                   class="search-input"
                 >
+                <span class="material-icons search-icon">search</span>
               </div>
               
-              <div class="worker-item" v-for="usuario in filteredUsuarios" :key="usuario.id">
-                <label class="worker-checkbox">
-                  <input 
-                    type="checkbox"
-                    v-model="pedido.trabajadores_asignados"
-                    :value="usuario.id"
-                  >
-                  <span class="checkmark"></span>
-                  <div class="worker-info">
-                    <span class="worker-name">{{ usuario.nombres }} {{ usuario.apellidos }}</span>
-                    <span class="worker-role">{{ usuario.puesto?.nombre || 'Sin puesto definido' }}</span>
-                    <span class="worker-contact">{{ usuario.email }}</span>
-                  </div>
-                </label>
+              <div class="filter-tabs">
+                <button 
+                  class="filter-tab"
+                  :class="{ active: workerFilter === 'available' }"
+                  @click="workerFilter = 'available'"
+                >
+                  <span class="material-icons">check_circle</span>
+                  Disponibles ({{ availableWorkers.length }})
+                </button>
+                <button 
+                  class="filter-tab"
+                  :class="{ active: workerFilter === 'busy' }"
+                  @click="workerFilter = 'busy'"
+                >
+                  <span class="material-icons">schedule</span>
+                  Ocupados ({{ busyWorkers.length }})
+                </button>
+                <button 
+                  class="filter-tab"
+                  :class="{ active: workerFilter === 'all' }"
+                  @click="workerFilter = 'all'"
+                >
+                  <span class="material-icons">group</span>
+                  Todos ({{ allWorkers.length }})
+                </button>
               </div>
             </div>
-            
-            <div class="assigned-preview" v-if="pedido.trabajadores_asignados && pedido.trabajadores_asignados.length > 0">
-              <h4>Trabajadores asignados:</h4>
-              <div class="assigned-list">
-                <span v-for="usuarioId in pedido.trabajadores_asignados" :key="usuarioId" class="assigned-badge">
-                  {{ getUsuarioName(usuarioId) }}
-                  <button @click="removeWorker(usuarioId)" class="remove-worker-btn">
-                    <span class="material-icons">close</span>
+
+            <div class="workers-grid">
+              <div class="worker-card" v-for="usuario in filteredUsuarios" :key="usuario.id">
+                <div class="worker-header">
+                  <div class="worker-avatar">
+                    <span class="material-icons">person</span>
+                  </div>
+                  <div class="worker-basic-info">
+                    <h4>{{ usuario.nombres }} {{ usuario.apellidos }}</h4>
+                    <p class="worker-role">{{ usuario.puesto?.nombre || 'Sin puesto definido' }}</p>
+                    <p class="worker-contact">{{ usuario.email }}</p>
+                  </div>
+                  <div class="worker-status">
+                    <span class="status-badge" :class="getWorkerStatusClass(usuario)">
+                      {{ getWorkerStatus(usuario) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="worker-details">
+                  <div class="worker-skills" v-if="usuario.habilidades && usuario.habilidades.length > 0">
+                    <span class="skills-label">Habilidades:</span>
+                    <div class="skills-tags">
+                      <span v-for="skill in usuario.habilidades" :key="skill" class="skill-tag">
+                        {{ skill }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="worker-availability" v-if="usuario.disponibilidad">
+                    <div class="availability-item">
+                      <span class="material-icons">schedule</span>
+                      <span>{{ usuario.disponibilidad.horas_disponibles }}h disponibles</span>
+                    </div>
+                    <div class="availability-item" v-if="usuario.conflictos && usuario.conflictos.length > 0">
+                      <span class="material-icons">warning</span>
+                      <span class="conflict-count">{{ usuario.conflictos.length }} conflicto(s)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Alertas de conflictos -->
+                <div class="worker-conflicts" v-if="usuario.conflictos && usuario.conflictos.length > 0">
+                  <div class="conflict-alert">
+                    <span class="material-icons">schedule_problem</span>
+                    <div class="conflict-details">
+                      <h5>Conflictos de Horario</h5>
+                      <ul>
+                        <li v-for="conflicto in usuario.conflictos" :key="conflicto.id">
+                          {{ conflicto.proyecto_nombre }} ({{ formatDateRange(conflicto.fecha_inicio, conflicto.fecha_fin) }})
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="worker-actions">
+                  <label class="worker-checkbox">
+                    <input 
+                      type="checkbox"
+                      v-model="pedido.trabajadores_asignados"
+                      :value="usuario.id"
+                      :disabled="!usuario.disponible"
+                    >
+                    <span class="checkmark"></span>
+                    <span>{{ isWorkerAssigned(usuario.id) ? 'Asignado' : 'Asignar' }}</span>
+                  </label>
+                  
+                  <button 
+                    class="view-calendar-btn"
+                    @click="viewWorkerCalendar(usuario.id)"
+                    :title="`Ver calendario de ${usuario.nombres}`"
+                  >
+                    <span class="material-icons">calendar_today</span>
                   </button>
-                </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sugerencias alternativas -->
+          <div class="suggestions-section" v-if="sugerenciasAlternativas.length > 0">
+            <h4 class="suggestions-title">
+              <span class="material-icons">lightbulb</span>
+              Sugerencias Alternativas
+            </h4>
+            
+            <div class="suggestions-grid">
+              <div class="suggestion-card" v-for="sugerencia in sugerenciasAlternativas" :key="sugerencia.id">
+                <div class="suggestion-header">
+                  <span class="material-icons">{{ getSuggestionIcon(sugerencia.tipo) }}</span>
+                  <h5>{{ sugerencia.titulo }}</h5>
+                  <span class="suggestion-score">{{ sugerencia.score }}%</span>
+                </div>
+                <p class="suggestion-description">{{ sugerencia.descripcion }}</p>
+                <div class="suggestion-details">
+                  <div class="suggestion-pros" v-if="sugerencia.ventajas">
+                    <span class="material-icons">check</span>
+                    <span>{{ sugerencia.ventajas }}</span>
+                  </div>
+                  <div class="suggestion-cons" v-if="sugerencia.desventajas">
+                    <span class="material-icons">warning</span>
+                    <span>{{ sugerencia.desventajas }}</span>
+                  </div>
+                </div>
+                <button class="apply-suggestion-btn" @click="applySuggestion(sugerencia)">
+                  Aplicar Sugerencia
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección de sobrecarga -->
+          <div class="overload-section" v-if="hayRiesgoSobrecarga">
+            <div class="overload-alert">
+              <div class="overload-header">
+                <span class="material-icons">report_problem</span>
+                <h4>Riesgo de Sobrecarga Detectado</h4>
+              </div>
+              <p class="overload-message">
+                El proyecto requiere {{ pedido.horas_estimadas }}h, pero el equipo actual solo puede cubrir {{ capacidadDisponible }}h.
+                Déficit: <strong>{{ pedido.horas_estimadas - capacidadDisponible }}h</strong>
+              </p>
+              
+              <!-- Card "Contratar Eventual" -->
+              <div class="hire-temp-card" v-if="recomendacionTemporal">
+                <div class="temp-card-header">
+                  <span class="material-icons">person_add</span>
+                  <h5>Contratación Temporal Recomendada</h5>
+                </div>
+                
+                <div class="temp-profile">
+                  <div class="temp-info">
+                    <div class="temp-role">
+                      <strong>{{ recomendacionTemporal.perfil }}</strong>
+                    </div>
+                    <div class="temp-skills">
+                      Habilidades: {{ recomendacionTemporal.habilidades.join(', ') }}
+                    </div>
+                    <div class="temp-duration">
+                      Duración estimada: {{ recomendacionTemporal.duracion_dias }} días
+                    </div>
+                  </div>
+                  
+                  <div class="temp-cost">
+                    <div class="cost-breakdown">
+                      <div class="cost-item">
+                        <span>Tarifa diaria:</span>
+                        <span class="cost-value">${{ recomendacionTemporal.costo_diario }}</span>
+                      </div>
+                      <div class="cost-item">
+                        <span>Costo total:</span>
+                        <span class="cost-total">${{ recomendacionTemporal.costo_total }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="temp-actions">
+                  <button class="btn secondary" @click="viewTempProfile()">
+                    Ver Perfil Completo
+                  </button>
+                  <button class="btn primary generate-posting-btn" @click="generateJobPosting()">
+                    <span class="material-icons">add_circle</span>
+                    Generar Solicitud
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -415,1484 +663,6 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    pedido: {
-      type: Object,
-      required: true,
-      default: () => ({
-        id: null,
-        codigo_pedido: '',
-        tipo_pedido_id: null,
-        prioridad: 3,
-        fecha_requerida: '',
-        fecha_estimada_entrega: '',
-        proyecto_asociado: '',
-        costo_estimado: null,
-        precio_final: null,
-        trabajadores_asignados: [],
-        herramientas_asignadas: [],
-        materiales: [],
-        planos: [],
-        notas: '',
-        estado_id: 1
-      })
-    },
-    mode: {
-      type: String,
-      default: 'create',
-      validator: value => ['create', 'edit'].includes(value)
-    }
-  },
-  
-  data() {
-    return {
-      usuarios: [],
-      herramientas: [],
-      tiposPedido: [
-        { id: 1, nombre: 'Fabricación' },
-        { id: 2, nombre: 'Reparación' },
-        { id: 3, nombre: 'Mantenimiento' },
-        { id: 4, nombre: 'Modificación' }
-      ],
-      materialOptions: [],
-      loadingMateriales: false,
-      filterStock: 'all',
-      
-      // Estados de carga
-      loadingUsuarios: false,
-      loadingHerramientas: false,
-      saving: false,
-      
-      // Búsqueda
-      searchUsuarios: '',
-      searchHerramientas: '',
-      searchMateriales: '',
-      
-      // Archivos nuevos
-      newFiles: []
-    }
-  },
-  
-  computed: {
-    filteredUsuarios() {
-      if (!this.searchUsuarios) return this.usuarios;
-      const search = this.searchUsuarios.toLowerCase();
-      return this.usuarios.filter(usuario => {
-        const nombreCompleto = `${usuario.nombres} ${usuario.apellidos}`.toLowerCase();
-        const puestoNombre = usuario.puesto?.nombre?.toLowerCase() || '';
-        const email = usuario.email?.toLowerCase() || '';
-        
-        return nombreCompleto.includes(search) || 
-               puestoNombre.includes(search) ||
-               email.includes(search);
-      });
-    },
-    
-    filteredHerramientas() {
-      if (!this.searchHerramientas) return this.herramientas;
-      const search = this.searchHerramientas.toLowerCase();
-      return this.herramientas.filter(herramienta =>
-        herramienta.nombre.toLowerCase().includes(search) ||
-        herramienta.tipo.toLowerCase().includes(search)
-      );
-    },
+<script src="/src/components/scripts/WorkOrderModalScrip.js"></script>
 
-    filteredAvailableMaterials() {
-      let materials = this.materialOptions;
-      
-      // Aplicar filtro de búsqueda
-      if (this.searchMateriales) {
-        const search = this.searchMateriales.toLowerCase();
-        materials = materials.filter(material => 
-          material.nombre.toLowerCase().includes(search) ||
-          (material.descripcion && material.descripcion.toLowerCase().includes(search))
-        );
-      }
-      
-      // Aplicar filtro de stock
-      switch (this.filterStock) {
-        case 'available':
-          materials = materials.filter(m => m.stock > 0);
-          break;
-        case 'low':
-          materials = materials.filter(m => m.stock > 0 && m.stock <= (m.stock_minimo || 5));
-          break;
-        // 'all' no necesita filtro adicional
-      }
-      
-      return materials.sort((a, b) => {
-        // Ordenar primero los seleccionados
-        const aSelected = this.isMaterialSelected(a.id);
-        const bSelected = this.isMaterialSelected(b.id);
-        if (aSelected && !bSelected) return -1;
-        if (!aSelected && bSelected) return 1;
-        
-        // Luego por stock (disponibles primero)
-        if (a.stock > 0 && b.stock <= 0) return -1;
-        if (a.stock <= 0 && b.stock > 0) return 1;
-        
-        // Luego por stock bajo
-        const aLowStock = a.stock <= (a.stock_minimo || 5);
-        const bLowStock = b.stock <= (b.stock_minimo || 5);
-        if (aLowStock && !bLowStock) return -1;
-        if (!aLowStock && bLowStock) return 1;
-        
-        // Finalmente por nombre
-        return a.nombre.localeCompare(b.nombre);
-      });
-    }
-  },
-  
-  async mounted() {
-    await this.loadUsuarios();
-    await this.loadHerramientas();
-    await this.loadMateriales();
-  },
-  
-  methods: {
-    // Carga de datos desde API
-    async loadUsuarios() {
-      this.loadingUsuarios = true;
-      try {
-        const response = await fetch('/api/usuarios');
-        if (response.ok) {
-          this.usuarios = await response.json();
-        } else {
-          console.error('Error al cargar usuarios:', response.statusText);
-          // Datos de fallback
-          this.usuarios = this.getFallbackUsuarios();
-        }
-      } catch (error) {
-        console.error('Error al cargar usuarios:', error);
-        this.usuarios = this.getFallbackUsuarios();
-      } finally {
-        this.loadingUsuarios = false;
-      }
-    },
-    
-    getFallbackUsuarios() {
-      return [
-        { 
-          id: 1, 
-          nombres: 'Juan Carlos', 
-          apellidos: 'Pérez González', 
-          activo: true,
-          puesto: { nombre: 'Soldador Especializado' },
-          telefono: '7890-1234',
-          email: 'juan.perez@empresa.com'
-        },
-        { 
-          id: 2, 
-          nombres: 'María Elena', 
-          apellidos: 'Gómez Rodríguez', 
-          activo: true,
-          puesto: { nombre: 'Mecánico Industrial' },
-          telefono: '7890-5678',
-          email: 'maria.gomez@empresa.com'
-        }
-      ];
-    },
-    
-    async loadHerramientas() {
-      this.loadingHerramientas = true;
-      try {
-        const response = await fetch('/api/herramientas');
-        if (response.ok) {
-          this.herramientas = await response.json();
-        } else {
-          console.error('Error al cargar herramientas:', response.statusText);
-          this.herramientas = [
-            { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true },
-            { id: 2, nombre: 'Equipo Soldadura MIG', tipo: 'Soldadura', estado: 'Operativo', disponible: true }
-          ];
-        }
-      } catch (error) {
-        console.error('Error al cargar herramientas:', error);
-        this.herramientas = [
-          { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true }
-        ];
-      } finally {
-        this.loadingHerramientas = false;
-      }
-    },
-    
-    async loadMateriales() {
-      this.loadingMateriales = true;
-      try {
-        const response = await fetch('/api/materiales');
-        if (response.ok) {
-          const data = await response.json();
-          this.materialOptions = data.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            descripcion: item.descripcion,
-            stock: item.cantidad_disponible || item.stock,
-            stock_minimo: item.stock_minimo || 5,
-            unidad: item.unidad_medida || 'unidades'
-          }));
-        } else {
-          console.error('Error al cargar materiales:', response.statusText);
-          this.materialOptions = this.getFallbackMateriales();
-        }
-      } catch (error) {
-        console.error('Error al cargar materiales:', error);
-        this.materialOptions = this.getFallbackMateriales();
-      } finally {
-        this.loadingMateriales = false;
-      }
-    },
-    
-    getFallbackMateriales() {
-      return [
-        { 
-          id: 1, 
-          nombre: 'Acero inoxidable 304', 
-          descripcion: 'Plancha de acero inoxidable grado 304 de 1/4" de espesor',
-          stock: 25, 
-          stock_minimo: 10,
-          unidad: 'planchas'
-        },
-        { 
-          id: 2, 
-          nombre: 'Tubo cuadrado 2x2', 
-          descripcion: 'Tubo cuadrado de acero al carbono 2"x2" calibre 14',
-          stock: 48, 
-          stock_minimo: 20,
-          unidad: 'metros'
-        },
-        { 
-          id: 3, 
-          nombre: 'Pintura epóxica negra', 
-          descripcion: 'Pintura industrial epóxica color negro, resistente a químicos',
-          stock: 0, 
-          stock_minimo: 5,
-          unidad: 'galones'
-        }
-      ];
-    },
-    
-    // Métodos de validación y guardado
-    close() {
-      this.$emit('close');
-    },
-    
-    async save() {
-      if (this.validateForm()) {
-        this.saving = true;
-        try {
-          if (this.newFiles.length > 0) {
-            await this.processNewFiles();
-          }
-          
-          this.$emit('save', this.pedido);
-        } catch (error) {
-          console.error('Error al guardar:', error);
-          this.showError('Error al guardar la orden de trabajo');
-        } finally {
-          this.saving = false;
-        }
-      }
-    },
-    
-    validateForm() {
-      const errors = [];
-      
-      if (!this.pedido.codigo_pedido.trim()) errors.push('Ingrese un código de pedido');
-      if (!this.pedido.tipo_pedido_id) errors.push('Seleccione un tipo de pedido');
-      if (!this.pedido.fecha_requerida) errors.push('Seleccione fecha requerida');
-      if (!this.pedido.precio_final || this.pedido.precio_final <= 0) {
-        errors.push('Ingrese un precio final válido');
-      }
-      
-      if (this.pedido.costo_estimado && this.pedido.precio_final <= this.pedido.costo_estimado) {
-        errors.push('El precio final debe ser mayor que el costo estimado');
-      }
-      
-      if (this.pedido.fecha_estimada_entrega && this.pedido.fecha_requerida) {
-        if (new Date(this.pedido.fecha_estimada_entrega) < new Date(this.pedido.fecha_requerida)) {
-          errors.push('La fecha estimada de entrega no puede ser anterior a la fecha requerida');
-        }
-      }
-      
-      if (!this.pedido.trabajadores_asignados || this.pedido.trabajadores_asignados.length === 0) {
-        errors.push('Asigne al menos un trabajador');
-      }
-      
-      // Validación de materiales
-      this.pedido.materiales.forEach((mat, index) => {
-        const material = this.materialOptions.find(m => m.id === mat.id);
-        if (!material) {
-          errors.push(`Material #${index + 1}: Material no encontrado`);
-        } else if (mat.cantidad <= 0) {
-          errors.push(`Material #${index + 1}: Cantidad debe ser mayor a 0`);
-        } else if (mat.cantidad > material.stock) {
-          errors.push(`Material #${index + 1}: Cantidad excede el stock disponible (${material.stock} ${material.unidad})`);
-        }
-      });
-      
-      if (errors.length > 0) {
-        this.showError('Errores de validación:\n' + errors.join('\n'));
-        return false;
-      }
-      return true;
-    },
-    
-    showError(message) {
-      if (this.$toast) {
-        this.$toast.error(message);
-      } else {
-        alert(message);
-      }
-    },
-    
-    // Métodos para archivos PDF
-    handleDrop(e) {
-      const files = e.dataTransfer.files;
-      this.handleFiles(files);
-    },
-    
-    handleFileChange(e) {
-      const files = e.target.files;
-      this.handleFiles(files);
-    },
-    
-    handleFiles(files) {
-      const validFiles = Array.from(files).filter(file => 
-        file.type === 'application/pdf' && file.size <= 10 * 1024 * 1024
-      );
-      
-      if (validFiles.length !== files.length) {
-        this.showError('Algunos archivos no son PDF o exceden el tamaño máximo de 10MB');
-      }
-      
-      this.newFiles = [...this.newFiles, ...validFiles];
-      this.previewNewFiles();
-    },
-    
-    previewNewFiles() {
-      this.newFiles.forEach(file => {
-        if (!this.pedido.planos) {
-          this.$set(this.pedido, 'planos', []);
-        }
-        
-        this.pedido.planos.push({
-          nombre_archivo: file.name,
-          tamaño: file.size,
-          fecha_subida: new Date().toISOString(),
-          file: file
-        });
-      });
-      
-      this.newFiles = [];
-    },
-    
-    removeBlueprint(index) {
-      this.pedido.planos.splice(index, 1);
-    },
-    
-    async processNewFiles() {
-      // Implementación de subida de archivos
-      const uploadPromises = this.pedido.planos
-        .filter(plano => plano.file)
-        .map(async (plano) => {
-          const formData = new FormData();
-          formData.append('file', plano.file);
-          formData.append('nombre', plano.nombre_archivo);
-          
-          try {
-            const response = await fetch('/api/planos/upload', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (response.ok) {
-              const result = await response.json();
-              plano.id = result.id;
-              plano.url = result.url;
-              delete plano.file;
-            }
-          } catch (error) {
-            console.error('Error subiendo archivo:', error);
-          }
-        });
-      
-      await Promise.all(uploadPromises);
-    },
-    
-    // Métodos de utilidad
-    formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    },
-    
-    formatDate(dateString) {
-      return new Date(dateString).toLocaleDateString();
-    },
-    
-    getUsuarioName(usuarioId) {
-      const usuario = this.usuarios.find(u => u.id === usuarioId);
-      return usuario ? `${usuario.nombres} ${usuario.apellidos}` : '';
-    },
-    
-    removeWorker(usuarioId) {
-      this.pedido.trabajadores_asignados = this.pedido.trabajadores_asignados.filter(id => id !== usuarioId);
-    },
-    
-    getHerramientaIcon(tipo) {
-      const iconMap = {
-        'Equipo': 'precision_manufacturing',
-        'Soldadura': 'handyman',
-        'Horno': 'oven',
-        'Herramienta': 'build',
-        'default': 'handyman'
-      };
-      return iconMap[tipo] || iconMap.default;
-    },
-    
-    // Métodos para materiales (mejorados)
-    isMaterialSelected(materialId) {
-      return this.pedido.materiales.some(m => m.id === materialId);
-    },
-    
-    getAddedQuantity(materialId) {
-      const material = this.pedido.materiales.find(m => m.id === materialId);
-      return material ? material.cantidad : 0;
-    },
-    
-    incrementMaterial(material) {
-      const currentQty = this.getAddedQuantity(material.id);
-      if (currentQty < material.stock) {
-        this.updateMaterial(material, currentQty + 1);
-      }
-    },
-    
-    decrementMaterial(material) {
-      const currentQty = this.getAddedQuantity(material.id);
-      if (currentQty > 0) {
-        this.updateMaterial(material, currentQty - 1);
-      }
-    },
-    
-    updateMaterialQuantity(material, event) {
-      let newQty = parseInt(event.target.value) || 0;
-      newQty = Math.max(0, Math.min(newQty, material.stock));
-      this.updateMaterial(material, newQty);
-    },
-    
-    updateMaterial(material, quantity) {
-      const index = this.pedido.materiales.findIndex(m => m.id === material.id);
-      
-      if (index >= 0) {
-        if (quantity > 0) {
-          this.pedido.materiales[index].cantidad = quantity;
-        } else {
-          this.pedido.materiales.splice(index, 1);
-        }
-      } else if (quantity > 0) {
-        this.pedido.materiales.push({
-          id: material.id,
-          cantidad: quantity
-        });
-      }
-    },
-    
-    toggleMaterial(material) {
-      if (this.isMaterialSelected(material.id)) {
-        this.removeMaterialFromList(material.id);
-      } else {
-        this.addMaterialToList(material);
-      }
-    },
-    
-    addMaterialToList(material) {
-      const currentQty = this.getAddedQuantity(material.id);
-      if (currentQty <= 0) {
-        this.updateMaterial(material, 1);
-      }
-    },
-    
-    removeMaterialFromList(materialId) {
-      const index = this.pedido.materiales.findIndex(m => m.id === materialId);
-      if (index >= 0) {
-        this.pedido.materiales.splice(index, 1);
-      }
-    },
-    
-    editMaterialQuantity(material) {
-      const maxQty = this.getMaterialStock(material.id);
-      this.$prompt({
-        title: 'Editar cantidad',
-        message: `Ingrese la nueva cantidad para ${this.getMaterialName(material.id)} (máx: ${maxQty})`,
-        inputType: 'number',
-        inputValue: material.cantidad,
-        inputAttributes: {
-          min: 1,
-          max: maxQty
-        },
-        confirmText: 'Guardar',
-        cancelText: 'Cancelar'
-      }).then(newQty => {
-        newQty = parseInt(newQty);
-        if (newQty > 0 && newQty <= maxQty) {
-          this.updateMaterial(material, newQty);
-        } else {
-          this.showError(`La cantidad debe estar entre 1 y ${maxQty}`);
-        }
-      }).catch(() => {});
-    },
-    
-    removeMaterial(index) {
-      this.pedido.materiales.splice(index, 1);
-    },
-    
-    getMaterialName(materialId) {
-      const material = this.materialOptions.find(m => m.id === materialId);
-      return material ? material.nombre : 'Material desconocido';
-    },
-    
-    getMaterialStock(materialId) {
-      const material = this.materialOptions.find(m => m.id === materialId);
-      return material ? material.stock : 0;
-    },
-    
-    getMaterialUnit(materialId) {
-      const material = this.materialOptions.find(m => m.id === materialId);
-      return material ? material.unidad : 'unidades';
-    },
-    
-    truncateDescription(text, maxLength = 60) {
-      if (text.length > maxLength) {
-        return text.substring(0, maxLength) + '...';
-      }
-      return text;
-    }
-  }
-}
-</script>
-
-<style scoped>
-/* Estilos base del modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e1e5e9;
-  background-color: #f8f9fa;
-  border-radius: 12px 12px 0 0;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6c757d;
-  font-size: 24px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: #495057;
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Secciones del formulario */
-.form-section {
-  margin-bottom: 32px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 20px;
-  background-color: #ffffff;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  color: #495057;
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.form-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 16px;
-}
-
-.form-row .form-group {
-  flex: 1;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #495057;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #ced4da;
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #42b983;
-  box-shadow: 0 0 0 0.2rem rgba(66, 185, 131, 0.25);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-/* Estilos para carga */
-.loading-message {
-  text-align: center;
-  padding: 20px;
-  color: #6c757d;
-  font-style: italic;
-}
-
-/* Estilos para búsqueda */
-.search-box {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 12px 10px 40px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 14px;
-  background-color: #f8f9fa;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #42b983;
-  background-color: white;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6c757d;
-}
-
-/* Estilos para planos */
-.blueprints-section {
-  margin-top: 1rem;
-}
-
-.file-upload-area {
-  border: 2px dashed #ced4da;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  background-color: #f8f9fa;
-}
-
-.file-upload-area:hover {
-  border-color: #42b983;
-  background-color: #f0f8f5;
-}
-
-.upload-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-}
-
-.large-icon {
-  font-size: 3rem;
-  color: #42b983;
-  margin-bottom: 0.5rem;
-}
-
-.small-text {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-top: 0.5rem;
-}
-
-.uploaded-files {
-  margin-top: 1rem;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.file-list-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  font-weight: 500;
-}
-
-.file-list {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f3f4;
-}
-
-.file-item:last-child {
-  border-bottom: none;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.file-name {
-  font-weight: 500;
-  color: #495057;
-}
-
-.file-meta {
-  font-size: 0.8rem;
-  color: #6c757d;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #dc3545;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.icon-btn:hover {
-  background-color: rgba(220, 53, 69, 0.1);
-}
-
-/* Estilos para trabajadores */
-.workers-selection {
-  display: flex;
-  gap: 24px;
-}
-
-.workers-list {
-  flex: 2;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  max-height: 400px;
-  overflow-y: auto;
-  background-color: #fafafa;
-}
-
-.worker-item {
-  padding: 12px;
-  border-bottom: 1px solid #e9ecef;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  background-color: white;
-  transition: background-color 0.2s;
-}
-
-.worker-item:hover {
-  background-color: #f8f9fa;
-}
-
-.worker-item:last-child {
-  margin-bottom: 0;
-}
-
-.worker-checkbox {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.checkmark {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #ced4da;
-  border-radius: 4px;
-  margin-right: 12px;
-  position: relative;
-  transition: all 0.2s;
-}
-
-.worker-checkbox input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.worker-checkbox input:checked ~ .checkmark {
-  background-color: #42b983;
-  border-color: #42b983;
-}
-
-.checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 5px;
-  top: 1px;
-  width: 5px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.worker-checkbox input:checked ~ .checkmark:after {
-  display: block;
-}
-
-.worker-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.worker-name {
-  font-weight: 500;
-  color: #495057;
-}
-
-.worker-role {
-  font-size: 0.85em;
-  color: #6c757d;
-  margin-top: 2px;
-}
-
-.worker-contact {
-  font-size: 0.8em;
-  color: #6c757d;
-  margin-top: 2px;
-}
-
-.assigned-preview {
-  flex: 1;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f8f9fa;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.assigned-preview h4 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  color: #495057;
-}
-
-.assigned-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.assigned-badge {
-  display: inline-flex;
-  align-items: center;
-  background-color: #e3f2fd;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 0.85em;
-  color: #1976d2;
-  border: 1px solid #bbdefb;
-}
-
-.remove-worker-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-  margin-left: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: 0.8em;
-  transition: background-color 0.2s;
-}
-
-.remove-worker-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Estilos para herramientas */
-.resource-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.resource-item {
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 12px;
-  transition: all 0.2s;
-}
-
-.resource-item:hover {
-  border-color: #42b983;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.resource-checkbox {
-  display: flex;
-  align-items: flex-start;
-  cursor: pointer;
-  user-select: none;
-  gap: 10px;
-}
-
-.resource-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #495057;
-}
-
-/* Estilos para la sección de materiales */
-.materials-filter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 16px;
-}
-
-.filter-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.filter-btn {
-  padding: 6px 12px;
-  border: 1px solid #ddd;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85em;
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  background-color: #e9ecef;
-}
-
-.filter-btn.active {
-  background-color: #42b983;
-  color: white;
-  border-color: #42b983;
-}
-
-/* Materiales disponibles */
-.materials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.material-card {
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-}
-
-.material-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.material-card.selected {
-  border-color: #42b983;
-  background-color: #f0f8f5;
-}
-
-.material-card.out-of-stock {
-  opacity: 0.7;
-  background-color: #f9f9f9;
-}
-
-.material-card.low-stock {
-  border-left: 4px solid #ffc107;
-}
-
-.material-info {
-  margin-bottom: 16px;
-}
-
-.material-info h5 {
-  margin: 0 0 8px 0;
-  color: #333;
-  font-size: 1.05em;
-}
-
-.material-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85em;
-  margin-bottom: 8px;
-}
-
-.stock-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.stock-info .material-icons {
-  font-size: 1.1em;
-}
-
-.min-stock {
-  color: #666;
-  font-size: 0.9em;
-}
-
-.material-description {
-  font-size: 0.85em;
-  color: #666;
-  line-height: 1.4;
-}
-
-.material-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-}
-
-.quantity-controls {
-  display: flex;
-  align-items: center;
-}
-
-.qty-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #ddd;
-  background-color: #f5f5f5;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.qty-btn:hover:not(:disabled) {
-  background-color: #e9ecef;
-}
-
-.qty-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.qty-input {
-  width: 50px;
-  height: 32px;
-  text-align: center;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin: 0 5px;
-}
-
-.qty-input.error {
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-.add-material-btn {
-  padding: 8px 16px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: all 0.2s;
-}
-
-.add-material-btn:hover:not(:disabled) {
-  background-color: #369870;
-  transform: translateY(-1px);
-}
-
-.add-material-btn.added {
-  background-color: #dc3545;
-}
-
-.add-material-btn.added:hover {
-  background-color: #c82333;
-}
-
-.add-material-btn.disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-.out-of-stock-message {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #dc3545;
-  font-size: 0.9em;
-  margin-top: 12px;
-}
-
-/* Lista de materiales seleccionados */
-.selected-materials {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f9f9f9;
-}
-
-.selected-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.selected-header h4 {
-  margin: 0;
-  color: #333;
-}
-
-.total-items {
-  font-size: 0.9em;
-  color: #666;
-  background-color: #e9ecef;
-  padding: 4px 10px;
-  border-radius: 12px;
-}
-
-.empty-message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: #666;
-  font-style: italic;
-  text-align: center;
-}
-
-.empty-message .material-icons {
-  font-size: 2em;
-  margin-bottom: 8px;
-  color: #6c757d;
-}
-
-.selected-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.selected-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 12px 16px;
-  transition: all 0.2s;
-}
-
-.selected-item:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.item-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.item-name {
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.item-details {
-  display: flex;
-  gap: 8px;
-  font-size: 0.85em;
-  color: #666;
-}
-
-.item-stock {
-  color: #6c757d;
-}
-
-.item-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.edit-btn, .remove-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.edit-btn {
-  background-color: #e3f2fd;
-  color: #1976d2;
-}
-
-.edit-btn:hover {
-  background-color: #bbdefb;
-}
-
-.remove-btn {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
-.remove-btn:hover {
-  background-color: #ffcdd2;
-}
-
-/* Pie del modal */
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
-  border-radius: 0 0 12px 12px;
-}
-
-.btn {
-  padding: 12px 24px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s;
-  min-width: 120px;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn.primary {
-  background-color: #42b983;
-  color: white;
-}
-
-.btn.primary:hover:not(:disabled) {
-  background-color: #369870;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(66, 185, 131, 0.3);
-}
-
-.btn.secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn.secondary:hover {
-  background-color: #5a6268;
-  transform: translateY(-1px);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .modal-content {
-    width: 95%;
-    max-height: 95vh;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 16px;
-  }
-  
-  .form-row {
-    flex-direction: column;
-    gap: 0;
-  }
-  
-  .workers-selection {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .workers-list,
-  .assigned-preview {
-    max-height: 250px;
-  }
-  
-  .materials-filter {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filter-buttons {
-    justify-content: space-between;
-  }
-  
-  .filter-btn {
-    flex: 1;
-    text-align: center;
-  }
-  
-  .materials-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .material-actions {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .quantity-controls {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .add-material-btn {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .modal-content {
-    width: 98%;
-    margin: 1vh;
-  }
-  
-  .section-title {
-    font-size: 1rem;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-    margin-bottom: 8px;
-  }
-  
-  .btn:last-child {
-    margin-bottom: 0;
-  }
-  
-  .file-upload-area {
-    padding: 1.5rem 1rem;
-  }
-  
-  .large-icon {
-    font-size: 2rem;
-  }
-}
-</style>
+<style src="/src/assets/Componentes_Style/WorkOrderModalStyle.css" scoped></style>
