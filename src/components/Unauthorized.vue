@@ -47,4 +47,4 @@
   };
   </script>
   
-<style scoped src="./style/Unauthorized.css"></style>
+<style scoped src="../assets/Unauthorized.css"></style>

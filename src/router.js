@@ -198,15 +198,7 @@ const routes = [
     name: 'technician-schedule',
     component: () => import('@/components/VistasTecnico/Programacion.vue'),
     meta: { public: true }
-  } , {
-    path: '/gannta',
-    name: 'gannt', 
-    component: () => import('@/components/examples/GanttExample.vue'),
-    meta: { 
-      public: true,
-      layout: 'empty'
-    }
-  },
+  }
 ]
 
 const router = createRouter({

@@ -601,4 +601,4 @@ onUnmounted(() => {
 })
 </script>\
 
-<style src="./style/DashboardTecnico.css"></style>
+<style src="src/assets/DashboardTecnico.css"></style>

@@ -55,5 +55,5 @@
     }
   };
   </script>
-  
-<style src="./style/NotFound.css" ></style>
+
+<style src="src/assets/NotFound.css" ></style>

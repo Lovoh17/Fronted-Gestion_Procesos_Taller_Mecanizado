@@ -183,4 +183,4 @@
   </div>
 </template>
 <script src="./ComponentesAdmin/Script/Usuarios.js"></script>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

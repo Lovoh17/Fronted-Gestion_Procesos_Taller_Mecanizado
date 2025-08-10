@@ -270,4 +270,4 @@
 </template>
 
 <script src ="./script/Programacion.js"></script>
-<style src="./style/Programacion.css" scoped></style>
+<style src="src/assets/Programacion.css" scoped></style>
