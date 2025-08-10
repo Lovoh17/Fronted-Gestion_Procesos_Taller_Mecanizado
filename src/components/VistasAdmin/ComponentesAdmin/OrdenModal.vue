@@ -1,126 +1,134 @@
 <template>
-  <div class="modal-overlay" @click.self="close">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3>Nuevo Trabajo</h3>
-        <button class="close-btn" @click="close">×</button>
-      </div>
-      
-      <div class="modal-body">
-        <form @submit.prevent="save">
-          <!-- Sección Cliente -->
-          <div class="form-section">
-            <h4>Datos del Cliente</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Cliente</label>
-                <input 
-                  v-model="formData.cliente" 
-                  type="text" 
-                  required
-                  placeholder="Nombre del cliente"
-                >
-              </div>
-              <div class="form-group">
-                <label>Teléfono</label>
-                <input 
-                  v-model="formData.telefono" 
-                  type="tel" 
-                  placeholder="Teléfono de contacto"
-                >
-              </div>
-            </div>
+  <VaModal
+    v-model="showModal"
+    title="Nuevo Trabajo"
+    size="large"
+    @close="close"
+  >
+    <form @submit.prevent="save">
+      <!-- Sección Cliente -->
+      <VaCard class="form-section">
+        <VaCardTitle>Datos del Cliente</VaCardTitle>
+        <VaCardContent>
+          <div class="form-row">
+            <VaInput
+              v-model="formData.cliente"
+              label="Cliente *"
+              placeholder="Nombre del cliente"
+              required
+              class="form-field"
+            />
+            <VaInput
+              v-model="formData.telefono"
+              type="tel"
+              label="Teléfono"
+              placeholder="Teléfono de contacto"
+              class="form-field"
+            />
           </div>
+        </VaCardContent>
+      </VaCard>
 
-          <!-- Sección Vehículo -->
-          <div class="form-section">
-            <h4>Datos del Vehículo</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Marca</label>
-                <input 
-                  v-model="formData.marca" 
-                  type="text" 
-                  required
-                  placeholder="Ej: Toyota"
-                >
-              </div>
-              <div class="form-group">
-                <label>Modelo</label>
-                <input 
-                  v-model="formData.modelo" 
-                  type="text" 
-                  required
-                  placeholder="Ej: Corolla"
-                >
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Placa/Número de Serie</label>
-              <input 
-                v-model="formData.placa" 
-                type="text" 
-                placeholder="Placa o VIN"
-              >
-            </div>
+      <!-- Sección Vehículo -->
+      <VaCard class="form-section">
+        <VaCardTitle>Datos del Vehículo</VaCardTitle>
+        <VaCardContent>
+          <div class="form-row">
+            <VaInput
+              v-model="formData.marca"
+              label="Marca *"
+              placeholder="Ej: Toyota"
+              required
+              class="form-field"
+            />
+            <VaInput
+              v-model="formData.modelo"
+              label="Modelo *"
+              placeholder="Ej: Corolla"
+              required
+              class="form-field"
+            />
           </div>
+          <VaInput
+            v-model="formData.placa"
+            label="Placa/Número de Serie"
+            placeholder="Placa o VIN"
+            class="form-field"
+          />
+        </VaCardContent>
+      </VaCard>
 
-          <!-- Sección Trabajo -->
-          <div class="form-section">
-            <h4>Detalles del Trabajo</h4>
-            <div class="form-group">
-              <label>Tipo de Trabajo</label>
-              <select v-model="formData.tipo" required>
-                <option value="">Seleccione un tipo</option>
-                <option value="Mantenimiento">Mantenimiento</option>
-                <option value="Reparación">Reparación</option>
-                <option value="Diagnóstico">Diagnóstico</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label>Descripción</label>
-              <textarea 
-                v-model="formData.descripcion" 
-                required
-                placeholder="Describa el trabajo a realizar..."
-              ></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label>Técnico</label>
-              <select v-model="formData.tecnico_id" required>
-                <option value="">Seleccione un técnico</option>
-                <option 
-                  v-for="tecnico in tecnicos" 
-                  :key="tecnico.id" 
-                  :value="tecnico.id"
-                >
-                  {{ tecnico.nombre }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </form>
+      <!-- Sección Trabajo -->
+      <VaCard class="form-section">
+        <VaCardTitle>Detalles del Trabajo</VaCardTitle>
+        <VaCardContent>
+          <VaSelect
+            v-model="formData.tipo"
+            label="Tipo de Trabajo *"
+            placeholder="Seleccione un tipo"
+            :options="tipoOptions"
+            required
+            class="form-field"
+          />
+          
+          <VaTextarea
+            v-model="formData.descripcion"
+            label="Descripción *"
+            placeholder="Describa el trabajo a realizar..."
+            required
+            class="form-field"
+            :min-rows="3"
+          />
+          
+          <VaSelect
+            v-model="formData.tecnico_id"
+            label="Técnico *"
+            placeholder="Seleccione un técnico"
+            :options="tecnicoOptions"
+            text-by="nombre"
+            value-by="id"
+            required
+            class="form-field"
+          />
+        </VaCardContent>
+      </VaCard>
+    </form>
+
+    <template #footer>
+      <div class="form-actions">
+        <VaButton
+          preset="secondary"
+          @click="close"
+        >
+          Cancelar
+        </VaButton>
+        <VaButton
+          color="primary"
+          @click="save"
+        >
+          Guardar
+        </VaButton>
       </div>
-      
-      <div class="modal-footer">
-        <button class="btn-secondary" @click="close">Cancelar</button>
-        <button class="btn-primary" @click="save">Guardar</button>
-      </div>
-    </div>
-  </div>
+    </template>
+  </VaModal>
 </template>
 
 <script>
 export default {
   name: 'NewJobModal',
   props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
     tecnicos: {
       type: Array,
       default: () => []
     }
   },
+  
+  emits: ['update:modelValue', 'close', 'save'],
+  
   data() {
     return {
       formData: {
@@ -135,8 +143,34 @@ export default {
       }
     }
   },
+  
+  computed: {
+    showModal: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      }
+    },
+    tipoOptions() {
+      return [
+        { text: 'Mantenimiento', value: 'Mantenimiento' },
+        { text: 'Reparación', value: 'Reparación' },
+        { text: 'Diagnóstico', value: 'Diagnóstico' }
+      ]
+    },
+    tecnicoOptions() {
+      return this.tecnicos.map(tecnico => ({
+        id: tecnico.id,
+        nombre: tecnico.nombre
+      }))
+    }
+  },
+  
   methods: {
     close() {
+      this.showModal = false
       this.$emit('close')
     },
     save() {
@@ -146,12 +180,56 @@ export default {
           fecha: new Date().toISOString(),
           estado: 'pendiente'
         })
+        this.resetForm()
+        this.close()
       }
     },
     validateForm() {
       const required = ['cliente', 'marca', 'modelo', 'tipo', 'descripcion', 'tecnico_id']
       return required.every(field => this.formData[field])
+    },
+    resetForm() {
+      this.formData = {
+        cliente: '',
+        telefono: '',
+        marca: '',
+        modelo: '',
+        placa: '',
+        tipo: '',
+        descripcion: '',
+        tecnico_id: ''
+      }
     }
   }
 }
 </script>
+
+<style scoped>
+.form-section {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-field {
+  margin-bottom: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+</style>

@@ -22,22 +22,20 @@
     </div>
     
     <div class="preset-ranges">
-      <button 
-        v-for="(range, label) in ranges" 
+      <va-button v-for="(range, label) in ranges" 
         :key="label"
         @click="setPresetRange(range)"
         class="preset-btn"
         :class="{ 'active': isActivePreset(range) }"
-      >
+         >
         {{ label }}
-      </button>
-      <button 
-        v-if="showCustomRange" 
+      </va-button>
+      <va-button v-if="showCustomRange" 
         class="preset-btn"
         :class="{ 'active': isCustomRangeSelected }"
-      >
+         >
         {{ locale.customRangeLabel }}
-      </button>
+      </va-button>
     </div>
   </div>
 </template>

@@ -1,50 +1,65 @@
 <template>
-  <div class="modal-overlay" @click="cancel">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <div class="modal-icon">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h3>{{ title }}</h3>
-        <button class="close-btn" @click="cancel" :disabled="loading">
-          <i class="fas fa-times"></i>
-        </button>
+  <VaModal 
+    v-model="showModal"
+    :title="title"
+    :close-button="!loading"
+    :no-outside-dismiss="loading"
+    :no-escape-dismiss="loading"
+    size="small"
+    @close="cancel"
+  >
+    <template #header>
+      <div class="confirm-header">
+        <VaIcon 
+          name="warning" 
+          size="large"
+          color="warning"
+          class="confirm-icon"
+        />
+        <h3 class="confirm-title">{{ title }}</h3>
       </div>
+    </template>
 
-      <div class="modal-body">
-        <p>{{ message }}</p>
-        <div v-if="details" class="details">
-          <small>{{ details }}</small>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="cancel"
-          :disabled="loading"
-        >
-          {{ cancelText }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger"
-          @click="confirm"
-          :disabled="loading"
-        >
-          <i v-if="loading" class="fas fa-spinner fa-spin mr-2"></i>
-          {{ confirmText }}
-        </button>
+    <div class="confirm-content">
+      <p class="confirm-message">{{ message }}</p>
+      <div v-if="details" class="confirm-details">
+        <small>{{ details }}</small>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <div class="confirm-actions">
+        <VaButton
+          preset="secondary"
+          @click="cancel"
+          :disabled="loading"
+          class="cancel-button"
+        >
+          {{ cancelText }}
+        </VaButton>
+        
+        <VaButton
+          color="danger"
+          @click="confirm"
+          :disabled="loading"
+          :loading="loading"
+          class="confirm-button"
+        >
+          {{ confirmText }}
+        </VaButton>
+      </div>
+    </template>
+  </VaModal>
 </template>
 
 <script>
 export default {
   name: 'ConfirmModal',
   props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
     title: {
       type: String,
       default: 'Confirmar acción'
@@ -70,29 +85,20 @@ export default {
       default: false
     }
   },
-
-  methods: {
-    confirm() {
-      this.$emit('confirm')
-    },
-
-    cancel() {
-      if (!this.loading) {
-        this.$emit('cancel')
+  
+  emits: ['update:modelValue', 'confirm', 'cancel'],
+  
+  computed: {
+    showModal: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
       }
     }
   },
 
-  mounted() {
-    // Agregar event listener para ESC
-    document.addEventListener('keydown', this.handleKeydown)
-  },
-
-  beforeUnmount() {
-    // Remover event listener
-    document.removeEventListener('keydown', this.handleKeydown)
-  },
-
   methods: {
     confirm() {
       this.$emit('confirm')
@@ -100,13 +106,8 @@ export default {
 
     cancel() {
       if (!this.loading) {
+        this.showModal = false
         this.$emit('cancel')
-      }
-    },
-
-    handleKeydown(event) {
-      if (event.key === 'Escape' && !this.loading) {
-        this.cancel()
       }
     }
   }
@@ -114,165 +115,85 @@ export default {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.confirm-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1001;
-  padding: 20px;
+  gap: 1rem;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 400px;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.modal-icon {
-  width: 40px;
-  height: 40px;
+.confirm-icon {
+  width: 3rem;
+  height: 3rem;
   border-radius: 50%;
-  background: #fff3cd;
+  background: var(--va-warning);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #856404;
-  font-size: 18px;
+  color: var(--va-background-primary);
 }
 
-.modal-header h3 {
+.confirm-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--va-text-primary);
   flex: 1;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  margin-left: auto;
+.confirm-content {
+  padding: 1.5rem 0;
 }
 
-.close-btn:hover:not(:disabled) {
-  background: #f8f9fa;
-  color: #495057;
-}
-
-.close-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.modal-body {
-  padding: 20px 24px;
-}
-
-.modal-body p {
-  margin: 0 0 12px 0;
-  color: #495057;
+.confirm-message {
+  margin: 0 0 1rem 0;
+  color: var(--va-text-primary);
+  font-size: 1rem;
   line-height: 1.5;
 }
 
-.details {
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border-left: 3px solid #dee2e6;
+.confirm-details {
+  padding: 0.75rem;
+  background: var(--va-background-element);
+  border-radius: var(--va-border-radius);
+  border-left: 3px solid var(--va-info);
 }
 
-.details small {
-  color: #6c757d;
-  font-size: 12px;
+.confirm-details small {
+  color: var(--va-text-secondary);
+  font-size: 0.875rem;
   line-height: 1.4;
 }
 
-.modal-footer {
+.confirm-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px 20px;
-  border-top: 1px solid #dee2e6;
-  background: #f8f9fa;
+  gap: 0.75rem;
 }
 
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 80px;
-  justify-content: center;
+.cancel-button {
+  min-width: 6rem;
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.confirm-button {
+  min-width: 6rem;
 }
 
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #5a6268;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #c82333;
-}
-
+/* Responsive */
 @media (max-width: 480px) {
-  .modal-overlay {
-    padding: 10px;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 16px;
-  }
-
-  .modal-footer {
+  .confirm-actions {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .btn {
+  .cancel-button,
+  .confirm-button {
     width: 100%;
+  }
+
+  .confirm-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
   }
 }
 </style>

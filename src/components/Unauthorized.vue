@@ -9,15 +9,19 @@
           No tienes permisos para acceder a esta página con tu rol actual.
         </p>
         <div class="error-actions">
-          <button @click="goBack" class="action-btn back-btn">
+          <va-button @click="goBack" class="action-btn back-btn"    >
+        
             <span class="material-icons">arrow_back</span> Volver atrás
-          </button>
+          
+      </va-button>
           <router-link to="/" class="action-btn home-btn">
             <span class="material-icons">home</span> Ir al inicio
           </router-link>
-          <button v-if="showLogout" @click="logout" class="action-btn logout-btn">
+          <va-button v-if="showLogout" @click="logout" class="action-btn logout-btn"    >
+        
             <span class="material-icons">logout</span> Cambiar de usuario
-          </button>
+          
+      </va-button>
         </div>
       </div>
     </div>
@@ -43,4 +47,4 @@
   };
   </script>
   
-<style scoped src="./style/Unauthorized.css"></style>
+<style scoped src="../assets/Unauthorized.css"></style>

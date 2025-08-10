@@ -1,9 +1,9 @@
 <template>
   <div class="crud-table">
     <div class="table-header">
-      <button @click="showAddForm = !showAddForm" class="btn-add">
+      <va-button @click="showAddForm = !showAddForm" class="btn-add"   >
         {{ showAddForm ? 'Cancelar' : '➕ Agregar Nuevo' }}
-      </button>
+      </va-button>
     </div>
 
     <!-- Formulario para agregar nuevo -->
@@ -53,8 +53,12 @@
         </div>
       </div>
       <div class="form-actions">
-        <button @click="addItem" class="btn-save">Guardar</button>
-        <button @click="cancelAdd" class="btn-cancel">Cancelar</button>
+        <va-button @click="addItem" class="btn-save"   >
+        Guardar
+      </va-button>
+        <va-button @click="cancelAdd" class="btn-cancel"   >
+        Cancelar
+      </va-button>
       </div>
     </div>
 
@@ -143,12 +147,20 @@
             </td>
             <td class="actions">
               <template v-if="editingItem?.id === item.id">
-                <button @click="saveItem" class="btn-save">💾</button>
-                <button @click="cancelEdit" class="btn-cancel">✖</button>
+                <va-button @click="saveItem" class="btn-save"   >
+        💾
+      </va-button>
+                <va-button @click="cancelEdit" class="btn-cancel"   >
+        ✖
+      </va-button>
               </template>
               <template v-else>
-                <button @click="startEdit(item)" class="btn-edit">✏️</button>
-                <button @click="deleteItem(item)" class="btn-delete">🗑️</button>
+                <va-button @click="startEdit(item)" class="btn-edit"   >
+        ✏️
+      </va-button>
+                <va-button @click="deleteItem(item)" class="btn-delete"   >
+        🗑️
+      </va-button>
               </template>
             </td>
           </tr>

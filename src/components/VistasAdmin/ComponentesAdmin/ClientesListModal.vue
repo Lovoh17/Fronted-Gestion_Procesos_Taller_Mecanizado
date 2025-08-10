@@ -10,13 +10,17 @@
                 placeholder="Buscar cliente..."
                 @input="searchClients"
               >
-              <button class="search-btn">
-                <i class="fas fa-search"></i>
-              </button>
+              <va-button    icon="search">
+        
+                
+              
+      </va-button>
             </div>
-            <button class="close-btn" @click="close">
-              <i class="fas fa-times"></i>
-            </button>
+            <va-button  @click="close"    icon="times">
+        
+              
+            
+      </va-button>
           </div>
         </div>
         
@@ -45,12 +49,13 @@
                   <td>{{ cliente.vehiculos ? cliente.vehiculos.length : 0 }}</td>
                   <td>{{ formatDate(cliente.ultima_visita) }}</td>
                   <td>
-                    <button 
-                      class="btn btn-sm btn-select"
+                    <va-button 
                       @click="selectClient(cliente)"
-                    >
-                      <i class="fas fa-check mr-1"></i>Seleccionar
-                    </button>
+                      size="small"  icon="check">
+        
+                      Seleccionar
+                    
+      </va-button>
                   </td>
                 </tr>
                 <tr v-if="filteredClients.length === 0">
@@ -64,15 +69,18 @@
         </div>
         
         <div class="modal-footer">
-          <button class="btn btn-outline-secondary" @click="close">
-            <i class="fas fa-times mr-1"></i>Cancelar
-          </button>
-          <button 
-            class="btn btn-primary" 
+          <va-button  @click="close"   preset="outline" icon="times">
+        
+            Cancelar
+          
+      </va-button>
+          <va-button  
             @click="showNewClientModal = true"
-          >
-            <i class="fas fa-plus mr-1"></i>Nuevo Cliente
-          </button>
+           color="primary"   icon="plus">
+        
+            Nuevo Cliente
+          
+      </va-button>
         </div>
       </div>
   

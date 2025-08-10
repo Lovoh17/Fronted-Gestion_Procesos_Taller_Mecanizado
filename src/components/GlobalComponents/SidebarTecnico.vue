@@ -40,10 +40,12 @@
       </nav>
       
       <div class="sidebar-footer" v-if="!isCollapsed">
-        <button class="logout-btn" @click="logout">
+        <va-button class="logout-btn" @click="logout"    >
+        
           <span class="material-icons">logout</span>
           Cerrar Sesión
-        </button>
+        
+      </va-button>
         <div class="company-brand">UNIVO INDUSTRIAL</div>
       </div>
     </div>

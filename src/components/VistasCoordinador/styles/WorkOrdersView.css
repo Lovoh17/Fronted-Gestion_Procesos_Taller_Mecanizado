@@ -4,68 +4,6 @@
   min-height: 100vh;
 }
 
-.header-section {
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.header-content:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 70px;
-  height: 70px;
-  background: #003366;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.8rem;
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #003366, #003366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
 .dark-mode .work-orders-page {
   background-color: #121212;
   color: #ffffff;
@@ -113,44 +51,6 @@
   gap: 10px;
 }
 
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn.primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.btn.primary:hover {
-  background-color: var(--secondary-color);
-}
-
-.btn.secondary {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-.dark-mode .btn.secondary {
-  background-color: #333;
-  color: #fff;
-}
-
-.btn.secondary:hover {
-  background-color: #d0d0d0;
-}
-
-.dark-mode .btn.secondary:hover {
-  background-color: #444;
-}
 
 .summary-cards {
   display: grid;
@@ -213,7 +113,7 @@
 }
 
 .orders-table th {
-  background-color: #f5f5f5;
+  background-color: var(--gray-medium);
   padding: 12px 15px;
   text-align: left;
   font-weight: 600;

@@ -3,9 +3,11 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>{{ editing ? 'Editar' : 'Agregar' }} Materia Prima</h3>
-        <button @click="$emit('close')" class="btn-icon">
+        <va-button @click="$emit('close')" class="btn-icon"    >
+        
           <span class="material-icons">close</span>
-        </button>
+        
+      </va-button>
       </div>
       
       <form @submit.prevent="submitForm" class="modal-form">
@@ -221,12 +223,12 @@
         </div>
         
         <div class="form-actions">
-          <button type="button" @click="$emit('close')" class="btn btn-outline">
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" :disabled="loading">
-            {{ loading ? 'Guardando...' : (editing ? 'Actualizar' : 'Guardar') }}
-          </button>
+          <va-button type="button" @click="$emit('close')" class="btn btn-outline"   preset="outline">
+        Cancelar
+      </va-button>
+          <va-button type="submit" class="btn btn-primary" :disabled="loading" color="primary"  >
+        {{ loading ? 'Guardando...' : (editing ? 'Actualizar' : 'Guardar') }}
+      </va-button>
         </div>
       </form>
     </div>

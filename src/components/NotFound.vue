@@ -12,9 +12,14 @@
         </div>
         
         <div class="actions">
-          <button @click="goBack" class="btn back">
-            <span class="material-icons">arrow_back</span> Volver atrás
-          </button>
+          <va-button 
+            @click="goBack" 
+            class="btn back"
+            color="secondary"
+            icon="arrow_back"
+          >
+            Volver atrás
+          </va-button>
           <router-link to="/" class="btn home">
             <span class="material-icons">home</span> Ir al inicio
           </router-link>
@@ -50,5 +55,5 @@
     }
   };
   </script>
-  
-<style src="./style/NotFound.css" ></style>
+
+<style src="src/assets/NotFound.css" ></style>

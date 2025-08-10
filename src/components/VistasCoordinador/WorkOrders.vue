@@ -1,6 +1,5 @@
 <template>
   <div class="work-orders-page" :class="{ 'dark-mode': $root.darkMode }">
-
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">
@@ -60,12 +59,16 @@
       </div>
 
       <div class="actions">
-        <button style="background: #2c3e50;" class="btn primary" @click="openCreateModal">
+        <va-button style="background: #2c3e50;" class="btn primary" @click="openCreateModal"    >
+        
           <span class="material-icons">add</span> Nueva Orden
-        </button>
-        <button class="btn secondary" @click="exportToExcel">
+        
+      </va-button>
+        <va-button class="btn secondary" @click="exportToExcel"    >
+        
           <span class="material-icons">download</span> Exportar
-        </button>
+        
+      </va-button>
       </div>
     </div>
 
@@ -126,15 +129,21 @@
             <td>{{ formatDate(order.startDate) }}</td>
             <td>{{ formatDate(order.endDate) }}</td>
             <td class="actions-cell">
-              <button class="icon-btn" @click="openEditModal(order)">
+              <va-button class="icon-btn" @click="openEditModal(order)"    >
+        
                 <span class="material-icons">edit</span>
-              </button>
-              <button class="icon-btn" @click="openDetailsModal(order)">
+              
+      </va-button>
+              <va-button class="icon-btn" @click="openDetailsModal(order)"    >
+        
                 <span class="material-icons">visibility</span>
-              </button>
-              <button class="icon-btn" @click="changeStatus(order, 'completed')" v-if="order.status !== 'completed'">
+              
+      </va-button>
+              <va-button class="icon-btn" @click="changeStatus(order, 'completed')" v-if="order.status !== 'completed'"    >
+        
                 <span class="material-icons">check_circle</span>
-              </button>
+              
+      </va-button>
             </td>
           </tr>
         </tbody>
@@ -143,13 +152,17 @@
 
     <!-- Paginación -->
     <div class="pagination">
-      <button @click="prevPage" :disabled="currentPage === 1">
+      <va-button @click="prevPage" :disabled="currentPage === 1"    >
+        
         <span class="material-icons">chevron_left</span>
-      </button>
+      
+      </va-button>
       <span>Página {{ currentPage }} de {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="currentPage === totalPages">
+      <va-button @click="nextPage" :disabled="currentPage === totalPages"    >
+        
         <span class="material-icons">chevron_right</span>
-      </button>
+      
+      </va-button>
     </div>
 
     <!-- Modal Crear/Editar -->
@@ -162,3 +175,4 @@
 
 <script src="./scripts/WorkOrdersView.js"></script>
 <style src="./styles/WorkOrdersView.css" scoped></style>
+<style src="src/assets/EstiloBase.css"></style>

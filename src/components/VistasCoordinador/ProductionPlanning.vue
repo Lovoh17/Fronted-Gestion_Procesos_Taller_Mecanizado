@@ -1,143 +1,116 @@
 <template>
   <div class="">
     <Sidebar :role="'coordinator'" />
-    <main class="">
-      <div class="calendario-container">
-        <!-- Loading -->
-        <div v-if="loading" class="loading-container">
-          <div class="loading-content">
-            <i class="fas fa-spinner fa-spin loading-icon"></i>
-            <span>Cargando pedidos...</span>
+
+    <!-- Panel de Alertas Superior -->
+    <div v-if="alerts.length > 0" class="alerts-panel">
+      <div v-for="alert in alerts" :key="alert.id" :class="['alert-item', alert.type]">
+        <div class="alert-content">
+          <i :class="alert.icon"></i>
+          <span class="alert-message">{{ alert.message }}</span>
+          <button v-if="alert.actionButton" class="alert-action-btn" @click="handleAlertAction(alert)">
+            {{ alert.actionButton }}
+          </button>
+        </div>
+        <button class="alert-close" @click="dismissAlert(alert.id)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Header principal fuera del contenedor del calendario -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-boxes-stacked"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Planificación de Producción</h1>
+            <p class="header-subtitle">Gestiona la producción con vista de calendario y diagrama de Gantt</p>
           </div>
         </div>
 
-        <!-- Error -->
-        <div v-else-if="error" class="error-container">
-          <div class="error-content">
-            <i class="fas fa-exclamation-circle error-icon"></i>
-            <h3>Error al cargar los pedidos</h3>
-            <p>{{ error }}</p>
-            <button @click="cargarPedidos" class="btn btn-primary">
-              Reintentar
+        <div class="header-actions">
+          <!-- Botón Solicitar Eventual -->
+          <button class="solicitar-eventual-btn" @click="openSolicitarEventualModal">
+            <i class="fas fa-user-plus"></i>
+            <span>Solicitar Eventual</span>
+          </button>
+
+          <!-- Selector de vista -->
+          <div class="view-selector-tabs">
+            <button :class="['tab-btn', { active: currentView === 'calendar' }]" @click="switchView('calendar')">
+              <i class="fas fa-calendar"></i>
+              <span>Calendario</span>
+            </button>
+            <button :class="['tab-btn', { active: currentView === 'gantt' }]" @click="switchView('gantt')">
+              <i class="fas fa-chart-gantt"></i>
+              <span>Gantt</span>
             </button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Calendario -->
-        <div v-else>
-          <!-- Header -->
-          <div class="header-section">
-            <div class="header-content">
-              <div class="header-info">
-                <div class="header-icon">
-                  <i class="fas fa-boxes-stacked"></i>
-                </div>
-                <div class="header-text">
-                  <h1 class="header-title">Calendario de producción</h1>
-                  <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
-                </div>
-              </div>
-            </div>
+    <main class="">
+      <!-- Vista de Calendario -->
+      <div v-show="currentView === 'calendar'" class="calendar-view">
+        <div class="calendario-container">
+          <FullCalendarComponent :title="calendarTitle" :events="events" :initial-view="selectedView"
+            :can-create-events="true" :can-edit-events="true" :can-delete-events="true" :show-controls="true"
+            :event-types="eventTypes" :loading="isLoading" height="600px" @event-click="handleEventClick"
+            @event-create="handleEventCreate" @event-edit="handleEventEdit" @event-delete="handleEventDelete"
+            @date-click="handleDateClick" @view-change="handleViewChange" />
+        </div>
+      </div>
+
+      <!-- Vista de Gantt -->
+      <div v-show="currentView === 'gantt'" class="gantt-view">
+        <!-- Leyenda de Códigos de Color por Carga de Trabajo -->
+        <div class="workload-legend">
+          <div class="legend-item free">
+            <div class="legend-dot"></div>
+            <span>Libre (0-20%)</span>
           </div>
-          
-          <div class="header">
-            <div class="header-left">
-              <h1>Calendario de Pedidos</h1>
-              <div class="fecha-info">
-                <i class="fas fa-calendar"></i>
-                <span>{{ fechaFormateada }}</span>
-              </div>
-              <div class="contador-pedidos">
-                ({{ pedidos.length }} pedidos totales)
-              </div>
-            </div>
-            <div class="header-right">
-              <button @click="navegarMes(-1)" class="btn-nav">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button @click="irHoy" class="btn btn-primary">
-                Hoy
-              </button>
-              <button @click="navegarMes(1)" class="btn-nav">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-              <button @click="cargarPedidos" class="btn btn-success" :disabled="loading">
-                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
-                Actualizar
-              </button>
-            </div>
+          <div class="legend-item light">
+            <div class="legend-dot"></div>
+            <span>Carga Ligera (20-40%)</span>
           </div>
-
-          <!-- Leyenda -->
-          <div class="leyenda">
-            <h3>Leyenda de Estados:</h3>
-            <div class="estados-container">
-              <div v-for="(estado, id) in estados" :key="id" class="estado-item">
-                <i :class="obtenerIconoEstado(parseInt(id))"></i>
-                <span :class="estado.class">{{ estado.nombre }}</span>
-              </div>
-            </div>
+          <div class="legend-item moderate">
+            <div class="legend-dot"></div>
+            <span>Carga Moderada (40-60%)</span>
           </div>
-
-          <!-- Calendario -->
-          <div class="calendario">
-            <!-- Días de la semana -->
-            <div class="dias-semana">
-              <div v-for="dia in diasSemana" :key="dia" class="dia-semana">
-                {{ dia }}
-              </div>
-            </div>
-
-            <!-- Días del mes -->
-            <div class="dias-mes">
-              <div v-for="(day, index) in diasCalendario" :key="index" class="dia" :class="{
-                'dia-vacio': !day,
-                'dia-hoy': esHoy(day),
-                'dia-con-pedidos': day && getPedidosDelDia(day).length > 0
-              }">
-                <div v-if="day" class="dia-contenido">
-                  <div class="dia-numero" :class="{ 'hoy': esHoy(day) }">
-                    {{ day }}
-                    <span v-if="esHoy(day)" class="hoy-label">(Hoy)</span>
-                  </div>
-
-                  <div class="pedidos-dia">
-                    <div v-for="pedido in getPedidosDelDia(day)" :key="pedido.id" class="pedido-item"
-                      :class="estados[pedido.estado_id]?.class || 'estado-default'" :title="obtenerTooltip(pedido)">
-                      <div class="pedido-header">
-                        <span class="pedido-codigo">{{ pedido.codigo_pedido }}</span>
-                        <i :class="obtenerIconoEstado(pedido.estado_id)"></i>
-                      </div>
-                      <div class="pedido-proyecto">
-                        {{ pedido.proyecto_asociado }}
-                      </div>
-                      <div v-if="pedido.prioridad" class="pedido-prioridad" :class="prioridades[pedido.prioridad]?.class">
-                        Prioridad: {{ prioridades[pedido.prioridad]?.nombre }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="legend-item heavy">
+            <div class="legend-dot"></div>
+            <span>Carga Pesada (60-80%)</span>
           </div>
-
-          <!-- Resumen -->
-          <div class="resumen">
-            <div v-for="(estado, id) in estados" :key="id" class="resumen-item">
-              <div class="resumen-header">
-                <i :class="obtenerIconoEstado(parseInt(id))"></i>
-                <h3>{{ estado.nombre }}</h3>
-              </div>
-              <div class="resumen-numero">{{ contarPedidosPorEstado(parseInt(id)) }}</div>
-              <div class="resumen-label">pedidos</div>
-            </div>
+          <div class="legend-item critical">
+            <div class="legend-dot"></div>
+            <span>Crítico (80-100%)</span>
           </div>
+          <div class="legend-item overloaded">
+            <div class="legend-dot"></div>
+            <span>Requiere Contratación (+100%)</span>
+          </div>
+        </div>
+        
+        <div class="gantt-container">
+          <GanttChartComponent :title="ganttTitle" :rows="ganttRows" :chart-start="chartStart" :chart-end="chartEnd"
+            :precision="precision" :can-create-tasks="canCreateTasks" :can-edit-tasks="canEditTasks"
+            :can-delete-tasks="canDeleteTasks" :show-controls="showControls" :task-types="taskTypes"
+            :loading="ganttLoading" :show-current-time="showCurrentTime" @task-click="handleTaskClick"
+            @task-create="handleTaskCreate" @task-edit="handleTaskEdit" @task-delete="handleTaskDelete"
+            @task-drop="handleTaskDrop" @time-unit-change="handleTimeUnitChange" />
         </div>
       </div>
     </main>
   </div>
 </template>
 
-<script src="./scripts/PedidosCalendario.js"></script>
+<style src="src/assets/EstiloBase.css" scoped></style>
+<script src="./scripts/ProductionPlanning.js"></script>
+<style src="src/components/VistasCoordinador/styles/ProductionPlanning.css" scoped></style>
 
-<style src="./styles/PedidosCalendario.css" scoped></style>
+
+

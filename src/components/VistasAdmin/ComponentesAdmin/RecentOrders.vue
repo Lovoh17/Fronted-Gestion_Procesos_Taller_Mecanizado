@@ -3,17 +3,15 @@
     <div class="card-header">
       <h2 class="card-title">Pedidos Recientes</h2>
       <div class="card-actions">
-        <button class="btn btn-filter" @click="openFilters">
-          <i class="icon-filter"></i>
+        <va-button @click="openFilters" icon="info">
           Filtrar
-        </button>
-        <button class="btn btn-primary" @click="createNewOrder">
-          <i class="icon-add"></i>
+        </va-button>
+        <va-button @click="createNewOrder" color="secondary" icon="info">
           Nuevo Pedido
-        </button>
+        </va-button>
       </div>
     </div>
-    
+
     <div class="table-container">
       <table class="orders-table">
         <thead>
@@ -38,9 +36,7 @@
               </span>
             </td>
             <td>
-              <button class="btn-icon" @click="viewOrder(order.id)" title="Ver detalles">
-                <i class="icon-view"></i>
-              </button>
+              <va-button @click="viewOrder(order.id)" title="Ver detalles" icon="info"></va-button>
             </td>
           </tr>
         </tbody>
@@ -55,7 +51,7 @@ export default {
     orders: {
       type: Array,
       required: true,
-      validator: orders => orders.every(order => 
+      validator: orders => orders.every(order =>
         order.id && order.client && order.date && order.total && order.status
       )
     }

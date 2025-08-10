@@ -31,10 +31,17 @@
           {{ errorMessage }}
         </div>
          
-        <button type="submit" class="univo-submit-btn" :disabled="loading">
+        <va-button 
+          type="submit" 
+          class="univo-submit-btn" 
+          :disabled="loading"
+          :loading="loading"
+          color="primary"
+          block
+        >
           <span v-if="!loading">Acceder</span>
           <span v-else">Verificando...</span>
-        </button>
+        </va-button>
       </form>
       
       <!-- Sección de acceso directo -->

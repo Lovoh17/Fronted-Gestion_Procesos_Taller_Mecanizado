@@ -1,72 +1,93 @@
 <template>
-  <div class="modal-overlay" @click.self="close">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Detalles del Pedido #{{ order.id }}</h3>
-        <button @click="close" class="close-btn">×</button>
-      </div>
+  <VaModal
+    v-model="showModal"
+    :title="`Detalles del Pedido #${order.id}`"
+    size="large"
+    @close="close"
+  >
+    <div class="order-details">
+      <!-- Información básica del pedido -->
+      <VaCard class="info-section">
+        <VaCardTitle>Información del Pedido</VaCardTitle>
+        <VaCardContent>
+          <div class="detail-row">
+            <span class="detail-label">Cliente:</span>
+            <span class="detail-value">{{ order.client }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Fecha:</span>
+            <span class="detail-value">{{ formatDate(order.date) }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Estado:</span>
+            <VaBadge
+              :text="getStatusText(order.status)"
+              :color="getStatusColor(order.status)"
+              class="status-badge"
+            />
+          </div>
+        </VaCardContent>
+      </VaCard>
       
-      <div class="order-details">
-        <!-- Información básica del pedido -->
-        <div class="detail-row">
-          <span class="detail-label">Cliente:</span>
-          <span class="detail-value">{{ order.client }}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Fecha:</span>
-          <span class="detail-value">{{ formatDate(order.date) }}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="detail-label">Estado:</span>
-          <span class="status-badge" :class="getStatusClass(order.status)">
-            {{ getStatusText(order.status) }}
-          </span>
-        </div>
-        
-        <!-- Lista de productos -->
-        <div class="products-section">
-          <h4>Productos</h4>
-          <div class="products-table">
-            <div class="table-header">
-              <div>Producto</div>
-              <div>Cantidad</div>
-              <div>Precio Unitario</div>
-              <div>Subtotal</div>
-            </div>
-            <div class="table-row" v-for="(product, index) in order.products" :key="index">
-              <div>{{ product.name }}</div>
-              <div>{{ product.quantity }}</div>
-              <div>${{ formatNumber(product.price) }}</div>
-              <div>${{ formatNumber(product.price * product.quantity) }}</div>
-            </div>
-            <div class="table-footer">
-              <div class="total-label">Total:</div>
-              <div class="total-value">${{ formatNumber(order.total) }}</div>
+      <!-- Lista de productos -->
+      <VaCard class="products-section">
+        <VaCardTitle>Productos</VaCardTitle>
+        <VaCardContent>
+          <VaDataTable
+            :items="order.products"
+            :columns="productColumns"
+            class="products-table"
+          >
+            <template #cell(price)="{ rowData }">
+              ${{ formatNumber(rowData.price) }}
+            </template>
+            <template #cell(subtotal)="{ rowData }">
+              ${{ formatNumber(rowData.price * rowData.quantity) }}
+            </template>
+          </VaDataTable>
+          
+          <div class="total-section">
+            <VaDivider />
+            <div class="total-row">
+              <span class="total-label">Total:</span>
+              <span class="total-value">${{ formatNumber(order.total) }}</span>
             </div>
           </div>
-        </div>
-        
-        <!-- Notas adicionales -->
-        <div class="notes-section" v-if="order.notes">
-          <h4>Notas</h4>
-          <p>{{ order.notes }}</p>
-        </div>
-      </div>
+        </VaCardContent>
+      </VaCard>
       
-      <div class="modal-footer">
-        <button @click="close" class="btn-primary">
-          Cerrar
-        </button>
-      </div>
+      <!-- Notas adicionales -->
+      <VaCard v-if="order.notes" class="notes-section">
+        <VaCardTitle>Notas</VaCardTitle>
+        <VaCardContent>
+          <p class="notes-text">{{ order.notes }}</p>
+        </VaCardContent>
+      </VaCard>
     </div>
-  </div>
+
+    <template #footer>
+      <div class="modal-actions">
+        <VaButton
+          color="primary"
+          @click="close"
+        >
+          Cerrar
+        </VaButton>
+      </div>
+    </template>
+  </VaModal>
 </template>
 
 <script>
 export default {
+  name: 'OrderDetailsModal',
   props: {
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
     order: {
       type: Object,
       required: true,
@@ -75,8 +96,46 @@ export default {
       }
     }
   },
+  
+  emits: ['update:modelValue', 'close'],
+  
+  computed: {
+    showModal: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      }
+    },
+    productColumns() {
+      return [
+        {
+          key: 'name',
+          title: 'Producto',
+          sortable: true
+        },
+        {
+          key: 'quantity',
+          title: 'Cantidad',
+          sortable: true
+        },
+        {
+          key: 'price',
+          title: 'Precio Unitario',
+          sortable: true
+        },
+        {
+          key: 'subtotal',
+          title: 'Subtotal'
+        }
+      ]
+    }
+  },
+  
   methods: {
     close() {
+      this.showModal = false
       this.$emit('close')
     },
     formatDate(dateString) {
@@ -86,14 +145,14 @@ export default {
     formatNumber(value) {
       return Number(value).toLocaleString('es-ES')
     },
-    getStatusClass(status) {
-      const statusClasses = {
-        'pending': 'status-pending',
-        'in_progress': 'status-in-progress',
-        'completed': 'status-completed',
-        'cancelled': 'status-cancelled'
+    getStatusColor(status) {
+      const statusColors = {
+        'pending': 'warning',
+        'in_progress': 'info',
+        'completed': 'success',
+        'cancelled': 'danger'
       }
-      return statusClasses[status] || ''
+      return statusColors[status] || 'secondary'
     },
     getStatusText(status) {
       const statusTexts = {
@@ -107,3 +166,97 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.order-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-section {
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--va-background-border);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--va-text-primary);
+  min-width: 100px;
+}
+
+.detail-value {
+  color: var(--va-text-secondary);
+  flex: 1;
+  text-align: right;
+}
+
+.products-section {
+  margin-bottom: 1rem;
+}
+
+.products-table {
+  margin-bottom: 1rem;
+}
+
+.total-section {
+  margin-top: 1rem;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.total-label {
+  color: var(--va-text-primary);
+}
+
+.total-value {
+  color: var(--va-primary);
+  font-size: 1.25rem;
+}
+
+.notes-section {
+  margin-bottom: 1rem;
+}
+
+.notes-text {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--va-text-primary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .detail-value {
+    text-align: left;
+  }
+}
+</style>

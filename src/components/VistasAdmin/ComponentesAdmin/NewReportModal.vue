@@ -3,7 +3,9 @@
     <div class="modal-container">
       <div class="modal-header">
         <h3>Nuevo Reporte</h3>
-        <button class="btn-close" @click="closeModal">×</button>
+        <va-button class="btn-close" @click="closeModal"   >
+        ×
+      </va-button>
       </div>
       
       <div class="modal-body">
@@ -75,12 +77,12 @@
           
           <!-- Acciones del formulario -->
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-              Guardar Reporte
-            </button>
-            <button type="button" class="btn btn-secondary" @click="closeModal">
-              Cancelar
-            </button>
+            <va-button type="submit" class="btn btn-primary" color="primary"  >
+        Guardar Reporte
+      </va-button>
+            <va-button type="button" class="btn btn-secondary" @click="closeModal" color="secondary"  >
+        Cancelar
+      </va-button>
           </div>
         </form>
       </div>

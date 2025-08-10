@@ -26,11 +26,36 @@ export default {
       error: null,
       submitting: false,
       submitSuccess: false,
-      minDate: new Date().toISOString().split('T')[0]
+      minDate: new Date()
     }
   },
   async created() {
     await this.loadInitialData();
+  },
+  computed: {
+    // Transform herramientas array for va-select
+    herramientaOptions() {
+      return this.allHerramientas.map(herramienta => ({
+        value: herramienta.id,
+        text: `${herramienta.nombre} (${herramienta.codigo})`
+      }));
+    },
+    
+    // Transform tipos de alerta array for va-select
+    tipoAlertaOptions() {
+      return this.tiposAlerta.map(tipo => ({
+        value: tipo.id,
+        text: tipo.nombre_alertas
+      }));
+    },
+    
+    // Transform prioridades array for va-select
+    prioridadOptions() {
+      return this.prioridades.map(prioridad => ({
+        value: prioridad.id,
+        text: prioridad.nombre_prioridad
+      }));
+    }
   },
   methods: {
     async loadInitialData() {
@@ -101,11 +126,21 @@ async submitForm() {
       throw new Error('Debe seleccionar una herramienta válida');
     }
 
+    // Convert date to API format (YYYY-MM-DD)
+    let fechaLimiteFormatted = this.formData.fecha_limite;
+    if (this.formData.fecha_limite instanceof Date) {
+      fechaLimiteFormatted = this.formData.fecha_limite.toISOString().split('T')[0];
+    } else if (typeof this.formData.fecha_limite === 'string' && this.formData.fecha_limite.includes('/')) {
+      // Convert DD/MM/YYYY to YYYY-MM-DD
+      const [day, month, year] = this.formData.fecha_limite.split('/');
+      fechaLimiteFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
     const alertaData = {
       herramienta_id: parseInt(this.formData.herramienta_id),
       tipo_alerta_id: parseInt(this.formData.tipo_alerta_id),
       prioridad_id: parseInt(this.formData.prioridad_id),
-      fecha_limite: this.formData.fecha_limite,
+      fecha_limite: fechaLimiteFormatted,
       descripcion: this.formData.descripcion.trim(),
       estado_reparacion: 1
     };
@@ -160,6 +195,42 @@ async submitForm() {
       this.error = null;
 
       console.log('✅ Formulario reseteado');
+    },
+
+    // Date formatting methods for Vuestic date picker
+    formatDate(date) {
+      if (!date) return '';
+      if (typeof date === 'string') {
+        date = new Date(date);
+      }
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    },
+
+    parseDate(dateString) {
+      if (!dateString) return null;
+      
+      // If already a date object, return it
+      if (dateString instanceof Date) {
+        return dateString;
+      }
+      
+      // Handle DD/MM/YYYY format
+      if (typeof dateString === 'string' && dateString.includes('/')) {
+        const [day, month, year] = dateString.split('/');
+        return new Date(year, month - 1, day);
+      }
+      
+      // Handle YYYY-MM-DD format (ISO)
+      if (typeof dateString === 'string' && dateString.includes('-')) {
+        return new Date(dateString);
+      }
+      
+      return new Date(dateString);
     }
   }
 }

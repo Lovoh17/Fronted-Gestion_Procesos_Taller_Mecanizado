@@ -1,3 +1,98 @@
+/* Vuestic UI Integration Styles */
+.works-section.va-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-title-section {
+  display: flex;
+  align-items: center;
+}
+
+.filter-container {
+  min-width: 200px;
+}
+
+.filter-select .va-select {
+  min-width: 200px;
+}
+
+.va-card-title {
+  padding: 1.5rem 1.5rem 0 1.5rem;
+}
+
+.va-card-content {
+  padding: 1.5rem;
+}
+
+/* Utility classes for spacing */
+.mr-3 {
+  margin-right: 0.75rem;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+/* Enhanced select styling */
+.va-select {
+  border-radius: 12px;
+}
+
+.va-select .va-input-wrapper {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.va-select .va-input-wrapper:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Icon styling */
+.va-icon {
+  transition: all 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .header-title-section {
+    width: 100%;
+  }
+  
+  .filter-container {
+    width: 100%;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .va-card-title,
+  .va-card-content {
+    padding: 1rem;
+  }
+}
+
 /* Estilos base */
 .operario-trabajos-container {
   padding: 2rem;

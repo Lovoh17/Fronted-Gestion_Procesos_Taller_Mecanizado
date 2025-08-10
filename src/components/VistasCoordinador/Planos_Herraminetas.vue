@@ -10,10 +10,12 @@
         <p class="subtitle">Gestiona y visualiza los planos de herramientas del sistema</p>
       </div>
       <div class="header-actions">
-        <button @click="showUploadModal = true" class="upload-button">
+        <va-button @click="showUploadModal = true" class="upload-button"    >
+        
           <i class="material-icons">upload_file</i>
           Subir Plano
-        </button>
+        
+      </va-button>
         <div class="search-bar">
           <input type="text" v-model="searchQuery" placeholder="Buscar por nombre de herramienta o código de plano..."
             class="search-input">
@@ -43,10 +45,12 @@
           <i class="material-icons">error_outline</i>
         </div>
         <p class="error-text">{{ error }}</p>
-        <button @click="fetchData" class="retry-button">
+        <va-button @click="fetchData" class="retry-button"    >
+        
           <i class="material-icons">refresh</i>
           Reintentar
-        </button>
+        
+      </va-button>
       </div>
     </transition>
 
@@ -128,9 +132,11 @@
               <h3>{{ selectedItem.herramienta.nombre }}</h3>
               <span class="modal-subtitle">{{ selectedItem.plano.codigo }}</span>
             </div>
-            <button @click="selectedItem = null" class="close-button">
+            <va-button @click="selectedItem = null" class="close-button"    >
+        
               <i class="material-icons">close</i>
-            </button>
+            
+      </va-button>
           </div>
 
           <div class="modal-body">
@@ -231,9 +237,11 @@
               <i class="material-icons">upload_file</i>
               <h3>Subir Plano de Herramienta</h3>
             </div>
-            <button @click="closeUploadModal" class="close-button">
+            <va-button @click="closeUploadModal" class="close-button"    >
+        
               <i class="material-icons">close</i>
-            </button>
+            
+      </va-button>
           </div>
 
           <div class="upload-modal-body">
@@ -289,9 +297,11 @@
                       <p>{{ formatFileSize(uploadForm.selectedFile.size) }} • {{ getFileType(uploadForm.selectedFile.type) }}</p>
                     </div>
                   </div>
-                  <button @click.stop="removeFile" class="remove-file-button">
+                  <va-button @click.stop="removeFile" class="remove-file-button"    >
+        
                     <i class="material-icons">close</i>
-                  </button>
+                  
+      </va-button>
                 </div>
               </div>
 
@@ -314,14 +324,16 @@
           </div>
 
           <div class="upload-modal-footer">
-            <button @click="closeUploadModal" class="cancel-button" :disabled="uploading">
-              Cancelar
-            </button>
-            <button @click="handleUpload" class="upload-submit-button" :disabled="!canSubmit || uploading">
+            <va-button @click="closeUploadModal" class="cancel-button" :disabled="uploading"   >
+        Cancelar
+      </va-button>
+            <va-button @click="handleUpload" class="upload-submit-button" :disabled="!canSubmit || uploading"    >
+        
               <i v-if="uploading" class="material-icons spin">autorenew</i>
               <i v-else class="material-icons">upload</i>
               {{ uploading ? 'Subiendo...' : 'Subir Plano' }}
-            </button>
+            
+      </va-button>
           </div>
         </div>
       </div>
