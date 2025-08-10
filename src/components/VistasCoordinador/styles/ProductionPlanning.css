@@ -1,0 +1,537 @@
+/* Panel de Alertas Superior */
+.alerts-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  animation: alertPulse 2s infinite;
+}
+
+.alert-item.critical {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-left: 4px solid #fecaca;
+}
+
+.alert-item.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-left: 4px solid #fde68a;
+}
+
+.alert-item.urgent {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-left: 4px solid #ddd6fe;
+}
+
+@keyframes alertPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.alert-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.alert-content i {
+  font-size: 1.2rem;
+  animation: alertIcon 2s infinite;
+}
+
+@keyframes alertIcon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.alert-message {
+  font-weight: 500;
+  flex: 1;
+}
+
+.alert-action-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alert-action-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.alert-close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+/* Header con botón Solicitar Eventual */
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--univo-primary), var(--univo-secondary));
+  color: white;
+  border-radius: 0 0 1rem 1rem;
+  margin: 0 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Botón Solicitar Eventual */
+.solicitar-eventual-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--gray-light);
+  color:var(--univo-primary);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+}
+
+.solicitar-eventual-btn:hover {
+  background: var(--univo-secondary);
+  color:var(--univo-primary);
+  font-weight: 600;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.solicitar-eventual-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.solicitar-eventual-btn i {
+  font-size: 1.1rem;
+  animation: userPlus 2s infinite;
+}
+
+@keyframes userPlus {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Estilos para el selector de vista */
+.view-selector-tabs {
+  display: flex;
+  background: var(--gray-light);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--univo-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn:hover {
+  background: var(--univo-secondary);
+  color:var(--univo-primary);
+  font-weight: 600;
+  transform: translateY(-1px);
+}
+
+.tab-btn.active {
+  background: var(--univo-secondary);
+  color: var(--univo-primary);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn i {
+  font-size: 1.1rem;
+}
+
+/* Estilos para las vistas */
+.calendar-view,
+.gantt-view {
+  width: 100%;
+  min-height: 600px;
+  margin-top: 1rem;
+}
+
+.calendario-container,
+.gantt-container {
+  margin: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Códigos de color para carga de trabajo - Leyenda */
+.workload-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  margin: 0.5rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.legend-item.free { background: #22c55e; }
+.legend-item.light { background: #84cc16; }
+.legend-item.moderate { background: #eab308; }
+.legend-item.heavy { background: #f97316; }
+.legend-item.critical { background: #ef4444; }
+.legend-item.overloaded { background: #8b5cf6; }
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design para tablets */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .view-selector-tabs {
+    order: -1;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .solicitar-eventual-btn {
+    width: 100%;
+    justify-content: center;
+    max-width: 300px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .alerts-panel {
+    position: relative;
+    background: rgba(0, 0, 0, 0.95);
+  }
+
+  .workload-legend {
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .legend-item {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* Responsive design para móviles */
+@media (max-width: 480px) {
+  .tab-btn span {
+    display: none;
+  }
+
+  .solicitar-eventual-btn span {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 0.75rem;
+    min-width: 48px;
+  }
+
+  .solicitar-eventual-btn {
+    padding: 0.75rem;
+    min-width: 48px;
+  }
+
+  .calendario-container,
+  .gantt-container {
+    margin: 0.5rem;
+  }
+
+  .alert-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .alert-action-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .workload-legend {
+    padding: 0.5rem;
+    margin: 0.5rem;
+  }
+
+  .legend-item {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* Animaciones de transición */
+.calendar-view,
+.gantt-view {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos específicos para datos con códigos de color de carga */
+.gantt-row-overloaded {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+  border-left: 4px solid #8b5cf6 !important;
+}
+
+.gantt-row-critical {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-left: 4px solid #ef4444 !important;
+}
+
+.gantt-row-heavy {
+  background-color: rgba(249, 115, 22, 0.1) !important;
+  border-left: 4px solid #f97316 !important;
+}
+
+.gantt-row-moderate {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+  border-left: 4px solid #eab308 !important;
+}
+
+.gantt-row-light {
+  background-color: rgba(132, 204, 22, 0.1) !important;
+  border-left: 4px solid #84cc16 !important;
+}
+
+.gantt-row-free {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border-left: 4px solid #22c55e !important;
+}
+/* Estilos para el selector de vista */
+.view-selector-tabs {
+  display: flex;
+  background: var(--gray-light);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--univo-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.tab-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--univo-primary);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn i {
+  font-size: 1.1rem;
+}
+
+/* Estilos para las vistas */
+.calendar-view,
+.gantt-view {
+  width: 100%;
+  min-height: 600px;
+}
+
+.calendario-container,
+.gantt-container {
+  margin: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Responsive design para tablets */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .view-selector-tabs {
+    order: -1;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Responsive design para móviles */
+@media (max-width: 480px) {
+  .tab-btn span {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 0.75rem;
+    min-width: 48px;
+  }
+
+  .calendario-container,
+  .gantt-container {
+    margin: 0.5rem;
+  }
+}
+
+/* Animaciones de transición */
+.calendar-view,
+.gantt-view {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
