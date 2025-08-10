@@ -1,77 +1,223 @@
 <template>
-  <div class="">
+  <div class="dashboard-layout">
     <Sidebar :role="'admin'" />
-    <div class="dashboard-content">
-      <!-- Header del Dashboard -->
-      <div class="dashboard-header">
+
+    <!-- Contenido Principal del Dashboard -->
+    <main class="dashboard-main">
+      <!-- Header del Dashboard usando EstiloBase -->
+
+      <div class="header-section">
         <div class="header-content">
-          <h1 class="dashboard-title">Panel de Control</h1>
-          <p class="dashboard-subtitle">Resumen de tu negocio en tiempo real</p>
+          <div class="header-info">
+            <div class="header-icon">
+              <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div class="header-text">
+              <h1 class="header-title">Dashboard Administrativo</h1>
+              <p class="header-subtitle">Panel de control y gestión del taller de mecanizado</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <va-button color="#003366" @click="refreshData = true" :disabled="isLoading" icon="update">
+              Actualizar
+            </va-button>
+          </div>
         </div>
-        <button @click="refreshData" class="refresh-btn" :disabled="isLoading">
-          <svg class="refresh-icon" :class="{ 'rotating': isLoading }" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor">
-            <path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22-4l-4.36 4.36A9 9 0 0 1 3.51 15" />
-          </svg>
-          Actualizar
-        </button>
       </div>
 
-      <!-- Cards de Estadísticas Principales -->
-      <StatsCards :stats="statsData" :loading="loading.stats" />
+      <!-- Indicadores de Carga Global -->
+      <div v-if="isLoading" class="loading-container">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Cargando...</span>
+        </div>
+      </div>
 
-      <div class="content-grid">
-        <div class="content-column">
-          <!-- Gráfico de Ventas -->
-          <div class="dashboard-card chart-card">
-            <div class="card-header">
-              <h3 class="card-title">Ingresos Mensuales</h3>
-              <div class="card-actions">
-                <select class="period-selector">
-                  <option value="6">Últimos 6 meses</option>
-                  <option value="12">Último año</option>
-                </select>
+      <!-- Grid Principal del Dashboard -->
+      <div v-else class="dashboard-grid">
+        <!-- Fila de Estadísticas Principales -->
+        <section class="stats-section">
+          <h2 class="section-title">Estadísticas Generales</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon total-orders">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">{{ statsData.totalPedidos }}</h3>
+                <p class="stat-label">Total Pedidos</p>
+                <span class="stat-trend positive">+12%</span>
               </div>
             </div>
-            <DashboardSalesChart :sales-data="salesData" :loading="loading.sales" />
-          </div>
 
-          <!-- Pedidos Recientes -->
-          <div class="dashboard-card orders-card">
-            <div class="card-header">
-              <h3 class="card-title">Pedidos Recientes</h3>
-              <span class="orders-count">{{ recentOrders.length }} pedidos</span>
-            </div>
-            <RecentOrders :orders="recentOrders" :loading="loading.orders" @view-order="viewOrderDetails" />
-          </div>
-        </div>
-
-        <div class="content-column">
-          <!-- Feed de Actividades -->
-          <div class="dashboard-card activity-card">
-            <div class="card-header">
-              <h3 class="card-title">Actividad Reciente</h3>
-              <div class="activity-indicator">
-                <div class="pulse-dot"></div>
-                En vivo
+            <div class="stat-card">
+              <div class="stat-icon pending-orders">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">{{ statsData.pedidosPendientes }}</h3>
+                <p class="stat-label">Pedidos Pendientes</p>
+                <span class="stat-trend neutral">{{ Math.round((statsData.pedidosPendientes / statsData.totalPedidos) *
+                  100) }}%</span>
               </div>
             </div>
-            <ActivityFeed :activities="recentActivities" :loading="loading.activities" />
-          </div>
 
-          <!-- Estadísticas Rápidas -->
-          <div class="dashboard-card stats-card">
-            <div class="card-header">
-              <h3 class="card-title">Estadísticas Rápidas</h3>
+            <div class="stat-card">
+              <div class="stat-icon completed-orders">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">{{ statsData.pedidosCompletados }}</h3>
+                <p class="stat-label">Pedidos Completados</p>
+                <span class="stat-trend positive">+8%</span>
+              </div>
             </div>
-            <QuickStats :stats="quickStatsData" :loading="loading.quickStats" />
+
+            <div class="stat-card">
+              <div class="stat-icon revenue">
+                <i class="fas fa-dollar-sign"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">${{ formatCurrency(statsData.ingresosMes) }}</h3>
+                <p class="stat-label">Ingresos del Mes</p>
+                <span class="stat-trend positive">+15%</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon users">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">{{ statsData.totalUsuarios }}</h3>
+                <p class="stat-label">Total Usuarios</p>
+                <span class="stat-trend positive">+3</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon tools">
+                <i class="fas fa-tools"></i>
+              </div>
+              <div class="stat-content">
+                <h3 class="stat-number">{{ statsData.herramientasDisponibles }}</h3>
+                <p class="stat-label">Herramientas Disponibles</p>
+                <span class="stat-trend neutral">{{ Math.round((statsData.herramientasDisponibles /
+                  (statsData.herramientasDisponibles + 5)) * 100) }}%</span>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <!-- Fila de Gráficos y Análisis -->
+        <section class="analytics-section">
+          <div class="analytics-grid">
+            <!-- Gráfico de Ingresos -->
+            <div class="card chart-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-chart-line mr-2"></i>
+                  Análisis de Ingresos
+                </h3>
+                <div class="card-controls">
+                  <select class="form-control form-control-sm" v-model="selectedPeriod" @change="loadSalesChart">
+                    <option value="6">Últimos 6 meses</option>
+                    <option value="12">Último año</option>
+                    <option value="24">Últimos 2 años</option>
+                  </select>
+                </div>
+              </div>
+              <div class="card-body">
+                <DashboardSalesChart :sales-data="salesData" :loading="loading.sales" />
+              </div>
+            </div>
+
+            <!-- Actividad Reciente -->
+            <div class="card activity-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-bell mr-2"></i>
+                  Actividad Reciente
+                </h3>
+                <div class="live-indicator">
+                  <span class="pulse-dot"></span>
+                  En vivo
+                </div>
+              </div>
+              <div class="card-body">
+                <ActivityFeed :activities="recentActivities" :loading="loading.activities" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Fila de Pedidos y Estadísticas -->
+        <section class="orders-section">
+          <div class="orders-grid">
+            <!-- Pedidos Recientes -->
+            <div class="card orders-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-list-alt mr-2"></i>
+                  Pedidos Recientes
+                </h3>
+                <div class="orders-summary">
+                  <span class="badge badge-primary">{{ recentOrders.length }} pedidos</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <RecentOrders :orders="recentOrders" :loading="loading.orders" @view-order="viewOrderDetails" />
+              </div>
+            </div>
+
+            <!-- Estadísticas Rápidas -->
+            <div class="card quick-stats-card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-tachometer-alt mr-2"></i>
+                  Métricas de Hoy
+                </h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-stats-grid">
+                  <div class="quick-stat">
+                    <div class="quick-stat-icon today-orders">
+                      <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="quick-stat-info">
+                      <span class="quick-stat-number">{{ quickStatsData.pedidosHoy }}</span>
+                      <span class="quick-stat-label">Pedidos Hoy</span>
+                    </div>
+                  </div>
+
+                  <div class="quick-stat">
+                    <div class="quick-stat-icon tools-in-use">
+                      <i class="fas fa-hammer"></i>
+                    </div>
+                    <div class="quick-stat-info">
+                      <span class="quick-stat-number">{{ quickStatsData.herramientasEnUso }}</span>
+                      <span class="quick-stat-label">Herramientas en Uso</span>
+                    </div>
+                  </div>
+
+                  <div class="quick-stat">
+                    <div class="quick-stat-icon maintenance">
+                      <i class="fas fa-wrench"></i>
+                    </div>
+                    <div class="quick-stat-info">
+                      <span class="quick-stat-number">{{ quickStatsData.mantenimientosPendientes }}</span>
+                      <span class="quick-stat-label">Mantenimientos Pendientes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Modal de Detalles del Pedido -->
       <OrderDetailsModal v-if="selectedOrder" :order="selectedOrder" @close="selectedOrder = null" />
-    </div>
+    </main>
   </div>
 </template>
 
@@ -99,6 +245,8 @@ export default {
 
   data() {
     return {
+      selectedPeriod: '6',
+
       statsData: {
         totalPedidos: 0,
         pedidosPendientes: 0,
@@ -421,6 +569,13 @@ export default {
       this.showToast('Datos actualizados correctamente', 'success');
     },
 
+    formatCurrency(amount) {
+      return new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount || 0);
+    },
+
     showToast(message, type = 'success') {
       const alertType = type === 'success' ? 'Éxito' : 'Error';
       alert(`${alertType}: ${message}`);
@@ -432,74 +587,8 @@ export default {
   }
 }
 </script>
-
+<style src="src/assets/EstiloBase.css"></style>
 <style scoped>
-/* Variables CSS personalizadas */
-:root {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-accent: #f1f5f9;
-  --primary-color: #3b82f6;
-  --primary-dark: #2563eb;
-  --univo-primary: #1e40af;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e1;
-  --success-color: #10b981;
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.dashboard-content {
-  min-height: 100vh;
-  background: var(--bg-primary);
-  padding: 2rem;
-  width: 100%;
-}
-
-/* Header del Dashboard */
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem 2rem;
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-}
-
-.header-content h1.dashboard-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  margin: 0 0 0.25rem 0;
-}
-
-.dashboard-subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  color: white;
-  background-color: var(--univo-primary);
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
-}
-
 .refresh-btn:hover:not(:disabled) {
   background: var(--primary-dark);
   transform: translateY(-2px);
@@ -531,108 +620,6 @@ export default {
   }
 }
 
-/* Grid Layout */
-.content-grid {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.content-column {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-/* Cards Base */
-.dashboard-card {
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-  transition: all 0.3s ease;
-}
-
-.dashboard-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--bg-accent);
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.card-actions .period-selector {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-medium);
-  border-radius: 8px;
-  background: var(--bg-accent);
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.card-actions .period-selector:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Chart Card */
-.chart-card {
-  min-height: 400px;
-}
-
-/* Orders Card */
-.orders-card {
-  flex: 1;
-}
-
-.orders-count {
-  background: var(--success-color);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-/* Activity Card */
-.activity-card {
-  min-height: 300px;
-}
-
-.activity-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--success-color);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
 
 @keyframes pulse {
   0% {
@@ -726,5 +713,360 @@ export default {
 /* Smooth Transitions */
 * {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Nuevos estilos para el dashboard rediseñado */
+
+
+.dashboard-main {
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+  padding-left: 0.5rem;
+  border-left: 4px solid #003366;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #003366, #0066cc);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.stat-icon.total-orders {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.stat-icon.pending-orders {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.completed-orders {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.stat-icon.revenue {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-icon.users {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.stat-icon.tools {
+  background: linear-gradient(135deg, #84cc16, #65a30d);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-trend {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stat-trend.positive {
+  background: #dcfdf7;
+  color: #059669;
+}
+
+.stat-trend.negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.stat-trend.neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Analytics Section */
+.analytics-section {
+  margin-bottom: 2rem;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* Orders Section */
+.orders-section {
+  margin-bottom: 2rem;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.card-controls select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+}
+
+/* Live Indicator */
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-primary {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Quick Stats Grid */
+.quick-stats-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.quick-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.quick-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+}
+
+.quick-stat-icon.today-orders {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.quick-stat-icon.tools-in-use {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.quick-stat-icon.maintenance {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.quick-stat-info {
+  flex: 1;
+}
+
+.quick-stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.quick-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+
+
+.header-actions .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+}
+
+.header-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+
+  .analytics-grid,
+  .orders-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 1.875rem;
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Utilidades */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 </style>
