@@ -1,18 +1,20 @@
 <template>
+  <Sidebar :role="'coordinator'" />
   <div class="tool-usage-view">
-<div class="header-section">
-  <div class="header-content">
-    <div class="header-info">
-      <div class="header-icon">
-        <i class="fas fa-exchange-alt"></i>
-      </div>
-      <div class="header-text">
-        <h1 class="header-title">Gestión de Movimientos</h1>
-        <p class="header-subtitle">Registra y supervisa las transferencias, entradas y salidas del inventario</p>
+
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Gestión de Movimientos</h1>
+            <p class="header-subtitle">Registra y supervisa las transferencias, entradas y salidas del inventario</p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
     <div class="stats-bar" v-if="!loading && !error">
       <div class="stat-card">
@@ -58,11 +60,11 @@
         <i class="material-icons">error_outline</i>
       </div>
       <p class="error-text">{{ error }}</p>
-      <va-button @click="fetchData" class="retry-button"    >
-        
+      <va-button @click="fetchData" class="retry-button">
+
         <i class="material-icons">refresh</i>
         Reintentar
-      
+
       </va-button>
     </div>
 
@@ -149,11 +151,11 @@
                   </span>
                 </td>
                 <td>
-                  <va-button class="action-btn" @click="viewDetails(item)"    >
-        
+                  <va-button class="action-btn" @click="viewDetails(item)">
+
                     <i class="material-icons">visibility</i>
-                  
-      </va-button>
+
+                  </va-button>
                 </td>
               </tr>
             </tbody>
@@ -161,19 +163,19 @@
         </div>
 
         <div class="pagination" v-if="totalPages > 1">
-          <va-button @click="prevPage" :disabled="currentPage === 1" class="pagination-btn"    >
-        
+          <va-button @click="prevPage" :disabled="currentPage === 1" class="pagination-btn">
+
             <i class="material-icons">chevron_left</i>
-          
-      </va-button>
+
+          </va-button>
 
           <span class="page-info">Página {{ currentPage }} de {{ totalPages }}</span>
 
-          <va-button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn"    >
-        
+          <va-button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn">
+
             <i class="material-icons">chevron_right</i>
-          
-      </va-button>
+
+          </va-button>
         </div>
 
         <div class="empty-state" v-if="filteredItems.length === 0 && !loading">
@@ -182,12 +184,12 @@
           </div>
           <h3>No se encontraron registros</h3>
           <p>No hay usos de herramientas que coincidan con los filtros aplicados</p>
-          <va-button class="btn-clear" @click="clearFilters"    >
-        
+          <va-button class="btn-clear" @click="clearFilters">
+
             <i class="material-icons">clear_all</i>
             Limpiar Filtros
-          
-      </va-button>
+
+          </va-button>
         </div>
       </div>
     </div>
@@ -197,11 +199,11 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>Detalles del Uso #{{ selectedItem.id }}</h3>
-          <va-button @click="selectedItem = null" class="close-button"    >
-        
+          <va-button @click="selectedItem = null" class="close-button">
+
             <i class="material-icons">close</i>
-          
-      </va-button>
+
+          </va-button>
         </div>
 
         <div class="modal-body">

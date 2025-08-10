@@ -20,6 +20,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import TopBar from '@/components/GlobalComponents/TopBar.vue';
 
@@ -30,6 +31,7 @@ import SidebarOperario from '@/components/GlobalComponents/SidebarOperario.vue';
 import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
 
 const authStore = useAuthStore();
+const route = useRoute();
 
 // Mapeo de roles a componentes
 const roleSidebars = {
@@ -39,105 +41,112 @@ const roleSidebars = {
   technician: SidebarTecnico
 };
 
+// Función para determinar el rol basándose en la ruta
+const getRoleFromRoute = (currentPath) => {
+  // Rutas de administrador
+  if (currentPath.startsWith('/admin') ||
+    currentPath === '/admin-dashboard' ||
+    currentPath === '/inventory' ||
+    currentPath === '/herramientas') {
+    return 'admin';
+  }
+
+  // Rutas de coordinador
+  if (currentPath.startsWith('/coordinator') ||
+    currentPath === '/dashboard-coordinador' ||
+    currentPath === '/control-calidad') {
+    return 'coordinator';
+  }
+
+  // Rutas de operario
+  if (currentPath.startsWith('/operator') ||
+    currentPath === '/dashboard-operario' ||
+    currentPath.startsWith('/operario')) {
+    return 'operator';
+  }
+
+  // Rutas de técnico
+  if (currentPath.startsWith('/technician') ||
+    currentPath === '/tech-dashboard' ||
+    currentPath.startsWith('/tech')) {
+    return 'technician';
+  }
+
+  // Rutas públicas o sin rol específico
+  return null;
+};
+
 const currentSidebar = computed(() => {
+  // Si no está autenticado, no mostrar sidebar
   if (!authStore.isAuthenticated) {
     return null;
   }
 
-  const userRole = authStore.user?.role || authStore.userRole;
-  console.log('🔄 Current role:', userRole);
-  
+  const currentPath = route.path;
+
+  // Primero intentar obtener el rol desde el store de autenticación
+  let userRole = authStore.user?.role || authStore.userRole;
+
+  // Si no hay rol en el store, determinar por la ruta
+  if (!userRole) {
+    userRole = getRoleFromRoute(currentPath);
+  }
+
+  // Verificar que el rol coincida con la ruta (opcional, para validación)
+  const routeRole = getRoleFromRoute(currentPath);
+  if (routeRole && userRole !== routeRole) {
+    console.warn('⚠️ El rol del usuario no coincide con la ruta:', {
+      userRole,
+      routeRole,
+      currentPath
+    });
+    // Puedes decidir si usar el rol del usuario o el de la ruta
+    // En este caso, usaremos el de la ruta
+    userRole = routeRole;
+  }
+
+  console.log('🔄 Current role:', userRole, 'for path:', currentPath);
+
   const sidebar = roleSidebars[userRole];
-  
+
   if (!sidebar) {
     console.warn('⚠️ Rol no reconocido:', userRole);
     return null;
   }
-  
+
   return sidebar;
 });
 </script>
 
 <style scoped>
-:root {
-  --header-height: 60px;
-  --mobile-header-height: 50px;
-  --sidebar-width: 250px;
-  --content-padding: 20px;
-}
-
 .holy-grail-app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .content-wrapper {
   display: flex;
   flex: 1;
-  margin-top: var(--header-height);
-  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .content-container {
-  flex: 1;
-  padding: var(--content-padding);
-  overflow-y: auto;
-  height: 100%;
+  padding: 1rem;
 }
 
-/* Scrollbar personalizada */
-.content-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.content-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.content-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Transición para cambios de ruta */
+/* Transiciones */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    flex-direction: column;
-    margin-top: var(--mobile-header-height);
-  }
-  
-  .main-content {
-    height: auto;
-    min-height: calc(100vh - var(--mobile-header-height));
-  }
-  
-  .content-container {
-    padding: 10px;
-    overflow-y: visible;
-  }
 }
 </style>

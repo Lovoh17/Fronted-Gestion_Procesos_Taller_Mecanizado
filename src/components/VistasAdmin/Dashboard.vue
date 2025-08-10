@@ -1,85 +1,82 @@
 <template>
-  <div class="dashboard-content">
-    <!-- Header del Dashboard -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <h1 class="dashboard-title">Panel de Control</h1>
-        <p class="dashboard-subtitle">Resumen de tu negocio en tiempo real</p>
+  <div class="">
+    <Sidebar :role="'admin'" />
+    <div class="dashboard-content">
+      <!-- Header del Dashboard -->
+      <div class="dashboard-header">
+        <div class="header-content">
+          <h1 class="dashboard-title">Panel de Control</h1>
+          <p class="dashboard-subtitle">Resumen de tu negocio en tiempo real</p>
+        </div>
+        <button @click="refreshData" class="refresh-btn" :disabled="isLoading">
+          <svg class="refresh-icon" :class="{ 'rotating': isLoading }" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor">
+            <path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22-4l-4.36 4.36A9 9 0 0 1 3.51 15" />
+          </svg>
+          Actualizar
+        </button>
       </div>
-      <button @click="refreshData" class="refresh-btn" :disabled="isLoading">
-        <svg class="refresh-icon" :class="{ 'rotating': isLoading }" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22-4l-4.36 4.36A9 9 0 0 1 3.51 15"/>
-        </svg>
-        Actualizar
-      </button>
-    </div>
 
-    <!-- Cards de Estadísticas Principales -->
-    <StatsCards :stats="statsData" :loading="loading.stats" />
-    
-    <div class="content-grid">
-      <div class="content-column">
-        <!-- Gráfico de Ventas -->
-        <div class="dashboard-card chart-card">
-          <div class="card-header">
-            <h3 class="card-title">Ingresos Mensuales</h3>
-            <div class="card-actions">
-              <select class="period-selector">
-                <option value="6">Últimos 6 meses</option>
-                <option value="12">Último año</option>
-              </select>
+      <!-- Cards de Estadísticas Principales -->
+      <StatsCards :stats="statsData" :loading="loading.stats" />
+
+      <div class="content-grid">
+        <div class="content-column">
+          <!-- Gráfico de Ventas -->
+          <div class="dashboard-card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Ingresos Mensuales</h3>
+              <div class="card-actions">
+                <select class="period-selector">
+                  <option value="6">Últimos 6 meses</option>
+                  <option value="12">Último año</option>
+                </select>
+              </div>
             </div>
+            <DashboardSalesChart :sales-data="salesData" :loading="loading.sales" />
           </div>
-          <DashboardSalesChart :sales-data="salesData" :loading="loading.sales" />
-        </div>
 
-        <!-- Pedidos Recientes -->
-        <div class="dashboard-card orders-card">
-          <div class="card-header">
-            <h3 class="card-title">Pedidos Recientes</h3>
-            <span class="orders-count">{{ recentOrders.length }} pedidos</span>
-          </div>
-          <RecentOrders 
-            :orders="recentOrders" 
-            :loading="loading.orders"
-            @view-order="viewOrderDetails"
-          />
-        </div>
-      </div>
-      
-      <div class="content-column">
-        <!-- Feed de Actividades -->
-        <div class="dashboard-card activity-card">
-          <div class="card-header">
-            <h3 class="card-title">Actividad Reciente</h3>
-            <div class="activity-indicator">
-              <div class="pulse-dot"></div>
-              En vivo
+          <!-- Pedidos Recientes -->
+          <div class="dashboard-card orders-card">
+            <div class="card-header">
+              <h3 class="card-title">Pedidos Recientes</h3>
+              <span class="orders-count">{{ recentOrders.length }} pedidos</span>
             </div>
+            <RecentOrders :orders="recentOrders" :loading="loading.orders" @view-order="viewOrderDetails" />
           </div>
-          <ActivityFeed :activities="recentActivities" :loading="loading.activities" />
         </div>
 
-        <!-- Estadísticas Rápidas -->
-        <div class="dashboard-card stats-card">
-          <div class="card-header">
-            <h3 class="card-title">Estadísticas Rápidas</h3>
+        <div class="content-column">
+          <!-- Feed de Actividades -->
+          <div class="dashboard-card activity-card">
+            <div class="card-header">
+              <h3 class="card-title">Actividad Reciente</h3>
+              <div class="activity-indicator">
+                <div class="pulse-dot"></div>
+                En vivo
+              </div>
+            </div>
+            <ActivityFeed :activities="recentActivities" :loading="loading.activities" />
           </div>
-          <QuickStats :stats="quickStatsData" :loading="loading.quickStats" />
+
+          <!-- Estadísticas Rápidas -->
+          <div class="dashboard-card stats-card">
+            <div class="card-header">
+              <h3 class="card-title">Estadísticas Rápidas</h3>
+            </div>
+            <QuickStats :stats="quickStatsData" :loading="loading.quickStats" />
+          </div>
         </div>
       </div>
+
+      <!-- Modal de Detalles del Pedido -->
+      <OrderDetailsModal v-if="selectedOrder" :order="selectedOrder" @close="selectedOrder = null" />
     </div>
-    
-    <!-- Modal de Detalles del Pedido -->
-    <OrderDetailsModal
-      v-if="selectedOrder"
-      :order="selectedOrder"
-      @close="selectedOrder = null"
-    />
   </div>
 </template>
 
 <script>
+import Sidebar from '@/components/GlobalComponents/Sidebar.vue'
 import axios from 'axios'
 import StatsCards from '@/components/VistasAdmin/ComponentesAdmin/StatsCards.vue'
 import DashboardSalesChart from '@/components/VistasAdmin/ComponentesAdmin/DashboardSalesChart.vue'
@@ -96,9 +93,10 @@ export default {
     RecentOrders,
     ActivityFeed,
     QuickStats,
-    OrderDetailsModal
+    OrderDetailsModal,
+    Sidebar
   },
-  
+
   data() {
     return {
       statsData: {
@@ -109,7 +107,7 @@ export default {
         totalUsuarios: 0,
         herramientasDisponibles: 0
       },
-      
+
       salesData: {
         labels: [],
         datasets: [{
@@ -127,16 +125,16 @@ export default {
           pointHoverRadius: 8
         }]
       },
-      
+
       recentOrders: [],
       recentActivities: [],
-      
+
       quickStatsData: {
         pedidosHoy: 0,
         herramientasEnUso: 0,
         mantenimientosPendientes: 0
       },
-      
+
       selectedOrder: null,
       loading: {
         stats: false,
@@ -147,46 +145,46 @@ export default {
       }
     }
   },
-  
+
   computed: {
     isLoading() {
       return Object.values(this.loading).some(loading => loading);
     }
   },
-  
+
   methods: {
     async loadStats() {
       try {
         this.loading.stats = true;
-        
+
         const [pedidos, usuarios, herramientas, transacciones] = await Promise.all([
           axios.get('/api/Pedido'),
           axios.get('/api/Usuario'),
           axios.get('/api/Herramienta'),
           axios.get('/api/Transaccion_Financiera')
         ]);
-        
+
         const totalPedidos = pedidos.data.length;
-        
-        const pedidosPendientes = pedidos.data.filter(p => 
+
+        const pedidosPendientes = pedidos.data.filter(p =>
           p.estado && p.estado.toLowerCase().includes('pendiente')
         ).length;
-        
-        const pedidosCompletados = pedidos.data.filter(p => 
+
+        const pedidosCompletados = pedidos.data.filter(p =>
           p.estado && p.estado.toLowerCase().includes('completado')
         ).length;
-        
+
         const mesActual = new Date().getMonth();
         const añoActual = new Date().getFullYear();
         const ingresosMes = transacciones.data
           .filter(t => {
             const fecha = new Date(t.fecha);
-            return fecha.getMonth() === mesActual && 
-                   fecha.getFullYear() === añoActual &&
-                   t.tipo === 'ingreso';
+            return fecha.getMonth() === mesActual &&
+              fecha.getFullYear() === añoActual &&
+              t.tipo === 'ingreso';
           })
           .reduce((sum, t) => sum + parseFloat(t.monto || 0), 0);
-        
+
         this.statsData = {
           totalPedidos,
           pedidosPendientes,
@@ -195,7 +193,7 @@ export default {
           totalUsuarios: usuarios.data.length,
           herramientasDisponibles: herramientas.data.filter(h => h.disponible).length
         };
-        
+
       } catch (error) {
         console.error('Error cargando estadísticas:', error);
         this.showToast('Error al cargar estadísticas', 'error');
@@ -203,17 +201,17 @@ export default {
         this.loading.stats = false;
       }
     },
-    
+
     async loadSalesChart() {
       try {
         this.loading.sales = true;
-        
+
         const response = await axios.get('/api/Transaccion_Financiera');
         const transacciones = response.data;
-        
+
         const salesByMonth = {};
         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dec'];
-        
+
         for (let i = 5; i >= 0; i--) {
           const fecha = new Date();
           fecha.setMonth(fecha.getMonth() - i);
@@ -221,7 +219,7 @@ export default {
           const label = `${meses[fecha.getMonth()]} ${fecha.getFullYear()}`;
           salesByMonth[key] = { label, amount: 0 };
         }
-        
+
         transacciones
           .filter(t => t.tipo === 'ingreso')
           .forEach(t => {
@@ -231,9 +229,9 @@ export default {
               salesByMonth[key].amount += parseFloat(t.monto || 0);
             }
           });
-        
+
         const salesArray = Object.values(salesByMonth);
-        
+
         this.salesData = {
           labels: salesArray.map(s => s.label),
           datasets: [{
@@ -251,7 +249,7 @@ export default {
             pointHoverRadius: 8
           }]
         };
-        
+
       } catch (error) {
         console.error('Error cargando gráfico de ventas:', error);
         this.showToast('Error al cargar gráfico de ventas', 'error');
@@ -259,21 +257,21 @@ export default {
         this.loading.sales = false;
       }
     },
-    
+
     async loadRecentOrders() {
       try {
         this.loading.orders = true;
-        
+
         const [pedidos, usuarios] = await Promise.all([
           axios.get('/api/Pedido'),
           axios.get('/api/Usuario')
         ]);
-        
+
         const usuariosMap = usuarios.data.reduce((map, user) => {
           map[user.id] = user;
           return map;
         }, {});
-        
+
         this.recentOrders = pedidos.data
           .sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
           .slice(0, 10)
@@ -288,7 +286,7 @@ export default {
             createdAt: pedido.fecha_pedido,
             estimatedCompletion: pedido.fecha_entrega
           }));
-        
+
       } catch (error) {
         console.error('Error cargando pedidos recientes:', error);
         this.showToast('Error al cargar pedidos recientes', 'error');
@@ -296,19 +294,19 @@ export default {
         this.loading.orders = false;
       }
     },
-    
+
     async loadRecentActivities() {
       try {
         this.loading.activities = true;
-        
+
         const [pedidos, herramientas, historialStock] = await Promise.all([
           axios.get('/api/Pedido'),
           axios.get('/api/Herramienta'),
           axios.get('/api/Historial_Movimiento_Stock')
         ]);
-        
+
         const activities = [];
-        
+
         pedidos.data
           .sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
           .slice(0, 5)
@@ -322,7 +320,7 @@ export default {
               icon: '📋'
             });
           });
-        
+
         historialStock.data
           .sort((a, b) => new Date(b.fecha_movimiento) - new Date(a.fecha_movimiento))
           .slice(0, 3)
@@ -336,7 +334,7 @@ export default {
               icon: '📦'
             });
           });
-        
+
         herramientas.data
           .filter(h => h.estado && h.estado.toLowerCase().includes('mantenimiento'))
           .sort((a, b) => new Date(b.fecha_ultimo_mantenimiento) - new Date(a.fecha_ultimo_mantenimiento))
@@ -351,11 +349,11 @@ export default {
               icon: '🛠️'
             });
           });
-        
+
         this.recentActivities = activities
           .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
           .slice(0, 10);
-        
+
       } catch (error) {
         console.error('Error cargando actividades:', error);
         this.showToast('Error al cargar actividades', 'error');
@@ -363,33 +361,33 @@ export default {
         this.loading.activities = false;
       }
     },
-    
+
     async loadQuickStats() {
       try {
         this.loading.quickStats = true;
-        
+
         const [pedidos, herramientas, mantenimientos] = await Promise.all([
           axios.get('/api/Pedido'),
           axios.get('/api/Herramienta'),
           axios.get('/api/Mantenimiento')
         ]);
-        
+
         const hoy = new Date().toISOString().split('T')[0];
-        
+
         this.quickStatsData = {
-          pedidosHoy: pedidos.data.filter(p => 
+          pedidosHoy: pedidos.data.filter(p =>
             p.fecha_pedido?.startsWith(hoy)
           ).length,
-          
-          herramientasEnUso: herramientas.data.filter(h => 
+
+          herramientasEnUso: herramientas.data.filter(h =>
             !h.disponible
           ).length,
-          
-          mantenimientosPendientes: mantenimientos.data.filter(m => 
+
+          mantenimientosPendientes: mantenimientos.data.filter(m =>
             m.estado === 'pendiente' || m.estado === 'programado'
           ).length
         };
-        
+
       } catch (error) {
         console.error('Error cargando estadísticas rápidas:', error);
         this.showToast('Error al cargar estadísticas rápidas', 'error');
@@ -397,7 +395,7 @@ export default {
         this.loading.quickStats = false;
       }
     },
-    
+
     async viewOrderDetails(order) {
       try {
         const response = await axios.get(`/api/Pedido/${order.id}`);
@@ -407,7 +405,7 @@ export default {
         this.showToast('Error al cargar detalles del pedido', 'error');
       }
     },
-    
+
     async loadDashboardData() {
       await Promise.all([
         this.loadStats(),
@@ -417,18 +415,18 @@ export default {
         this.loadQuickStats()
       ]);
     },
-    
+
     async refreshData() {
       await this.loadDashboardData();
       this.showToast('Datos actualizados correctamente', 'success');
     },
-    
+
     showToast(message, type = 'success') {
       const alertType = type === 'success' ? 'Éxito' : 'Error';
       alert(`${alertType}: ${message}`);
     }
   },
-  
+
   async mounted() {
     await this.loadDashboardData();
   }
@@ -436,11 +434,29 @@ export default {
 </script>
 
 <style scoped>
-/* Variables de Color - Colores oscuros y legibles */
+/* Variables CSS personalizadas */
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-accent: #f1f5f9;
+  --primary-color: #3b82f6;
+  --primary-dark: #2563eb;
+  --univo-primary: #1e40af;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --success-color: #10b981;
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
 .dashboard-content {
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 2rem;
+  width: 100%;
 }
 
 /* Header del Dashboard */
@@ -506,8 +522,13 @@ export default {
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Grid Layout */
@@ -617,9 +638,11 @@ export default {
   0% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
   }
@@ -636,7 +659,7 @@ export default {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .content-column {
     gap: 1.5rem;
   }
@@ -646,25 +669,25 @@ export default {
   .dashboard-content {
     padding: 1rem;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
   }
-  
+
   .header-content h1.dashboard-title {
     font-size: 1.5rem;
   }
-  
+
   .content-grid {
     gap: 1rem;
   }
-  
+
   .dashboard-card {
     padding: 1rem;
   }
-  
+
   .card-header {
     flex-direction: column;
     gap: 0.75rem;
@@ -691,8 +714,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Smooth Transitions */
@@ -700,4 +728,3 @@ export default {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 </style>
-<style src="src/assets/EstiloBase.css"></style>

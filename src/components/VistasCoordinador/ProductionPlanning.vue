@@ -1,151 +1,213 @@
 <template>
   <div class="">
     <Sidebar :role="'coordinator'" />
+
+    <!-- Header principal fuera del contenedor del calendario -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-info">
+          <div class="header-icon">
+            <i class="fas fa-boxes-stacked"></i>
+          </div>
+          <div class="header-text">
+            <h1 class="header-title">Calendario de producción</h1>
+            <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main class="">
       <div class="calendario-container">
-        <!-- Loading -->
-        <div v-if="loading" class="loading-container">
-          <div class="loading-content">
-            <i class="fas fa-spinner fa-spin loading-icon"></i>
-            <span>Cargando pedidos...</span>
-          </div>
-        </div>
 
-        <!-- Error -->
-        <div v-else-if="error" class="error-container">
-          <div class="error-content">
-            <i class="fas fa-exclamation-circle error-icon"></i>
-            <h3>Error al cargar los pedidos</h3>
-            <p>{{ error }}</p>
-            <button @click="cargarPedidos" class="btn btn-primary">
-              Reintentar
-            </button>
-          </div>
-        </div>
+        <FullCalendarComponent :title="calendarTitle" :events="events" :initial-view="selectedView"
+          :can-create-events="true" :can-edit-events="true" :can-delete-events="true" :show-controls="true"
+          :event-types="eventTypes" :loading="isLoading" height="600px" @event-click="handleEventClick"
+          @event-create="handleEventCreate" @event-edit="handleEventEdit" @event-delete="handleEventDelete"
+          @date-click="handleDateClick" @view-change="handleViewChange" />
 
-        <!-- Calendario -->
-        <div v-else>
-          <!-- Header -->
-          <div class="header-section">
-            <div class="header-content">
-              <div class="header-info">
-                <div class="header-icon">
-                  <i class="fas fa-boxes-stacked"></i>
-                </div>
-                <div class="header-text">
-                  <h1 class="header-title">Calendario de producción</h1>
-                  <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="header">
-            <div class="header-left">
-              <h1>Calendario de Pedidos</h1>
-              <div class="fecha-info">
-                <i class="fas fa-calendar"></i>
-                <span>{{ fechaFormateada }}</span>
-              </div>
-              <div class="contador-pedidos">
-                ({{ pedidos.length }} pedidos totales)
-              </div>
-            </div>
-            <div class="header-right">
-              <button @click="navegarMes(-1)" class="btn-nav">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button @click="irHoy" class="btn btn-primary">
-                Hoy
-              </button>
-              <button @click="navegarMes(1)" class="btn-nav">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-              <button @click="cargarPedidos" class="btn btn-success" :disabled="loading">
-                <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
-                Actualizar
-              </button>
-            </div>
-          </div>
-
-          <!-- Leyenda -->
-          <div class="leyenda">
-            <h3>Leyenda de Estados:</h3>
-            <div class="estados-container">
-              <div v-for="(estado, id) in estados" :key="id" class="estado-item">
-                <i :class="obtenerIconoEstado(parseInt(id))"></i>
-                <span :class="estado.class">{{ estado.nombre }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Estilo de calendario -->
-          <div class="leyenda">
-            <h3>Estilo del calendario:</h3>
-              <VaBadge text="Calendario" color="success" class="mr-2" />
-              <VaBadge text="Linea de tiempo" color="info" class="mr-2" />
-          </div>
-
-          <!-- Calendario -->
-          <div class="calendario">
-            <!-- Días de la semana -->
-            <div class="dias-semana">
-              <div v-for="dia in diasSemana" :key="dia" class="dia-semana">
-                {{ dia }}
-              </div>
-            </div>
-
-            <!-- Días del mes -->
-            <div class="dias-mes">
-              <div v-for="(day, index) in diasCalendario" :key="index" class="dia" :class="{
-                'dia-vacio': !day,
-                'dia-hoy': esHoy(day),
-                'dia-con-pedidos': day && getPedidosDelDia(day).length > 0
-              }">
-                <div v-if="day" class="dia-contenido">
-                  <div class="dia-numero" :class="{ 'hoy': esHoy(day) }">
-                    {{ day }}
-                    <span v-if="esHoy(day)" class="hoy-label">(Hoy)</span>
-                  </div>
-
-                  <div class="pedidos-dia">
-                    <div v-for="pedido in getPedidosDelDia(day)" :key="pedido.id" class="pedido-item"
-                      :class="estados[pedido.estado_id]?.class || 'estado-default'" :title="obtenerTooltip(pedido)">
-                      <div class="pedido-header">
-                        <span class="pedido-codigo">{{ pedido.codigo_pedido }}</span>
-                        <i :class="obtenerIconoEstado(pedido.estado_id)"></i>
-                      </div>
-                      <div class="pedido-proyecto">
-                        {{ pedido.proyecto_asociado }}
-                      </div>
-                      <div v-if="pedido.prioridad" class="pedido-prioridad"
-                        :class="prioridades[pedido.prioridad]?.class">
-                        Prioridad: {{ prioridades[pedido.prioridad]?.nombre }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Resumen -->
-          <div class="resumen">
-            <div v-for="(estado, id) in estados" :key="id" class="resumen-item">
-              <div class="resumen-header">
-                <i :class="obtenerIconoEstado(parseInt(id))"></i>
-                <h3>{{ estado.nombre }}</h3>
-              </div>
-              <div class="resumen-numero">{{ contarPedidosPorEstado(parseInt(id)) }}</div>
-              <div class="resumen-label">pedidos</div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   </div>
 </template>
 
-<script src="./scripts/PedidosCalendario.js"></script>
-<style src="src/assets/EstiloBase.css"></style>
-<style src="./styles/PedidosCalendario.css" scoped></style>
+<style src="src/assets/EstiloBase.css" scoped></style>
+
+<script>
+import { ref, onMounted } from 'vue'
+import FullCalendarComponent from '@/components/GlobalComponents/FullCalendarComponent.vue'
+
+export default {
+  name: 'MiPaginaCalendario',
+  components: {
+    FullCalendarComponent
+  },
+  setup() {
+    // Estados reactivos
+    const calendarTitle = ref('Mi Calendario Personal')
+    const selectedView = ref('dayGridMonth')
+    const isLoading = ref(false)
+
+    // Tipos de eventos para el filtro
+    const eventTypes = ref([
+      { value: 'meeting', label: 'Reuniones' },
+      { value: 'task', label: 'Tareas' },
+      { value: 'personal', label: 'Personal' },
+      { value: 'holiday', label: 'Vacaciones' }
+    ])
+
+    // Eventos del calendario
+    const events = ref([
+      {
+        id: '1',
+        title: 'Reunión de equipo',
+        start: '2025-08-12T10:00:00',
+        end: '2025-08-12T11:00:00',
+        backgroundColor: '#3b82f6',
+        borderColor: '#3b82f6',
+        extendedProps: {
+          description: 'Reunión semanal del equipo de desarrollo',
+          location: 'Sala de conferencias A',
+          status: 'pending',
+          type: 'meeting',
+          priority: 'high'
+        }
+      },
+      {
+        id: '2',
+        title: 'Completar proyecto X',
+        start: '2025-08-13',
+        backgroundColor: '#10b981',
+        borderColor: '#10b981',
+        extendedProps: {
+          description: 'Finalizar la implementación del proyecto X',
+          status: 'in-progress',
+          type: 'task',
+          priority: 'medium'
+        }
+      },
+      {
+        id: '3',
+        title: 'Cita médica',
+        start: '2025-08-15T15:30:00',
+        end: '2025-08-15T16:30:00',
+        backgroundColor: '#f59e0b',
+        borderColor: '#f59e0b',
+        extendedProps: {
+          description: 'Consulta médica anual',
+          location: 'Hospital Central',
+          status: 'pending',
+          type: 'personal',
+          priority: 'high'
+        }
+      }
+    ])
+
+    // Event handlers
+    const handleEventClick = (event) => {
+      console.log('Evento clickeado:', event)
+      // Aquí puedes manejar el click del evento
+      // Por ejemplo, abrir un modal personalizado o navegar a otra página
+    }
+
+    const handleEventCreate = () => {
+      console.log('Crear nuevo evento')
+      // Aquí puedes abrir un formulario para crear eventos
+      // Por ejemplo:
+      // router.push('/eventos/crear')
+      // o abrir un modal
+    }
+
+    const handleEventEdit = (event) => {
+      console.log('Editar evento:', event)
+      // Aquí puedes abrir un formulario de edición
+      // Por ejemplo:
+      // router.push(`/eventos/editar/${event.id}`)
+    }
+
+    const handleEventDelete = (event) => {
+      console.log('Eliminar evento:', event)
+      // Aquí puedes hacer la llamada a la API para eliminar
+      deleteEventFromAPI(event.id)
+    }
+
+    const handleDateClick = (dateInfo) => {
+      console.log('Fecha clickeada:', dateInfo)
+      // Aquí puedes crear un evento en la fecha seleccionada
+      const newEvent = {
+        id: Date.now().toString(),
+        title: 'Nuevo evento',
+        start: dateInfo.dateStr,
+        backgroundColor: '#6b7280',
+        borderColor: '#6b7280',
+        extendedProps: {
+          status: 'pending',
+          type: 'task'
+        }
+      }
+      events.value.push(newEvent)
+    }
+
+    const handleViewChange = (viewName) => {
+      console.log('Vista cambiada a:', viewName)
+      selectedView.value = viewName
+    }
+
+    // Métodos para API (ejemplos)
+    const deleteEventFromAPI = async (eventId) => {
+      try {
+        isLoading.value = true
+        // Simular llamada a API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        // Eliminar del array local
+        events.value = events.value.filter(event => event.id !== eventId)
+
+        console.log(`Evento ${eventId} eliminado correctamente`)
+      } catch (error) {
+        console.error('Error al eliminar evento:', error)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    const loadEventsFromAPI = async () => {
+      try {
+        isLoading.value = true
+        // Simular carga de eventos desde API
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        // En una aplicación real, aquí harías:
+        // const response = await api.get('/eventos')
+        // events.value = response.data
+
+        console.log('Eventos cargados desde API')
+      } catch (error) {
+        console.error('Error al cargar eventos:', error)
+      } finally {
+        isLoading.value = false
+      }
+    }
+
+    // Lifecycle
+    onMounted(() => {
+      // Cargar eventos al montar el componente
+      loadEventsFromAPI()
+    })
+
+    return {
+      calendarTitle,
+      selectedView,
+      isLoading,
+      eventTypes,
+      events,
+      handleEventClick,
+      handleEventCreate,
+      handleEventEdit,
+      handleEventDelete,
+      handleDateClick,
+      handleViewChange
+    }
+  }
+}
+</script>
