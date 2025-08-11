@@ -33,6 +33,192 @@ export default {
         { id: 1, nombre: 'Suministros' },
         { id: 2, nombre: 'Equipamiento' },
         { id: 3, nombre: 'Servicios' }
+      ],
+      // Configuración de columnas para la tabla de Producción
+      columnsProduccion: [
+        {
+          label: 'Código',
+          field: 'codigo_pedido',
+          type: 'string',
+          sortable: true,
+          width: '120px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por código'
+          }
+        },
+        {
+          label: 'Solicitante',
+          field: 'solicitante_nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por solicitante'
+          }
+        },
+        {
+          label: 'Proyecto',
+          field: 'proyecto_asociado',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por proyecto'
+          }
+        },
+        {
+          label: 'Tipo',
+          field: 'tipo_pedido_nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Suministros', text: 'Suministros' },
+              { value: 'Equipamiento', text: 'Equipamiento' },
+              { value: 'Servicios', text: 'Servicios' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los tipos'
+          }
+        },
+        {
+          label: 'Supervisor',
+          field: 'supervisor_nombre',
+          type: 'string',
+          sortable: true
+        },
+        {
+          label: 'F. Solicitud',
+          field: 'fecha_solicitud',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd',
+          dateOutputFormat: 'dd/MM/yyyy',
+          sortable: true
+        },
+        {
+          label: 'F. Est. Entrega',
+          field: 'fecha_estimada_entrega',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd',
+          dateOutputFormat: 'dd/MM/yyyy',
+          sortable: true
+        },
+        {
+          label: 'Estado',
+          field: 'estado',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'pendiente', text: 'Pendiente' },
+              { value: 'en_proceso', text: 'En Proceso' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los estados'
+          }
+        },
+        {
+          label: 'Acciones',
+          field: 'actions',
+          sortable: false,
+          width: '120px'
+        }
+      ],
+      // Configuración de columnas para la tabla de Historial
+      columnsHistorial: [
+        {
+          label: 'Código',
+          field: 'codigo_pedido',
+          type: 'string',
+          sortable: true,
+          width: '120px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por código'
+          }
+        },
+        {
+          label: 'Solicitante',
+          field: 'solicitante_nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por solicitante'
+          }
+        },
+        {
+          label: 'Proyecto',
+          field: 'proyecto_asociado',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por proyecto'
+          }
+        },
+        {
+          label: 'Tipo',
+          field: 'tipo_pedido_nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Suministros', text: 'Suministros' },
+              { value: 'Equipamiento', text: 'Equipamiento' },
+              { value: 'Servicios', text: 'Servicios' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los tipos'
+          }
+        },
+        {
+          label: 'Supervisor',
+          field: 'supervisor_nombre',
+          type: 'string',
+          sortable: true
+        },
+        {
+          label: 'F. Solicitud',
+          field: 'fecha_solicitud',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd',
+          dateOutputFormat: 'dd/MM/yyyy',
+          sortable: true
+        },
+        {
+          label: 'F. Completado',
+          field: 'fecha_completado',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd',
+          dateOutputFormat: 'dd/MM/yyyy',
+          sortable: true
+        },
+        {
+          label: 'Estado',
+          field: 'estado',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'completado', text: 'Completado' },
+              { value: 'entregado', text: 'Entregado' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los estados'
+          }
+        },
+        {
+          label: 'Acciones',
+          field: 'actions',
+          sortable: false,
+          width: '80px'
+        }
       ]
     }
   },
@@ -122,6 +308,25 @@ export default {
 
     showingTo() {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredHistorial.length);
+    },
+
+    // Computed properties para los filtros activos
+    hasActiveFilters() {
+      return this.estadoFilter !== 'todos' ||
+             this.tecnicoFilter !== 'todos' ||
+             this.fechaInicio !== '' ||
+             this.fechaFin !== '' ||
+             this.searchQuery !== '';
+    },
+
+    activeFiltersCount() {
+      let count = 0;
+      if (this.estadoFilter !== 'todos') count++;
+      if (this.tecnicoFilter !== 'todos') count++;
+      if (this.fechaInicio !== '') count++;
+      if (this.fechaFin !== '') count++;
+      if (this.searchQuery !== '') count++;
+      return count;
     }
   },
 
@@ -465,6 +670,37 @@ export default {
       // Implementar un sistema de notificaciones más sofisticado si es necesario
       const alertType = type === 'success' ? 'Éxito' : 'Error';
       alert(`${alertType}: ${message}`);
+    },
+
+    // Métodos para exportar tablas a CSV usando vue-good-table-next
+    exportProduccionToCSV() {
+      try {
+        if (this.$refs.vueGoodTableProduccion) {
+          const fileName = `pedidos_produccion_${new Date().toISOString().split('T')[0]}.csv`;
+          this.$refs.vueGoodTableProduccion.exportCsv(fileName);
+          this.showToast('Tabla de producción exportada exitosamente', 'success');
+        } else {
+          this.showToast('Error al exportar: tabla de producción no encontrada', 'error');
+        }
+      } catch (error) {
+        console.error('Error exportando CSV de producción:', error);
+        this.showToast('Error al exportar tabla de producción', 'error');
+      }
+    },
+
+    exportHistorialToCSV() {
+      try {
+        if (this.$refs.vueGoodTableHistorial) {
+          const fileName = `historial_pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+          this.$refs.vueGoodTableHistorial.exportCsv(fileName);
+          this.showToast('Historial exportado exitosamente', 'success');
+        } else {
+          this.showToast('Error al exportar: tabla de historial no encontrada', 'error');
+        }
+      } catch (error) {
+        console.error('Error exportando CSV de historial:', error);
+        this.showToast('Error al exportar tabla de historial', 'error');
+      }
     }
   },
 

@@ -1,7 +1,7 @@
 <template>
   <Sidebar :role="'coordinator'" />
-  <div class="tool-usage-view">
-
+  <div class="historial-movimientos-container">
+    <!-- Encabezado Principal -->
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">
@@ -9,267 +9,291 @@
             <i class="fas fa-exchange-alt"></i>
           </div>
           <div class="header-text">
-            <h1 class="header-title">Gestión de Movimientos</h1>
-            <p class="header-subtitle">Registra y supervisa las transferencias, entradas y salidas del inventario</p>
+            <h1 class="header-title">Historial de Movimientos</h1>
+            <p class="header-subtitle">Registra y supervisa todas las transferencias, préstamos y devoluciones del
+              inventario</p>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="stats-bar" v-if="!loading && !error">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="material-icons">construction</i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ filteredItems.length }}</div>
-          <div class="stat-label">Usos Registrados</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="material-icons">timer</i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ totalHours }} hrs</div>
-          <div class="stat-label">Horas Totales</div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">
-          <i class="material-icons">check_circle</i>
-        </div>
-        <div class="stat-content">
-          <div class="stat-value">{{ completedReturns }}</div>
-          <div class="stat-label">Devoluciones Completadas</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="loading-state" v-if="loading">
-      <div class="loading-spinner">
-        <i class="material-icons spin">autorenew</i>
-      </div>
-      <p class="loading-text">Cargando historial...</p>
-    </div>
-
-    <div class="error-state" v-if="error">
-      <div class="error-icon">
-        <i class="material-icons">error_outline</i>
-      </div>
-      <p class="error-text">{{ error }}</p>
-      <va-button @click="fetchData" class="retry-button">
-
-        <i class="material-icons">refresh</i>
-        Reintentar
-
-      </va-button>
-    </div>
-
-    <div class="content-wrapper" v-if="!loading && !error">
-      <div class="table-container">
-        <div class="table-responsive">
-          <table class="usage-table">
-            <thead>
-              <tr>
-                <th @click="sortBy('herramienta.nombre')">
-                  Herramienta
-                  <i class="material-icons sort-icon" v-if="sortField === 'herramienta.nombre'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('usuario.nombre')">
-                  Usuario
-                  <i class="material-icons sort-icon" v-if="sortField === 'usuario.nombre'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('proyecto.nombre')">
-                  Proyecto
-                  <i class="material-icons sort-icon" v-if="sortField === 'proyecto.nombre'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('fecha_uso')">
-                  Fecha Uso
-                  <i class="material-icons sort-icon" v-if="sortField === 'fecha_uso'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('fecha_devolucion')">
-                  Fecha Devolución
-                  <i class="material-icons sort-icon" v-if="sortField === 'fecha_devolucion'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('horas_utilizada')">
-                  Horas
-                  <i class="material-icons sort-icon" v-if="sortField === 'horas_utilizada'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th @click="sortBy('estado_devolucion.nombre')">
-                  Estado
-                  <i class="material-icons sort-icon" v-if="sortField === 'estado_devolucion.nombre'">
-                    {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                  </i>
-                </th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in paginatedItems" :key="item.id" class="usage-row">
-                <td>
-                  <div class="tool-info">
-                    <strong>{{ item.herramienta?.nombre || 'N/A' }}</strong>
-                    <small v-if="item.herramienta?.codigo">Código: {{ item.herramienta.codigo }}</small>
-                  </div>
-                </td>
-                <td>
-                  <div class="user-info">
-                    <i class="material-icons">person</i>
-                    {{ item.usuario?.nombre || 'N/A' }}
-                  </div>
-                </td>
-                <td>
-                  {{ item.proyecto?.nombre || 'N/A' }}
-                </td>
-                <td>
-                  {{ formatDateTime(item.fecha_uso) }}
-                </td>
-                <td>
-                  {{ item.fecha_devolucion ? formatDateTime(item.fecha_devolucion) : 'Pendiente' }}
-                </td>
-                <td>
-                  <span class="hours-badge">{{ item.horas_utilizada }} hrs</span>
-                </td>
-                <td>
-                  <span class="status-badge" :class="item.estado_devolucion?.nombre.toLowerCase()">
-                    {{ item.estado_devolucion?.nombre || 'N/A' }}
-                  </span>
-                </td>
-                <td>
-                  <va-button class="action-btn" @click="viewDetails(item)">
-
-                    <i class="material-icons">visibility</i>
-
-                  </va-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pagination" v-if="totalPages > 1">
-          <va-button @click="prevPage" :disabled="currentPage === 1" class="pagination-btn">
-
-            <i class="material-icons">chevron_left</i>
-
-          </va-button>
-
-          <span class="page-info">Página {{ currentPage }} de {{ totalPages }}</span>
-
-          <va-button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-btn">
-
-            <i class="material-icons">chevron_right</i>
-
+        <div class="header-actions">
+          <va-button @click="exportMovimientos" color="primary" icon="download">
+            Exportar Historial
           </va-button>
         </div>
+      </div>
+    </div>
 
-        <div class="empty-state" v-if="filteredItems.length === 0 && !loading">
-          <div class="empty-icon">
-            <i class="material-icons">search_off</i>
+    <!-- Estadísticas Expandidas -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-list-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.total }}</div>
+          <div class="stat-label">Total Movimientos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon info">
+          <i class="fas fa-hand-holding"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.prestamos }}</div>
+          <div class="stat-label">Préstamos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <i class="fas fa-undo"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.devoluciones }}</div>
+          <div class="stat-label">Devoluciones</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.activos }}</div>
+          <div class="stat-label">Activos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon danger">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.vencidos }}</div>
+          <div class="stat-label">Vencidos</div>
+        </div>
+      </div>
+      <div class="stat-card cost-stat">
+        <div class="stat-icon">
+          <i class="fas fa-calculator"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.totalHoras }}h</div>
+          <div class="stat-sublabel">S/ {{ stats.totalCosto }}</div>
+          <div class="stat-label">Horas / Costo Total</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles de tabla -->
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" v-model="searchTerm" placeholder="Buscar movimientos por herramienta, usuario o proyecto..."
+          class="search-input" />
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <div class="table-actions">
+        <va-button @click="exportMovimientos" color="primary" icon="download">
+          Exportar CSV
+        </va-button>
+      </div>
+    </div>
+
+    <!-- Tabla con vue-good-table-next -->
+    <div class="table-container">
+      <vue-good-table :columns="columns" :rows="filteredData" max-height="45vh" :fixedHeader="true"
+        :pagination-options="paginationOptions" :sort-options="{ enabled: true, initialSortBy: sortOption }"
+        :search-options="{
+          enabled: true,
+          externalQuery: searchTerm
+        }" :loading="isLoading" theme="nocturnal" compactMode styleClass="vgt-table striped condensed fixed-header">
+        <!-- Slot para Tipo de Movimiento -->
+        <template #table-row="params">
+          <span v-if="params.column.field === 'tipoMovimiento'"
+            :class="getTipoMovimientoBadgeClass(params.row.tipoMovimiento)">
+            {{ params.row.tipoMovimiento }}
+          </span>
+
+          <!-- Slot para Estado -->
+          <span v-else-if="params.column.field === 'estado'" :class="getStatusBadgeClass(params.row.estado)">
+            {{ params.row.estado }}
+          </span>
+
+          <!-- Slot para Fecha de Devolución -->
+          <template v-else-if="params.column.field === 'fechaDevolucion'">
+            <span v-if="params.row.fechaDevolucion">
+              {{ formatDateTime(params.row.fechaDevolucion) }}
+            </span>
+            <span v-else class="fecha-pendiente">Pendiente</span>
+          </template>
+
+          <!-- Slot para Horas de Uso -->
+          <span v-else-if="params.column.field === 'horasUso'" class="hours-badge">{{ params.row.horasUso }}h</span>
+
+          <!-- Slot para Costo -->
+          <span v-else-if="params.column.field === 'costo'" class="currency">{{ formatCurrency(params.row.costo)
+            }}</span>
+
+          <!-- Slot para Acciones -->
+          <div v-else-if="params.column.field === 'acciones'" class="action-buttons">
+            <va-button size="small" color="info" icon="visibility" @click="viewDetails(params.row)"
+              title="Ver detalles" />
           </div>
-          <h3>No se encontraron registros</h3>
-          <p>No hay usos de herramientas que coincidan con los filtros aplicados</p>
-          <va-button class="btn-clear" @click="clearFilters">
 
-            <i class="material-icons">clear_all</i>
-            Limpiar Filtros
+          <!-- Contenido por defecto para otras columnas -->
+          <span v-else>{{ params.formattedRow[params.column.field] }}</span>
+        </template>
 
-          </va-button>
-        </div>
-      </div>
+        <!-- Slot personalizado para mensaje vacío -->
+        <template #emptystate>
+          <div class="empty-state">
+            <i class="fas fa-exchange-alt empty-icon"></i>
+            <h3>No hay movimientos</h3>
+            <p>No se encontraron movimientos que coincidan con los filtros aplicados.</p>
+          </div>
+        </template>
+      </vue-good-table>
     </div>
 
-    <!-- Modal de detalles -->
-    <div v-if="selectedItem" class="usage-modal" @click.self="selectedItem = null">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Detalles del Uso #{{ selectedItem.id }}</h3>
-          <va-button @click="selectedItem = null" class="close-button">
-
-            <i class="material-icons">close</i>
-
-          </va-button>
-        </div>
-
-        <div class="modal-body">
-          <div class="detail-grid">
-            <div class="detail-card">
-              <h4><i class="material-icons">construction</i> Herramienta</h4>
-              <div class="detail-content">
-                <p><strong>Nombre:</strong> {{ selectedItem.herramienta?.nombre || 'N/A' }}</p>
-                <p><strong>Código:</strong> {{ selectedItem.herramienta?.codigo || 'N/A' }}</p>
-                <p v-if="selectedItem.herramienta?.descripcion">
-                  <strong>Descripción:</strong> {{ selectedItem.herramienta.descripcion }}
-                </p>
+    <!-- Modal de detalles mejorado -->
+    <va-modal v-model="showDetailsModal" title="Detalles del Movimiento" size="large"
+      :before-close="() => { showDetailsModal = false; return true; }">
+      <div v-if="selectedMovimiento" class="modal-form">
+        <div class="detail-sections">
+          <!-- Información General -->
+          <div class="detail-section">
+            <h4><i class="fas fa-info-circle"></i> Información General</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>ID Movimiento:</label>
+                <span>{{ selectedMovimiento.id }}</span>
               </div>
-            </div>
-
-            <div class="detail-card">
-              <h4><i class="material-icons">person</i> Usuario</h4>
-              <div class="detail-content">
-                <p><strong>Nombre:</strong> {{ selectedItem.usuario?.nombre || 'N/A' }}</p>
-                <p><strong>Departamento:</strong> {{ selectedItem.usuario?.departamento || 'N/A' }}</p>
-                <p><strong>Contacto:</strong> {{ selectedItem.usuario?.email || selectedItem.usuario?.telefono || 'N/A'
-                  }}</p>
+              <div class="detail-item">
+                <label>Tipo:</label>
+                <span :class="getTipoMovimientoBadgeClass(selectedMovimiento.tipoMovimiento)">
+                  {{ selectedMovimiento.tipoMovimiento }}
+                </span>
               </div>
-            </div>
-
-            <div class="detail-card">
-              <h4><i class="material-icons">assignment</i> Proyecto</h4>
-              <div class="detail-content">
-                <p><strong>Nombre:</strong> {{ selectedItem.proyecto?.nombre || 'N/A' }}</p>
-                <p><strong>Código:</strong> {{ selectedItem.proyecto?.codigo || 'N/A' }}</p>
-                <p v-if="selectedItem.proyecto?.descripcion">
-                  <strong>Descripción:</strong> {{ selectedItem.proyecto.descripcion }}
-                </p>
+              <div class="detail-item">
+                <label>Estado:</label>
+                <span :class="getStatusBadgeClass(selectedMovimiento.estado)">
+                  {{ selectedMovimiento.estado }}
+                </span>
               </div>
-            </div>
-
-            <div class="detail-card">
-              <h4><i class="material-icons">schedule</i> Tiempo de Uso</h4>
-              <div class="detail-content">
-                <p><strong>Fecha de préstamo:</strong> {{ formatDateTime(selectedItem.fecha_uso) }}</p>
-                <p><strong>Fecha de devolución:</strong>
-                  {{ selectedItem.fecha_devolucion ? formatDateTime(selectedItem.fecha_devolucion) : 'Pendiente' }}
-                </p>
-                <p><strong>Horas utilizadas:</strong> {{ selectedItem.horas_utilizada }} hrs</p>
-              </div>
-            </div>
-
-            <div class="detail-card">
-              <h4><i class="material-icons">check_circle</i> Estado</h4>
-              <div class="detail-content">
-                <p><strong>Estado de devolución:</strong>
-                  <span class="status-badge" :class="selectedItem.estado_devolucion?.nombre.toLowerCase()">
-                    {{ selectedItem.estado_devolucion?.nombre || 'N/A' }}
-                  </span>
-                </p>
-                <p><strong>Aprobado por:</strong> {{ selectedItem.aprobado_por_nombre || 'N/A' }}</p>
-                <p><strong>Notas:</strong> {{ selectedItem.notas || 'Sin notas adicionales' }}</p>
+              <div class="detail-item">
+                <label>Departamento:</label>
+                <span>{{ selectedMovimiento.departamento }}</span>
               </div>
             </div>
           </div>
+
+          <!-- Herramienta -->
+          <div class="detail-section">
+            <h4><i class="fas fa-tools"></i> Herramienta</h4>
+            <div class="detail-grid">
+              <div class="detail-item full-width">
+                <label>Nombre:</label>
+                <span>{{ selectedMovimiento.herramienta }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Usuario y Proyecto -->
+          <div class="detail-section">
+            <h4><i class="fas fa-user"></i> Usuario y Proyecto</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Usuario:</label>
+                <span>{{ selectedMovimiento.usuario }}</span>
+              </div>
+              <div class="detail-item full-width">
+                <label>Proyecto:</label>
+                <span>{{ selectedMovimiento.proyecto }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fechas y Tiempos -->
+          <div class="detail-section">
+            <h4><i class="fas fa-calendar"></i> Fechas y Tiempos</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Fecha Movimiento:</label>
+                <span>{{ formatDateTime(selectedMovimiento.fechaMovimiento) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Fecha Devolución:</label>
+                <span v-if="selectedMovimiento.fechaDevolucion">
+                  {{ formatDateTime(selectedMovimiento.fechaDevolucion) }}
+                </span>
+                <span v-else class="fecha-pendiente">Pendiente</span>
+              </div>
+              <div class="detail-item">
+                <label>Duración:</label>
+                <span>{{ calcularDuracionPrestamo(selectedMovimiento.fechaMovimiento,
+                  selectedMovimiento.fechaDevolucion)
+                  }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Horas de Uso:</label>
+                <span class="hours-badge">{{ selectedMovimiento.horasUso }}h</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Costos -->
+          <div class="detail-section">
+            <h4><i class="fas fa-dollar-sign"></i> Información de Costos</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Costo Total:</label>
+                <span class="currency">{{ formatCurrency(selectedMovimiento.costo) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Costo por Hora:</label>
+                <span class="currency">{{ formatCurrency(selectedMovimiento.costo / selectedMovimiento.horasUso)
+                  }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="detail-section" v-if="selectedMovimiento.observaciones">
+            <h4><i class="fas fa-comment"></i> Observaciones</h4>
+            <div class="detail-content">
+              <p>{{ selectedMovimiento.observaciones }}</p>
+            </div>
+          </div>
+
+          <!-- Aprobación -->
+          <div class="detail-section">
+            <h4><i class="fas fa-check"></i> Aprobación</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Aprobado por:</label>
+                <span>{{ selectedMovimiento.aprobadoPor }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Ubicación Origen:</label>
+                <span>{{ selectedMovimiento.ubicacionOrigen }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Ubicación Destino:</label>
+                <span>{{ selectedMovimiento.ubicacionDestino }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <template #footer>
+        <va-button color="secondary" @click="showDetailsModal = false">
+          Cerrar
+        </va-button>
+      </template>
+    </va-modal>
   </div>
 </template>
 
-<script src="./scripts/ToolUsageHistoryView.js"></script>
+<script>
+import HistorialMovimientosScript from './scripts/HistorialMovimientosScript.js';
+export default HistorialMovimientosScript;
+</script>
 <style src="./styles/ToolUsageHistoryView.css" scoped></style>
 <style src="src/assets/EstiloBase.css"></style>

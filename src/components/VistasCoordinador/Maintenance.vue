@@ -32,47 +32,123 @@
     <div v-if="loading" class="loading">Cargando...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
-    <!-- Tabla de mantenimientos -->
-    <table v-if="!loading && !error">
-      <thead>
-        <tr>
-          <th @click="sortBy('nombre')">
-            Nombre
-            <SortIcon :direction="sortDirection('nombre')" />
-          </th>
-          <th @click="sortBy('herramienta_id')">
-            Herramienta
-            <SortIcon :direction="sortDirection('herramienta_id')" />
-          </th>
-          <th @click="sortBy('tipo_mantenimiento_id')">
-            Tipo
-            <SortIcon :direction="sortDirection('tipo_mantenimiento_id')" />
-          </th>
-          <th @click="sortBy('fecha_programada')">
-            Fecha Programada
-            <SortIcon :direction="sortDirection('fecha_programada')" />
-          </th>
-          <th @click="sortBy('estado_id')">
-            Estado
-            <SortIcon :direction="sortDirection('estado_id')" />
-          </th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="m in filteredMantenimientos" :key="m.id">
-          <td>{{ m.nombre }}</td>
-          <td>{{ getHerramientaName(m.herramienta_id) }}</td>
-          <td>{{ getTipoMantenimientoName(m.tipo_mantenimiento_id) }}</td>
-          <td>{{ formatDate(m.fecha_programada) }}</td>
-          <td>{{ getEstadoName(m.estado_id) }}</td>
-          <td class="actions">
-            <button @click="openEditModal(m)" class="btn small">Editar</button>
-            <button @click="deleteMantenimiento(m.id)" class="btn small danger">Eliminar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Tabla de mantenimientos/vue-good-table-next -->
+    <div class="card">
+      <div class="card-body">
+        <div v-if="loading" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+          <p>Cargando mantenimientos...</p>
+        </div>
+
+        <div v-else>
+          <vue-good-table ref="vueGoodTable" :fixedHeader="true" :columns="tableColumns" max-height="45vh"
+            :rows="mantenimientos" :search-options="{
+              enabled: true,
+              placeholder: 'Buscar mantenimientos por nombre, herramienta o tipo...',
+              externalQuery: searchQuery
+            }" :pagination-options="{
+              enabled: true,
+              mode: 'records',
+              perPage: 10,
+              perPageDropdown: [5, 10, 20, 50],
+              dropdownAllowAll: false,
+              nextLabel: 'Siguiente',
+              prevLabel: 'Anterior',
+              rowsPerPageLabel: 'Filas por página',
+              ofLabel: 'de',
+              pageLabel: 'página',
+              allLabel: 'Todos'
+            }" :sort-options="{
+          enabled: true,
+          initialSortBy: { field: 'nombre', type: 'asc' }
+        }" :select-options="{
+          enabled: false
+        }" styleClass="vgt-table striped bordered" theme="Black-rhino">
+
+            <!-- Slot personalizado para cada celda -->
+            <template #table-row="props">
+              <!-- Columna de Nombre -->
+              <span v-if="props.column.field === 'nombre'">
+                {{ props.row.nombre }}
+              </span>
+
+              <!-- Columna de Herramienta -->
+              <span v-else-if="props.column.field === 'herramienta_id'">
+                {{ getHerramientaName(props.row.herramienta_id) }}
+              </span>
+
+              <!-- Columna de Tipo de Mantenimiento -->
+              <span v-else-if="props.column.field === 'tipo_mantenimiento_id'">
+                <span :class="['badge', tipoMantenimientoClass(props.row.tipo_mantenimiento_id)]">
+                  {{ getTipoMantenimientoName(props.row.tipo_mantenimiento_id) }}
+                </span>
+              </span>
+
+              <!-- Columna de Fecha Programada -->
+              <span v-else-if="props.column.field === 'fecha_programada'">
+                {{ formatDate(props.row.fecha_programada) }}
+              </span>
+
+              <!-- Columna de Estado -->
+              <span v-else-if="props.column.field === 'estado_id'">
+                <span :class="['badge', estadoClass(props.row.estado_id)]">
+                  {{ getEstadoName(props.row.estado_id) }}
+                </span>
+              </span>
+
+              <!-- Columna de Acciones -->
+              <span v-else-if="props.column.field === 'actions'">
+                <div class="action-buttons">
+                  <va-button size="small" preset="plain" color="info" @click="openEditModal(props.row)" icon="edit"
+                    class="mr-1">
+                  </va-button>
+                  <va-button size="small" preset="plain" color="danger" @click="deleteMantenimiento(props.row.id)"
+                    icon="delete">
+                  </va-button>
+                </div>
+              </span>
+
+              <!-- Contenido por defecto -->
+              <span v-else>
+                {{ props.formattedRow[props.column.field] }}
+              </span>
+            </template>
+
+            <!-- Slot para acciones en la parte superior de la tabla -->
+            <template #table-actions>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="table-info">
+                  <span class="text-muted">Total: {{ mantenimientos.length }} mantenimientos</span>
+                </div>
+                <div class="table-actions-buttons">
+                  <va-button color="success" size="small" @click="exportToCSV" icon="download" class="mr-2">
+                    Exportar CSV
+                  </va-button>
+                  <va-button color="info" size="small" @click="testConnection" icon="wifi" class="mr-2">
+                    Test Conexión
+                  </va-button>
+                  <va-button color="primary" size="small" @click="loadMantenimientos" icon="refresh">
+                    Recargar
+                  </va-button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Mensaje cuando no hay datos -->
+            <template #emptystate>
+              <div class="text-center py-4">
+                <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No se encontraron mantenimientos</h5>
+                <p class="text-muted">Intenta ajustar los filtros o crear un nuevo mantenimiento</p>
+                <va-button color="primary" @click="showAddMantenimientoModal = true" icon="add">
+                  Crear Mantenimiento
+                </va-button>
+              </div>
+            </template>
+          </vue-good-table>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal para crear/editar -->
     <div v-if="showModal" class="modal">
@@ -130,4 +206,4 @@
 
 <script src="./scripts/Maintenance.js"></script>
 <style src="./styles/Maintenance.css"></style>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

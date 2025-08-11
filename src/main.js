@@ -20,6 +20,10 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
+// Vue Good Table Next
+import VueGoodTablePlugin from 'vue-good-table-next'
+import 'vue-good-table-next/dist/vue-good-table-next.css'
+
 // Iconos
 import '@mdi/font/css/materialdesignicons.css'
 
@@ -40,6 +44,7 @@ app.use(pinia) // Pinia debe instalarse primero
 app.use(router)
 app.use(vuetify)
 app.use(createVuestic()) // Agrega Vuestic UI
+app.use(VueGoodTablePlugin) // Agrega vue-good-table-next
 
 // Registra el componente LoadingSpinner globalmente
 app.component('LoadingSpinner', LoadingSpinner)
