@@ -5,45 +5,28 @@
       <div class="univo-logo-container">
         <img src="/src/assets/login.svg" alt="Logo del taller" class="univo-logo">
       </div>
-      
+
       <form class="univo-form" @submit.prevent="handleLogin">
         <div class="univo-input-group">
           <label class="univo-input-label">Nombre de usuario</label>
-          <input 
-            type="text"
-            class="univo-input"
-            v-model="username"
-            required
-          >
+          <input type="text" class="univo-input" v-model="username" required>
         </div>
-         
+
         <div class="univo-input-group">
           <label class="univo-input-label">Contraseña</label>
-          <input 
-            type="password"
-            class="univo-input"
-            v-model="password"
-            required
-          >
+          <input type="password" class="univo-input" v-model="password" required>
         </div>
-         
+
         <div v-if="errorMessage" class="univo-error-message">
           {{ errorMessage }}
         </div>
-         
-        <va-button 
-          type="submit" 
-          class="univo-submit-btn" 
-          :disabled="loading"
-          :loading="loading"
-          color="primary"
-          block
-        >
+
+        <va-button type="submit" class="univo-submit-btn" :disabled="loading" :loading="loading" color="primary" block>
           <span v-if="!loading">Acceder</span>
           <span v-else">Verificando...</span>
         </va-button>
       </form>
-      
+
       <!-- Sección de acceso directo -->
       <div class="univo-quick-access">
         <h3 class="univo-quick-access-title">Acceso Directo</h3>
@@ -91,6 +74,9 @@
               </router-link>
               <router-link to="/coordinator/movimientos" class="univo-quick-link coordinator">
                 Movimientos
+              </router-link>
+              <router-link to="/coordinator/planos-tools" class="univo-quick-link coordinator">
+                Planos y Herramientas
               </router-link>
             </div>
           </div>
@@ -141,11 +127,37 @@
           </div>
         </div>
       </div>
-       
+
+
+      <!-- Enlaces de Admin - Sección actualizada -->
+      <div class="univo-role-section">
+        <h4 class="univo-role-title">Administrador</h4>
+        <div class="univo-role-links">
+          <router-link to="/admin-dashboard" class="univo-quick-link admin">
+            Dashboard Admin
+          </router-link>
+          <router-link to="/admin/transacciones" class="univo-quick-link admin">
+            Transacciones
+          </router-link>
+          <router-link to="/admin/users" class="univo-quick-link admin">
+            Usuarios
+          </router-link>
+          <router-link to="/admin/departments" class="univo-quick-link admin">
+            Departamentos
+          </router-link>
+          <router-link to="/admin/orders" class="univo-quick-link admin">
+            Órdenes
+          </router-link>
+          <router-link to="/admin/reports" class="univo-quick-link admin">
+            Reportes
+          </router-link>
+        </div>
+      </div>
+
       <div class="univo-links">
         <a href="#" class="univo-link">¿Olvidó su contraseña?</a>
       </div>
-       
+
       <div class="univo-footer">
         <span class="univo-language">Español - Internacional (es) ✔</span>
         <span class="univo-cookies">Aviso de Cookies</span>
@@ -170,7 +182,7 @@ const handleLogin = async () => {
   try {
     loading.value = true;
     errorMessage.value = '';
-     
+
     // Aquí deberías reemplazar esto con tu llamada API real
     // await authStore.login({
     //   username: username.value,
@@ -185,7 +197,7 @@ const handleLogin = async () => {
     // } else {
     //   router.push('/dashboard-operario');
     // }
-       
+
   } catch (error) {
     console.error('Error de login:', error);
     errorMessage.value = 'Credenciales incorrectas. Por favor intente nuevamente.';
@@ -335,11 +347,11 @@ const handleLogin = async () => {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .univo-shared-links {
     flex-direction: column;
   }
-  
+
   .univo-quick-link {
     font-size: 0.9rem;
     padding: 0.6rem 1rem;

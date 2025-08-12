@@ -12,7 +12,11 @@
             <p class="header-subtitle">Controla tu inventario y mantén el stock siempre actualizado</p>
           </div>
         </div>
-
+        <div class="header-actions">
+          <va-button color="#003366" @click="exportToCSV" icon="download">
+            Exportar CSV
+          </va-button>
+        </div>
       </div>
     </div>
 
@@ -177,92 +181,113 @@
         </span>
       </div>
 
-      <!-- Tabla de productos -->
-      <div class="table-responsive">
-        <table class="inventory-table">
-          <thead>
-            <tr>
-              <th @click="sortBy('codigo')" class="sortable">
-                Código
-                <SortIcon :direction="sortDirection('codigo')" />
-              </th>
-              <th @click="sortBy('nombre')" class="sortable">
-                Nombre
-                <SortIcon :direction="sortDirection('nombre')" />
-              </th>
-              <th @click="sortBy('stock_total')" class="sortable">
-                Stock
-                <SortIcon :direction="sortDirection('stock_total')" />
-              </th>
-              <th @click="sortBy('costo_unitario')" class="sortable">
-                Precio
-                <SortIcon :direction="sortDirection('costo_unitario')" />
-              </th>
-              <th>Proveedor</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="filteredProducts.length === 0">
-              <td colspan="6" class="no-results">
-                {{ products.length === 0 ? 'Cargando productos...' : 'No se encontraron productos con los filtros aplicados' }}
-              </td>
-            </tr>
-            <tr v-for="product in paginatedProducts" :key="product.id">
-              <td>{{ product.codigo }}</td>
-              <td>{{ product.nombre }}</td>
-              <td :class="stockStatusClass(product)">
-                {{ product.stock_total }} {{ getUnitName(product.unidad_base_id) }}
-              </td>
-              <td>${{ formatPrice(product.costo_unitario) }}</td>
-              <td>{{ product.proveedor_principal || 'N/A' }}</td>
-              <td>
-                <span :class="statusBadgeClass(product)">
-                  {{ stockStatusText(product) }}
+      <!-- Tabla de productos con vue-good-table -->
+      <div class="card">
+        <div class="card-body">
+          <div v-if="loading" class="text-center py-4">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Cargando productos...</p>
+          </div>
+
+          <div v-else>
+            <vue-good-table ref="vueGoodTable" 
+              :columns="tableColumns" 
+              max-height="45vh" 
+              :fixedHeader="true" 
+              :rows="products" 
+              :search-options="{
+                enabled: true,
+                placeholder: 'Buscar productos por código, nombre o proveedor...',
+                externalQuery: searchQuery
+              }" 
+              :pagination-options="{
+                enabled: true,
+                mode: 'records',
+                perPage: 25,
+                perPageDropdown: [10, 25, 50, 100],
+                dropdownAllowAll: false,
+                nextLabel: 'Siguiente',
+                prevLabel: 'Anterior',
+                rowsPerPageLabel: 'Filas por página',
+                ofLabel: 'de',
+                pageLabel: 'página',
+                allLabel: 'Todos'
+              }" 
+              :sort-options="{
+                enabled: true,
+                initialSortBy: { field: 'codigo', type: 'asc' }
+              }" 
+              :select-options="{
+                enabled: false
+              }" 
+              styleClass="vgt-table striped bordered" 
+              theme="nocturnal">
+              
+              <!-- Slot personalizado para cada celda -->
+              <template #table-row="props">
+                <!-- Columna de Stock con formato especial -->
+                <span v-if="props.column.field === 'stock_display'">
+                  <span :class="stockStatusClass(props.row)">
+                    {{ props.row.stock_total }} {{ getUnitName(props.row.unidad_base_id) }}
+                  </span>
                 </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
 
-      <!-- Paginación -->
-      <div v-if="totalPages > 1" class="pagination">
-        <va-button @click="currentPage = 1" :disabled="currentPage === 1" class="pagination-btn"   >
-        « Primera
-      </va-button>
-        <va-button @click="currentPage--" :disabled="currentPage === 1" class="pagination-btn"   >
-        ‹ Anterior
-      </va-button>
+                <!-- Columna de Precio formateado -->
+                <span v-else-if="props.column.field === 'precio_display'">
+                  ${{ formatPrice(props.row.costo_unitario) }}
+                </span>
 
-        <span class="pagination-info">
-          Página {{ currentPage }} de {{ totalPages }}
-        </span>
+                <!-- Columna de Estado con badge -->
+                <span v-else-if="props.column.field === 'estado_display'">
+                  <span :class="statusBadgeClass(props.row)">
+                    {{ stockStatusText(props.row) }}
+                  </span>
+                </span>
 
-        <va-button @click="currentPage++" :disabled="currentPage === totalPages" class="pagination-btn"   >
-        Siguiente ›
-      </va-button>
-        <va-button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="pagination-btn"   >
-        Última »
-      </va-button>
-      </div>
+                <!-- Columna de Proveedor -->
+                <span v-else-if="props.column.field === 'proveedor_principal'">
+                  {{ props.row.proveedor_principal || 'N/A' }}
+                </span>
 
-      <!-- Total de items -->
-      <div class="results-summary">
-        <div class="total-items">
-          Mostrando {{ paginatedProducts.length }} de {{ filteredProducts.length }} items
-          <span v-if="filteredProducts.length !== products.length">
-            ({{ products.length }} total)
-          </span>
-        </div>
-        <div class="items-per-page">
-          <label>Items por página:</label>
-          <select v-model="itemsPerPage" @change="currentPage = 1">
-            <option :value="10">10</option>
-            <option :value="25">25</option>
-            <option :value="50">50</option>
-            <option :value="100">100</option>
-          </select>
+                <!-- Contenido por defecto -->
+                <span v-else>
+                  {{ props.formattedRow[props.column.field] }}
+                </span>
+              </template>
+
+              <!-- Slot para acciones en la parte superior de la tabla -->
+              <template #table-actions>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="table-info">
+                    <span class="text-muted">Total: {{ products.length }} productos</span>
+                  </div>
+                  <div class="table-actions-buttons">
+                    <va-button color="success" size="small" @click="exportToCSV" icon="download" class="mr-2">
+                      Exportar CSV
+                    </va-button>
+                    <va-button color="info" size="small" @click="applyFilters" icon="filter_alt" class="mr-2">
+                      Aplicar Filtros
+                    </va-button>
+                    <va-button color="primary" size="small" @click="fetchProducts" icon="refresh">
+                      Recargar
+                    </va-button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Mensaje cuando no hay datos -->
+              <template #emptystate>
+                <div class="text-center py-4">
+                  <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                  <h5 class="text-muted">No se encontraron productos</h5>
+                  <p class="text-muted">Intenta ajustar los filtros o verifica la conexión</p>
+                  <va-button color="primary" @click="fetchProducts" icon="refresh">
+                    Recargar Productos
+                  </va-button>
+                </div>
+              </template>
+            </vue-good-table>
+          </div>
         </div>
       </div>
     </div>
@@ -270,21 +295,19 @@
 </template>
 
 <script>
-import SortIcon from '@/components/VistasAdmin/ComponentesAdmin/SortIcon.vue'
-
 export default {
   name: 'ProductInventory',
-  components: {
-    SortIcon
-  },
   data() {
     return {
       products: [],
+      searchQuery: '',
       sortField: 'codigo',
       sortOrder: 'asc',
       showFilters: true,
       currentPage: 1,
       itemsPerPage: 25,
+      loading: false,
+      error: null,
 
       // Filtros
       filters: {
@@ -300,7 +323,85 @@ export default {
         1: { nombre: 'metros', abreviatura: 'm' },
         2: { nombre: 'litros', abreviatura: 'l' },
         3: { nombre: 'kilogramos', abreviatura: 'kg' }
-      }
+      },
+
+      // Configuración de columnas para vue-good-table
+      tableColumns: [
+        {
+          label: 'Código',
+          field: 'codigo',
+          type: 'string',
+          sortable: true,
+          width: '120px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por código'
+          }
+        },
+        {
+          label: 'Nombre',
+          field: 'nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por nombre'
+          }
+        },
+        {
+          label: 'Stock',
+          field: 'stock_display',
+          type: 'string',
+          sortable: true,
+          sortFn: (x, y, col, rowX, rowY) => {
+            // Ordenar por el valor numérico de stock
+            return Number(rowX.stock_total) - Number(rowY.stock_total)
+          }
+        },
+        {
+          label: 'Precio',
+          field: 'precio_display',
+          type: 'string',
+          sortable: true,
+          sortFn: (x, y, col, rowX, rowY) => {
+            // Ordenar por el valor numérico de precio
+            return Number(rowX.costo_unitario) - Number(rowY.costo_unitario)
+          }
+        },
+        {
+          label: 'Proveedor',
+          field: 'proveedor_principal',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por proveedor'
+          }
+        },
+        {
+          label: 'Estado',
+          field: 'estado_display',
+          type: 'string',
+          sortable: true,
+          sortFn: (x, y, col, rowX, rowY) => {
+            // Ordenar por estado: disponible < bajo stock < agotado
+            const statusOrder = { 'available': 0, 'low': 1, 'out': 2 }
+            const statusA = this.getProductStatus(rowX)
+            const statusB = this.getProductStatus(rowY)
+            return statusOrder[statusA] - statusOrder[statusB]
+          },
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Disponible', text: 'Disponible' },
+              { value: 'Bajo stock', text: 'Bajo stock' },
+              { value: 'Agotado', text: 'Agotado' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los estados'
+          }
+        }
+      ]
     }
   },
   computed: {
@@ -402,6 +503,18 @@ export default {
         this.filters.priceMax !== null ||
         this.filters.unit ||
         this.filters.supplier
+    },
+
+    // Contar filtros activos
+    activeFiltersCount() {
+      let count = 0
+      if (this.filters.search) count++
+      if (this.filters.stockStatus) count++
+      if (this.filters.priceMin !== null && this.filters.priceMin !== '') count++
+      if (this.filters.priceMax !== null && this.filters.priceMax !== '') count++
+      if (this.filters.unit) count++
+      if (this.filters.supplier) count++
+      return count
     }
   },
   watch: {
@@ -418,12 +531,16 @@ export default {
   },
   methods: {
     async fetchProducts() {
+      this.loading = true
       try {
         const response = await fetch('api/MateriaPrima')
         if (!response.ok) throw new Error('Error en la respuesta del servidor')
         this.products = await response.json()
       } catch (error) {
         console.error('Error al cargar productos:', error)
+        this.error = error
+      } finally {
+        this.loading = false
       }
     },
 
@@ -444,6 +561,25 @@ export default {
     // Métodos de filtros
     toggleFilters() {
       this.showFilters = !this.showFilters
+    },
+
+    applyFilters() {
+      // Combina los filtros del panel con la búsqueda de vue-good-table
+      this.searchQuery = this.filters.search
+      this.currentPage = 1
+    },
+
+    resetFilters() {
+      this.filters = {
+        search: '',
+        stockStatus: '',
+        priceMin: null,
+        priceMax: null,
+        unit: '',
+        supplier: ''
+      }
+      this.searchQuery = ''
+      this.currentPage = 1
     },
 
     clearFilters() {
@@ -541,6 +677,29 @@ export default {
     statusBadgeClass(product) {
       const status = this.stockStatusClass(product)
       return `status-badge ${status}`
+    },
+
+    // Método para exportar tabla a CSV usando vue-good-table
+    exportToCSV() {
+      try {
+        if (this.$refs.vueGoodTable) {
+          const fileName = `inventario_productos_${new Date().toISOString().split('T')[0]}.csv`
+          this.$refs.vueGoodTable.exportCsv(fileName)
+          this.showToast('Tabla exportada exitosamente', 'success')
+        } else {
+          this.showToast('Error al exportar: tabla no encontrada', 'error')
+        }
+      } catch (error) {
+        console.error('Error exportando CSV:', error)
+        this.showToast('Error al exportar tabla', 'error')
+      }
+    },
+
+    // Helper para mostrar notificaciones
+    showToast(message, type = 'success') {
+      // Implementa según tu librería de notificaciones
+      console.log(`${type.toUpperCase()}: ${message}`);
+      // Ejemplo: alert(`${type.toUpperCase()}: ${message}`)
     }
   }
 }

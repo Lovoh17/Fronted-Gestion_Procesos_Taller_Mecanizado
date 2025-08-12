@@ -198,14 +198,10 @@
         <div class="table-actions">
           <div class="view-options">
             <va-button :class="{ active: viewMode === 'table' }" @click="viewMode = 'table'" icon="table">
-
-
-
+              Tabla
             </va-button>
             <va-button :class="{ active: viewMode === 'cards' }" @click="viewMode = 'cards'" icon="th-large">
-
-
-
+              Tarjetas
             </va-button>
           </div>
         </div>
@@ -213,100 +209,128 @@
 
       <!-- Table View -->
       <div v-if="viewMode === 'table'" class="table-responsive">
-        <table class="transactions-table">
-          <thead>
-            <tr>
-              <th class="sortable" @click="sortBy('fecha')">
-                <div class="th-content">
-                  <i class="fas fa-calendar-alt"></i>
-                  Fecha
-                  <i :class="sortIcon('fecha')" class="sort-icon"></i>
-                </div>
-              </th>
-              <th class="sortable" @click="sortBy('descripcion')">
-                <div class="th-content">
-                  <i class="fas fa-file-alt"></i>
-                  Descripción
-                  <i :class="sortIcon('descripcion')" class="sort-icon"></i>
-                </div>
-              </th>
-              <th class="sortable" @click="sortBy('tipo')">
-                <div class="th-content">
-                  <i class="fas fa-exchange-alt"></i>
-                  Tipo
-                  <i :class="sortIcon('tipo')" class="sort-icon"></i>
-                </div>
-              </th>
-              <th class="sortable amount-column" @click="sortBy('monto')">
-                <div class="th-content">
-                  <i class="fas fa-dollar-sign"></i>
-                  Monto
-                  <i :class="sortIcon('monto')" class="sort-icon"></i>
-                </div>
-              </th>
-              <th class="actions-column">
-                <div class="th-content">
-                  <i class="fas fa-cogs"></i>
-                  Acciones
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="transaccion in paginatedTransacciones" :key="transaccion.id" class="transaction-row"
-              @click="verDetalles(transaccion)">
-              <td class="date-cell">
-                <div class="date-display">
-                  {{ formatDate(transaccion.fecha) }}
-                </div>
-              </td>
-              <td class="description-cell">
-                <div class="description-content">
-                  <span class="description-text">{{ transaccion.descripcion }}</span>
-                  <span v-if="transaccion.referencia" class="reference-text">
-                    Ref: {{ transaccion.referencia }}
-                  </span>
-                </div>
-              </td>
-              <td class="type-cell">
-                <span :class="['type-badge', transaccion.tipo]">
-                  <i :class="transaccion.tipo === 'ingreso' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                  {{ formatTipo(transaccion.tipo) }}
+        <vue-good-table
+          ref="vueGoodTable"
+          :columns="tableColumns"
+          :rows="filteredTransacciones"
+          max-height="60vh"
+          :fixedHeader="true"
+          :search-options="{
+            enabled: true,
+            placeholder: 'Buscar transacciones...',
+            externalQuery: searchQuery
+          }"
+          :pagination-options="{
+            enabled: true,
+            mode: 'records',
+            perPage: itemsPerPage,
+            perPageDropdown: [5, 10, 25, 50],
+            dropdownAllowAll: false,
+            nextLabel: 'Siguiente',
+            prevLabel: 'Anterior',
+            rowsPerPageLabel: 'Filas por página',
+            ofLabel: 'de',
+            pageLabel: 'página',
+            allLabel: 'Todos'
+          }"
+          :sort-options="{
+            enabled: true,
+            initialSortBy: { field: 'fecha', type: 'desc' }
+          }"
+          :select-options="{
+            enabled: false
+          }"
+          styleClass="vgt-table striped bordered"
+          theme="nocturnal"
+        >
+          <!-- Slot personalizado para cada celda -->
+          <template #table-row="props">
+            <!-- Columna de Fecha -->
+            <span v-if="props.column.field === 'fecha'">
+              <div class="date-display">
+                {{ formatDate(props.row.fecha) }}
+              </div>
+            </span>
+
+            <!-- Columna de Descripción -->
+            <span v-else-if="props.column.field === 'descripcion'">
+              <div class="description-content">
+                <span class="description-text">{{ props.row.descripcion }}</span>
+                <span v-if="props.row.referencia" class="reference-text">
+                  Ref: {{ props.row.referencia }}
                 </span>
-              </td>
-              <td class="amount-cell">
-                <div class="amount-display" :class="transaccion.tipo">
-                  {{ formatCurrency(transaccion.monto_total || transaccion.monto) }}
-                </div>
-              </td>
-              <td class="actions-cell" @click.stop>
-                <div class="action-buttons">
-                  <va-button @click="verDetalles(transaccion)" title="Ver detalles" icon="eye">
+              </div>
+            </span>
 
+            <!-- Columna de Tipo -->
+            <span v-else-if="props.column.field === 'tipo'">
+              <span :class="['type-badge', props.row.tipo]">
+                <i :class="props.row.tipo === 'ingreso' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                {{ formatTipo(props.row.tipo) }}
+              </span>
+            </span>
 
+            <!-- Columna de Categoría -->
+            <span v-else-if="props.column.field === 'categoria'">
+              <span class="category-tag">{{ props.row.categoria }}</span>
+            </span>
 
-                  </va-button>
-                  <va-button @click="editarTransaccion(transaccion)" title="Editar" icon="edit">
+            <!-- Columna de Monto -->
+            <span v-else-if="props.column.field === 'monto'">
+              <div class="amount-display" :class="props.row.tipo">
+                {{ formatCurrency(props.row.monto_total || props.row.monto) }}
+              </div>
+            </span>
 
+            <!-- Columna de Acciones -->
+            <span v-else-if="props.column.field === 'actions'">
+              <div class="action-buttons">
+                <va-button size="small" preset="plain" color="info" @click="verDetalles(props.row)"
+                  title="Ver detalles" icon="eye" class="mr-1"></va-button>
+                <va-button size="small" preset="plain" color="warning" @click="editarTransaccion(props.row)"
+                  title="Editar" icon="edit" class="mr-1"></va-button>
+                <va-button size="small" preset="plain" color="danger"
+                  @click="eliminarTransaccion(props.row.id)"
+                  :disabled="loadingDelete === props.row.id"
+                  title="Eliminar" icon="delete"></va-button>
+              </div>
+            </span>
 
+            <!-- Contenido por defecto -->
+            <span v-else>
+              {{ props.formattedRow[props.column.field] }}
+            </span>
+          </template>
 
-                  </va-button>
-                  <va-button @click="eliminarTransaccion(transaccion.id)" :disabled="loadingDelete === transaccion.id"
-                    title="Eliminar" icon="delete">
-                  </va-button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <!-- Slot para acciones en la parte superior de la tabla -->
+          <template #table-actions>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="table-info">
+                <span class="text-muted">Total: {{ filteredTransacciones.length }} transacciones</span>
+              </div>
+              <div class="table-actions-buttons">
+                <va-button color="success" size="small" @click="exportData" icon="download" class="mr-2">
+                  Exportar CSV
+                </va-button>
+                <va-button color="primary" size="small" @click="loadTransacciones" icon="refresh">
+                  Recargar
+                </va-button>
+              </div>
+            </div>
+          </template>
 
-        <div v-if="filteredTransacciones.length === 0" class="empty-state">
-          <div class="empty-icon">
-
-          </div>
-          <h3>No se encontraron transacciones</h3>
-          <p>Intenta ajustar los filtros o crear una nueva transacción</p>
-        </div>
+          <!-- Mensaje cuando no hay datos -->
+          <template #emptystate>
+            <div class="text-center py-4">
+              <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No se encontraron transacciones</h5>
+              <p class="text-muted">Intenta ajustar los filtros o crear una nueva transacción</p>
+              <va-button color="primary" @click="showNuevaTransaccionModal = true" icon="plus">
+                Nueva Transacción
+              </va-button>
+            </div>
+          </template>
+        </vue-good-table>
       </div>
 
       <!-- Cards View -->
@@ -319,22 +343,12 @@
                 <i :class="transaccion.tipo === 'ingreso' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
                 {{ formatTipo(transaccion.tipo) }}
               </span>
-              <div class="card-actions" @click.stop>
-                <va-button class="action-btn edit-btn" @click="editarTransaccion(transaccion)" icon="edit">
-                </va-button>
-                <va-button @click="eliminarTransaccion(transaccion.id)" :disabled="loadingDelete === transaccion.id"
-                  icon="calendar-alt">
-
-                  <i v-if="loadingDelete === transaccion.id" class="fas fa-spinner fa-spin"></i>
-                  <i v-else class="fas fa-trash"></i>
-                </va-button>
-              </div>
             </div>
             <div class="card-content">
               <h4 class="transaction-description">{{ transaccion.descripcion }}</h4>
               <div class="transaction-details">
                 <div class="detail-item">
-
+                  <i class="fas fa-calendar-alt"></i>
                   {{ formatDate(transaccion.fecha) }}
                 </div>
                 <div class="detail-item">
@@ -359,53 +373,6 @@
           </div>
           <h3>No se encontraron transacciones</h3>
           <p>Intenta ajustar los filtros o crear una nueva transacción</p>
-        </div>
-      </div>
-
-      <!-- Enhanced Pagination -->
-      <div class="pagination-container" v-if="totalPages > 1">
-        <div class="pagination-info">
-          <span class="showing-text">
-            Mostrando {{ showingFrom }} - {{ showingTo }} de {{ filteredTransacciones.length }} transacciones
-          </span>
-          <select v-model="itemsPerPage" class="items-per-page" @change="currentPage = 1">
-            <option :value="5">5 por página</option>
-            <option :value="10">10 por página</option>
-            <option :value="25">25 por página</option>
-            <option :value="50">50 por página</option>
-          </select>
-        </div>
-
-        <div class="pagination-controls">
-          <va-button class="pagination-btn" @click="goToPage(1)" :disabled="currentPage === 1" title="Primera página"
-            icon="angle-double-left">
-          </va-button>
-
-          <va-button @click="prevPage" :disabled="currentPage === 1" title="Página anterior" icon="angle-left">
-
-
-
-          </va-button>
-
-          <div class="page-numbers">
-            <va-button v-for="page in pages" :key="page"
-              :class="{ active: page === currentPage, ellipsis: page === '...' }" @click="goToPage(page)"
-              :disabled="page === '...'" icon="angle-right">
-
-              {{ page }}
-            </va-button>
-          </div>
-
-          <va-button @click="nextPage" :disabled="currentPage === totalPages" title="Página siguiente"
-            class="pagination-btn" icon="angle-right">
-          </va-button>
-
-          <va-button @click="goToPage(totalPages)" :disabled="currentPage === totalPages" title="Última página"
-            icon="angle-double-right">
-
-
-
-          </va-button>
         </div>
       </div>
     </div>
@@ -459,7 +426,49 @@ export default {
       showTransaccionModal: false,
       showNuevaTransaccionModal: false,
       selectedTransaccion: null,
-      viewMode: 'table' // 'table' or 'cards'
+      viewMode: 'table', // 'table' or 'cards'
+      tableColumns: [
+        {
+          label: 'Fecha',
+          field: 'fecha',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd',
+          dateOutputFormat: 'dd/MM/yyyy',
+          sortable: true,
+          width: '150px'
+        },
+        {
+          label: 'Descripción',
+          field: 'descripcion',
+          sortable: true,
+          width: '300px'
+        },
+        {
+          label: 'Tipo',
+          field: 'tipo',
+          sortable: true,
+          width: '130px'
+        },
+        {
+          label: 'Categoría',
+          field: 'categoria',
+          sortable: true,
+          width: '150px'
+        },
+        {
+          label: 'Monto',
+          field: 'monto',
+          type: 'number',
+          sortable: true,
+          width: '150px'
+        },
+        {
+          label: 'Acciones',
+          field: 'actions',
+          sortable: false,
+          width: '150px'
+        }
+      ]
     }
   },
 
