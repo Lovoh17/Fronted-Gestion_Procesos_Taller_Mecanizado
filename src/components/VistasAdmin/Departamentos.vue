@@ -477,7 +477,7 @@ export default {
   }
 }
 </script>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped ></style>
 <style scoped>
 /* Estilos completos para la vista de Departamentos Universitarios */
 .departamentos-container {

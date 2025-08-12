@@ -376,4 +376,4 @@ import ReportsScript from './ComponentesAdmin/Script/Reports.js'
 
 export default ReportsScript
 </script>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

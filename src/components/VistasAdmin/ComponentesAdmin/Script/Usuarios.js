@@ -7,6 +7,8 @@ export default {
   data() {
     return {
       users: [],
+      estados: [],
+      roles: [],
       searchQuery: '',
       userTypeFilter: 'all',
       statusFilter: 'all',
@@ -53,17 +55,13 @@ export default {
           }
         },
         {
-          label: 'Tipo',
+          label: 'Rol',
           field: 'type',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            filterDropdownItems: [
-              { value: 'coordinator', text: 'Coordinador' },
-              { value: 'employee', text: 'Empleado' },
-              { value: 'admin', text: 'Administrador' }
-            ],
+            filterDropdownItems: [], // Se llenará dinámicamente con los roles
             filterMultiselect: false,
             placeholder: 'Todos los tipos'
           }
@@ -75,10 +73,7 @@ export default {
           sortable: true,
           filterOptions: {
             enabled: true,
-            filterDropdownItems: [
-              { value: 'active', text: 'Activo' },
-              { value: 'inactive', text: 'Inactivo' }
-            ],
+            filterDropdownItems: [], // Se llenará dinámicamente
             filterMultiselect: false,
             placeholder: 'Todos los estados'
           }
@@ -102,15 +97,40 @@ export default {
   },
 
   computed: {
+    // Computed property para obtener los estados editables
+    editableEstados() {
+      return this.estados.filter(estado => estado.es_editable)
+    },
+
+    // Computed property para los filtros de estado
+    statusFilterOptions() {
+      return this.estados.map(estado => ({
+        value: estado.id.toString(),
+        text: estado.nombre
+      }))
+    },
+
+    // Computed property para los filtros de roles
+    roleFilterOptions() {
+      return this.roles.map(rol => ({
+        value: rol.descripcion,
+        text: rol.descripcion
+      }))
+    },
+
+
+    // Computed property para obtener roles con permiso de subida
+    rolesConPermisoSubida() {
+      return this.roles.filter(rol => rol.permiso_subida === 1)
+    },
+
     filteredUsers() {
       return this.users.filter(user => {
         const matchesType = this.userTypeFilter === 'all' ||
-          (this.userTypeFilter === 'coordinator' && user.type === 'coordinator') ||
-          (this.userTypeFilter === 'employee' && user.type === 'employee') ||
-          (this.userTypeFilter === 'admin' && user.type === 'admin')
+          user.type === this.userTypeFilter
 
         const matchesStatus = this.statusFilter === 'all' ||
-          user.status === this.statusFilter
+          user.estado_id === parseInt(this.statusFilter)
 
         const matchesSearch = this.searchQuery === '' ||
           (user.name && user.name.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
@@ -170,19 +190,65 @@ export default {
   },
 
   methods: {
+    async loadRoles() {
+      try {
+        const response = await axios.get('/api/Rol')
+
+        if (response.data && response.data.success) {
+          this.roles = response.data.data || []
+        } else if (Array.isArray(response.data)) {
+          this.roles = response.data
+        } else {
+          this.roles = []
+        }
+
+        // Actualizar las opciones de filtro de tipo en la configuración de columnas
+        const typeColumn = this.tableColumns.find(col => col.field === 'type')
+        if (typeColumn && typeColumn.filterOptions) {
+          typeColumn.filterOptions.filterDropdownItems = this.roleFilterOptions
+        }
+
+        console.log(`✅ ${this.roles.length} roles cargados`)
+
+      } catch (error) {
+        console.error("❌ Error cargando roles:", error)
+        this.showToast('Error al cargar roles de usuario', 'error')
+        this.roles = []
+      }
+    },
+
+    async loadEstados() {
+      try {
+        const response = await axios.get('/api/EstadoUsuario')
+
+        if (response.data && response.data.success) {
+          this.estados = response.data.data || []
+        } else if (Array.isArray(response.data)) {
+          this.estados = response.data
+        } else {
+          this.estados = []
+        }
+
+        // Actualizar las opciones de filtro de estado en la configuración de columnas
+        const statusColumn = this.tableColumns.find(col => col.field === 'status')
+        if (statusColumn && statusColumn.filterOptions) {
+          statusColumn.filterOptions.filterDropdownItems = this.statusFilterOptions
+        }
+
+        console.log(`✅ ${this.estados.length} estados cargados`)
+
+      } catch (error) {
+        console.error("❌ Error cargando estados:", error)
+        this.showToast('Error al cargar estados de usuario', 'error')
+        this.estados = []
+      }
+    },
+
     async loadUsers() {
       this.loading = true
       this.error = null
       try {
-        console.log("🔄 Vista: Iniciando carga de usuarios...")
-
         const response = await axios.get('/api/Usuario')
-
-        // Debug detallado
-        console.log("📊 Vista: Respuesta completa del servidor:", response)
-        console.log("📊 Vista: Status de respuesta:", response.status)
-        console.log("📊 Vista: Datos recibidos:", response.data)
-        console.log("📊 Vista: Tipo de datos:", typeof response.data)
 
         let userData = []
 
@@ -190,34 +256,27 @@ export default {
           userData = response.data.data || []
         } else if (Array.isArray(response.data)) {
           userData = response.data
-          console.log("✅ Vista: Respuesta es array directo")
         } else {
-          console.log("⚠️ Vista: Estructura de respuesta no reconocida")
           userData = []
         }
 
-        console.log("📋 Vista: Datos finales a procesar:", userData)
-        console.log("📋 Vista: Cantidad de usuarios:", userData.length)
+        console.log(`📋 ${userData.length} usuarios recibidos del servidor`)
 
         if (!Array.isArray(userData)) {
-          console.error("❌ Vista: userData no es un array:", typeof userData)
+          console.error("❌ userData no es un array:", typeof userData)
           throw new Error('Los datos recibidos no tienen el formato esperado')
         }
 
         this.users = userData.map((user, index) => {
-          console.log(`👤 Vista: Procesando usuario ${index + 1}:`, user)
-
           if (!user || typeof user !== 'object') {
-            console.warn(`⚠️ Vista: Usuario ${index + 1} no es un objeto válido:`, user)
             return null
           }
 
           const transformedUser = {
             id: user.id,
-            nombre: user.nombre || '',
-            apellido: user.apellido || '',
+            fullName: `${user.nombre || ''} ${user.apellido || ''}`.trim(),
             email: user.email || '',
-            puesto_id: user.puesto_id || 2,
+            puesto_id: user.puesto_id,
             estado_id: user.estado_id !== undefined ? user.estado_id : 1,
             password: user.password || '',
             foto_ruta: user.foto_ruta || null,
@@ -229,28 +288,24 @@ export default {
             ultimo_acceso: user.ultimo_acceso || null,
             name: user.nombre || '',
             lastname: user.apellido || '',
-            type: this.mapPuestoToType(user.puesto_id || 2),
-            status: this.mapEstadoToStatus(user.estado_id !== undefined ? user.estado_id : 1),
+            type: this.getRolDescripcion(user.puesto_id ?? 4),
+            status: user.estado_id,
             last_login: user.ultimo_acceso || null,
             createdAt: user.createdAt || null,
             updatedAt: user.updatedAt || null
           }
 
-          console.log(`✅ Vista: Usuario ${index + 1} transformado:`, transformedUser)
           return transformedUser
         }).filter(user => user !== null)
 
-        console.log(`🎉 Vista: ${this.users.length} usuarios cargados y transformados correctamente`)
+        console.log(`✅ ${this.users.length} usuarios cargados correctamente`)
 
         if (this.users.length === 0) {
-          console.log("⚠️ Vista: No se encontraron usuarios válidos en la respuesta")
           this.showToast('No se encontraron usuarios', 'info')
-        } else {
-          console.log("👥 Vista: Lista final de usuarios:", this.users)
         }
 
       } catch (error) {
-        console.error("❌ Vista: Error detallado cargando usuarios:", error)
+        console.error("❌ Error cargando usuarios:", error)
 
         if (error.response) {
           console.error("📊 Vista: Error response status:", error.response.status)
@@ -277,38 +332,68 @@ export default {
       }
     },
 
-    async testConnection() {
-      try {
-        console.log("🧪 Vista: Probando conexión con el backend...")
-        const response = await axios.get('/api/Usuario/test')
-        console.log("🧪 Vista: Respuesta del test:", response.data)
-
-        if (response.data.success) {
-          this.showToast(`Test exitoso: ${response.data.testData.usersFound} usuarios encontrados`, 'success')
-        } else {
-          this.showToast('Test falló: ' + response.data.message, 'error')
-        }
-      } catch (error) {
-        console.error("🧪 Vista: Error en test:", error)
-        this.showToast('Error en test de conexión: ' + this.getErrorMessage(error), 'error')
-      }
+    getRolById(rolId) {
+      return this.roles.find(rol => rol.id === rolId) || null
     },
 
-    mapPuestoToType(puestoId) {
-      switch (puestoId) {
-        case 1:
-          return 'coordinator'
-        case 2:
-          return 'employee'
-        case 3:
-          return 'admin'
-        default:
-          return 'employee'
+    getRolDescripcion(rolId) {
+      if (rolId === undefined || rolId === null || rolId === '') {
+        return 'Sin Rol'
       }
+      const rol = this.getRolById(Number(rolId))
+      return rol ? rol.descripcion : 'Rol Desconocido'
     },
 
-    mapEstadoToStatus(estado) {
-      return estado === 1 ? 'active' : 'inactive'
+    hasUploadPermission(rolId) {
+      const rol = this.getRolById(rolId)
+      return rol ? rol.permiso_subida === 1 : false
+    },
+
+    getEstadoById(estadoId) {
+      return this.estados.find(estado => estado.id === estadoId) || null
+    },
+
+    getEstadoNombre(estadoId) {
+      const estado = this.getEstadoById(estadoId)
+      return estado ? estado.nombre : 'Desconocido'
+    },
+
+    getEstadoColor(estadoId) {
+      const estado = this.getEstadoById(estadoId)
+      return estado ? estado.color_indicador : 'gray'
+    },
+
+    canAccessSystem(estadoId) {
+      const estado = this.getEstadoById(estadoId)
+      return estado ? estado.permite_acceso : false
+    },
+
+    isEstadoEditable(estadoId) {
+      const estado = this.getEstadoById(estadoId)
+      return estado ? estado.es_editable : false
+    },
+
+    formatUserType(puestoId) {
+      if (typeof puestoId === 'number') {
+        return this.getRolDescripcion(puestoId)
+      }
+      return puestoId || 'Desconocido'
+    },
+
+    userTypeClass(puestoId) {
+      const roleClassMap = {
+        1: 'badge-warning',    // Administrador
+        2: 'badge-primary',    // Jefe de Taller
+        3: 'badge-info',       // Supervisor
+        4: 'badge-secondary',  // Técnico
+        5: 'badge-light'       // Almacenista
+      }
+
+      if (typeof puestoId === 'number') {
+        return roleClassMap[puestoId] || 'badge-light'
+      }
+
+      return 'badge-light'
     },
 
     getErrorMessage(error) {
@@ -325,7 +410,7 @@ export default {
     resetFilters() {
       this.searchQuery = ''
       this.userTypeFilter = 'all'
-      this.statusFilter = 'active'
+      this.statusFilter = 'all'
       this.currentPage = 1
     },
 
@@ -371,33 +456,48 @@ export default {
     },
 
     async toggleUserStatus(user) {
-      const currentStatus = user.estado || user.status
-      const newStatus = (currentStatus === 'active' || currentStatus === 1) ? 0 : 1
-
       try {
-        const updatedUser = {
-          ...user,
-          estado: newStatus,
-          status: newStatus === 1 ? 'active' : 'inactive'
+        // Buscar el siguiente estado disponible que sea editable
+        const currentEstado = this.getEstadoById(user.estado_id)
+        if (!currentEstado) {
+          this.showToast('Estado actual no encontrado', 'error')
+          return
         }
 
-        await axios.put(`/api/Usuario/${user.id}`, {
-          nombre: user.nombre,
-          apellido: user.apellido,
-          email: user.email,
-          puesto_id: user.puesto_id,
-          estado: newStatus
+        // Lógica simple: si está activo (ID 1), cambiar a inactivo (ID 2), y viceversa
+        // Puedes personalizar esta lógica según tus necesidades
+        let newEstadoId
+        if (user.estado_id === 1) {
+          newEstadoId = 2 // Cambiar a Inactivo
+        } else {
+          newEstadoId = 1 // Cambiar a Activo
+        }
+
+        // Verificar que el nuevo estado existe y es editable
+        const newEstado = this.getEstadoById(newEstadoId)
+        if (!newEstado || !newEstado.es_editable) {
+          this.showToast('No se puede cambiar a este estado', 'error')
+          return
+        }
+
+        const response = await axios.patch(`/api/Usuario/${user.id}/status`, {
+          estado_id: newEstadoId
         })
 
+        // Actualizar estado localmente
         const index = this.users.findIndex(u => u.id === user.id)
         if (index !== -1) {
-          this.users.splice(index, 1, updatedUser)
+          this.users[index].estado_id = newEstadoId
+          this.users[index].status = newEstadoId
         }
 
-        this.showToast(`Usuario ${newStatus === 1 ? 'activado' : 'desactivado'}`, 'success')
+        this.showToast(
+          `Usuario cambiado a "${newEstado.nombre}" correctamente`,
+          'success'
+        )
       } catch (error) {
-        console.error("Error cambiando estado:", error)
-        this.showToast('Error al cambiar estado: ' + this.getErrorMessage(error), 'error')
+        console.error('Error al cambiar estado:', error)
+        this.showToast('Error al cambiar estado del usuario', 'error')
       }
     },
 
@@ -459,7 +559,7 @@ export default {
           nombre: userData.nombre.trim(),
           apellido: userData.apellido.trim(),
           email: userData.email.trim().toLowerCase(),
-          puesto_id: userData.puesto_id || 2,
+          puesto_id: userData.puesto_id || 4, // Default a Técnico
           estado_id: userData.estado_id !== undefined ? userData.estado_id : 1,
           foto_ruta: userData.foto_ruta || null,
           es_subcontratado: Boolean(userData.es_subcontratado),
@@ -478,199 +578,110 @@ export default {
           payload.password = userData.password;
         }
 
-        let response;
 
-        if (userData.id) {
+        let response;
+        let isNewUser = !userData.id;
+
+        if (!isNewUser) {
           // Actualizar usuario existente
           response = await axios.put(`/api/Usuario/${userData.id}`, payload);
-
-          // Actualizar lista local
-          const index = this.users.findIndex(u => u.id === userData.id);
-          if (index !== -1) {
-            this.users.splice(index, 1, {
-              ...this.users[index],
-              ...response.data.data,
-              name: response.data.data.nombre,
-              lastname: response.data.data.apellido,
-              status: response.data.data.estado_id === 1 ? 'active' : 'inactive',
-              type: this.mapPuestoToType(response.data.data.puesto_id)
-            });
-          }
-
-          this.showToast(response.data.message || 'Usuario actualizado correctamente', 'success');
         } else {
           // Crear nuevo usuario
           if (!payload.password) {
             this.showToast('La contraseña es requerida para nuevos usuarios', 'error');
             return;
           }
-
           response = await axios.post('/api/Usuario', payload);
-
-          // Agregar a lista local
-          this.users.unshift({
-            ...response.data,
-            name: response.data.nombre,
-            lastname: response.data.apellido,
-            status: response.data.estado_id === 1 ? 'active' : 'inactive',
-            type: this.mapPuestoToType(response.data.puesto_id)
-          });
-
-          this.showToast(response.data.message || 'Usuario creado correctamente', 'success');
         }
 
-        this.closeUserModal();
+        // Verificar si la respuesta fue exitosa
+        if (response.status >= 200 && response.status < 300) {
+          const responseData = response.data.data || response.data;
+
+          // Actualizar lista local
+          if (isNewUser) {
+            // Agregar nuevo usuario
+            this.users.unshift({
+              ...responseData,
+              name: responseData.nombre,
+              lastname: responseData.apellido,
+              status: responseData.estado_id,
+              type: this.getRolDescripcion(responseData.puesto_id || 4),
+              fullName: `${responseData.nombre || ''} ${responseData.apellido || ''}`.trim()
+            });
+          } else {
+            // Actualizar usuario existente
+            const index = this.users.findIndex(u => u.id === userData.id);
+            if (index !== -1) {
+              this.users.splice(index, 1, {
+                ...this.users[index],
+                ...responseData,
+                name: responseData.nombre,
+                lastname: responseData.apellido,
+                status: responseData.estado_id,
+                type: this.getRolDescripcion(responseData.puesto_id || 4),
+                fullName: `${responseData.nombre || ''} ${responseData.apellido || ''}`.trim()
+              });
+            }
+          }
+
+          this.showToast(response.data.message ||
+            (isNewUser ? 'Usuario creado correctamente' : 'Usuario actualizado correctamente'),
+            'success');
+
+          this.closeUserModal();
+          return; // Salir después de éxito
+        }
+
+        // Si llegamos aquí, la respuesta no fue exitosa
+        throw new Error(response.data.message || 'Respuesta no exitosa del servidor');
 
       } catch (error) {
-        console.error('Error al guardar usuario:', error);
+        console.error('❌ Error al guardar usuario - Error completo:', error);
+
+        if (error.response) {
+          console.error('❌ Response Status:', error.response.status);
+          console.error('❌ Response Headers:', error.response.headers);
+          console.error('❌ Response Data:', error.response.data);
+        }
+
+        if (error.request) {
+          console.error('❌ Request que falló:', error.request);
+        }
+
+        console.error('❌ Error config:', error.config);
 
         let errorMsg = 'Error al procesar la solicitud';
 
         if (error.response) {
-          // Manejo de errores del backend
           if (error.response.data?.message) {
             errorMsg = error.response.data.message;
           } else if (error.response.data?.error) {
             errorMsg = error.response.data.error;
-          } else if (error.response.status === 400) {
-            errorMsg = 'Datos inválidos enviados al servidor';
-          } else if (error.response.status === 404) {
-            errorMsg = 'Usuario no encontrado';
           } else if (error.response.status === 409) {
             errorMsg = 'El email ya está registrado';
           }
-        } else if (error.request) {
-          errorMsg = 'No se pudo conectar con el servidor';
         }
 
         this.showToast(errorMsg, 'error');
       }
     },
 
-    async deleteUser() {
-      if (!this.userToDelete) return;
-
-      try {
-        await axios.delete(`/api/Usuario/${this.userToDelete}`);
-
-        // Actualizar lista local
-        this.users = this.users.filter(user => user.id !== this.userToDelete);
-
-        this.showToast('Usuario eliminado correctamente', 'success');
-      } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-
-        let errorMsg = 'Error al eliminar usuario';
-        if (error.response?.data?.message) {
-          errorMsg = error.response.data.message;
-        } else if (error.response?.status === 404) {
-          errorMsg = 'Usuario no encontrado';
-        }
-
-        this.showToast(errorMsg, 'error');
-      } finally {
-        this.showDeleteModal = false;
-        this.userToDelete = null;
-      }
-    },
-
-    async toggleUserStatus(user) {
-      try {
-        const newStatus = user.estado_id === 1 ? 0 : 1;
-
-        const response = await axios.patch(`/api/Usuario/${user.id}/status`, {
-          estado_id: newStatus
-        });
-
-        // Actualizar estado localmente
-        const index = this.users.findIndex(u => u.id === user.id);
-        if (index !== -1) {
-          this.users[index].estado_id = newStatus;
-          this.users[index].status = newStatus === 1 ? 'active' : 'inactive';
-        }
-
-        this.showToast(
-          `Usuario ${newStatus === 1 ? 'activado' : 'desactivado'} correctamente`,
-          'success'
-        );
-      } catch (error) {
-        console.error('Error al cambiar estado:', error);
-        this.showToast('Error al cambiar estado del usuario', 'error');
-      }
-    },
-
-    // Helper para mapear puesto_id a tipo
-    mapPuestoToType(puestoId) {
-      const types = {
-        1: 'coordinator',
-        2: 'employee',
-        3: 'admin'
-      };
-      return types[puestoId] || 'employee';
-    },
-
-    // Helper para mostrar notificaciones
-    showToast(message, type = 'success') {
-      // Implementa según tu librería de notificaciones
-      console.log(`${type.toUpperCase()}: ${message}`);
-      // Ejemplo con Vuetify: this.$toast[type](message);
-    },
-
-    formatUserType(type) {
-      if (typeof type === 'number') {
-        const types = {
-          1: 'Coordinador',
-          2: 'Empleado',
-          3: 'Administrador',
-          4: 'Tecnico'
-        }
-        return types[type] || 'Empleado'
+    statusClass(statusId) {
+      const colorMap = {
+        'green': 'badge-success',
+        'gray': 'badge-secondary',
+        'blue': 'badge-info',
+        'yellow': 'badge-warning',
+        'red': 'badge-danger'
       }
 
-      const types = {
-        'coordinator': 'Coordinador',
-        'employee': 'Empleado',
-        'admin': 'Administrador'
-      }
-      return types[type] || 'Empleado'
+      const color = this.getEstadoColor(statusId)
+      return colorMap[color] || 'badge-light'
     },
 
-    userTypeClass(type) {
-      if (typeof type === 'number') {
-        return {
-          1: 'badge-primary',
-          2: 'badge-secondary',
-          3: 'badge-warning'
-        }[type] || 'badge-light'
-      }
-
-      return {
-        'coordinator': 'badge-primary',
-        'employee': 'badge-secondary',
-        'admin': 'badge-warning'
-      }[type] || 'badge-light'
-    },
-
-    statusClass(status) {
-      if (typeof status === 'number') {
-        return status === 1 ? 'badge-success' : 'badge-danger'
-      }
-
-      return {
-        'active': 'badge-success',
-        'inactive': 'badge-danger'
-      }[status] || 'badge-light'
-    },
-
-    formatStatus(status) {
-      if (typeof status === 'number') {
-        return status === 1 ? 'Activo' : 'Inactivo'
-      }
-
-      return {
-        'active': 'Activo',
-        'inactive': 'Inactivo'
-      }[status] || 'Inactivo'
+    formatStatus(statusId) {
+      return this.getEstadoNombre(statusId)
     },
 
     formatDate(date) {
@@ -688,7 +699,6 @@ export default {
       alert(`${type.toUpperCase()}: ${message}`)
     },
 
-    // Método para exportar tabla a CSV usando vue-good-table-next
     exportToCSV() {
       try {
         if (this.$refs.vueGoodTable) {
@@ -705,7 +715,9 @@ export default {
     }
   },
 
-  mounted() {
-    this.loadUsers()
+  async mounted() {
+    await this.loadRoles()
+    await this.loadEstados()
+    await this.loadUsers()
   }
 }
