@@ -20,7 +20,84 @@ export default {
       selectedUser: null,
       userToDelete: null,
       loading: false,
-      error: null
+      error: null,
+      // Configuración de columnas para vue-good-table-next
+      tableColumns: [
+        {
+          label: 'ID',
+          field: 'id',
+          type: 'number',
+          sortable: true,
+          width: '80px'
+        },
+        {
+          label: 'Nombre Completo',
+          field: 'fullName',
+          type: 'string',
+          sortable: false,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por nombre',
+            filterValue: '',
+            trigger: 'enter'
+          }
+        },
+        {
+          label: 'Email',
+          field: 'email',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por email'
+          }
+        },
+        {
+          label: 'Tipo',
+          field: 'type',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'coordinator', text: 'Coordinador' },
+              { value: 'employee', text: 'Empleado' },
+              { value: 'admin', text: 'Administrador' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los tipos'
+          }
+        },
+        {
+          label: 'Estado',
+          field: 'status',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'active', text: 'Activo' },
+              { value: 'inactive', text: 'Inactivo' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos los estados'
+          }
+        },
+        {
+          label: 'Último Acceso',
+          field: 'last_login',
+          type: 'date',
+          dateInputFormat: 'yyyy-MM-dd HH:mm:ss',
+          dateOutputFormat: 'dd/MM/yyyy HH:mm',
+          sortable: true
+        },
+        {
+          label: 'Acciones',
+          field: 'actions',
+          sortable: false,
+          width: '150px'
+        }
+      ]
     }
   },
 
@@ -609,6 +686,22 @@ export default {
 
     showToast(message, type = 'success') {
       alert(`${type.toUpperCase()}: ${message}`)
+    },
+
+    // Método para exportar tabla a CSV usando vue-good-table-next
+    exportToCSV() {
+      try {
+        if (this.$refs.vueGoodTable) {
+          const fileName = `usuarios_${new Date().toISOString().split('T')[0]}.csv`
+          this.$refs.vueGoodTable.exportCsv(fileName)
+          this.showToast('Tabla exportada exitosamente', 'success')
+        } else {
+          this.showToast('Error al exportar: tabla no encontrada', 'error')
+        }
+      } catch (error) {
+        console.error('Error exportando CSV:', error)
+        this.showToast('Error al exportar tabla', 'error')
+      }
     }
   },
 

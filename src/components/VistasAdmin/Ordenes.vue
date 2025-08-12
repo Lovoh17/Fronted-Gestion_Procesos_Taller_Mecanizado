@@ -50,155 +50,106 @@
       </ul>
     </div>
 
-    <!-- Filtros compactos -->
-    <div class="bg-white rounded-lg shadow-sm mb-4" v-if="!loading">
-      <!-- Encabezado del panel -->
-      <div class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-        @click="toggleFilters">
-        <div class="flex items-center text-gray-700 font-medium">
-          <i class="fas fa-filter mr-2 text-gray-500"></i>
-          <span>Filtros de Búsqueda</span>
-          <div v-if="hasActiveFilters"
-            class="bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-2">
-            {{ activeFiltersCount }}
-          </div>
-        </div>
-        <button class="text-gray-500 hover:text-gray-700">
-          <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        </button>
-      </div>
-
-      <!-- Contenido de filtros con grid responsivo en una sola fila -->
-      <div v-if="showFilters" class="p-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-3">
-          <!-- Filtro Estado -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-tasks mr-1 text-gray-500"></i>
-              Estado
-            </label>
-            <select v-model="estadoFilter"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="todos">Todos</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="en_proceso">En Proceso</option>
-              <option value="completado">Completado</option>
-              <option value="entregado">Entregado</option>
-            </select>
-          </div>
-
-          <!-- Filtro Técnico -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-user-cog mr-1 text-gray-500"></i>
-              Técnico
-            </label>
-            <select v-model="tecnicoFilter"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="todos">Todos</option>
-              <option v-for="tecnico in tecnicos" :key="tecnico.id" :value="tecnico.id">
-                {{ tecnico.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Filtro Fecha - ocupa 2 columnas en XL para acomodar ambos inputs -->
-          <div class="xl:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-calendar-alt mr-1 text-gray-500"></i>
-              Período
-            </label>
-            <div class="flex items-center space-x-2">
-              <input type="date" v-model="fechaInicio"
-                class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <span class="text-gray-500 text-sm">hasta</span>
-              <input type="date" v-model="fechaFin"
-                class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </div>
-          </div>
-
-          <!-- Filtro Búsqueda -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-search mr-1 text-gray-500"></i>
-              Buscar
-            </label>
-            <div class="relative">
-              <input v-model="searchQuery" placeholder="Código, solicitante..."
-                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                @keyup.enter="applyFilters">
-              <button class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-500"
-                @click="applyFilters">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Acciones -->
-        <div class="flex justify-end items-center space-x-2 pt-2 border-t border-gray-100">
-          <va-button color="primary" size="small" @click="applyFilters" icon="check" class="text-xs px-3 py-1">
-            Aplicar Filtros
-          </va-button>
-          <va-button preset="outline" color="secondary" size="small" @click="resetFilters" icon="refresh"
-            class="text-xs px-3 py-1">
-            Limpiar
-          </va-button>
-        </div>
-      </div>
-    </div>
-
     <!-- Contenido de pestañas -->
     <div class="tab-content" v-if="!loading">
       <!-- Pestaña Producción -->
       <div v-if="activeTab === 'produccion'" class="tab-pane active">
         <div class="card">
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Solicitante</th>
-                    <th>Proyecto</th>
-                    <th>Tipo</th>
-                    <th>Supervisor</th>
-                    <th>Solicitud</th>
-                    <th>Entrega Estimada</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="pedido in trabajosProduccion" :key="pedido.id">
-                    <td>{{ pedido.codigo_pedido }}</td>
-                    <td>{{ pedido.solicitante_nombre }}</td>
-                    <td>{{ pedido.proyecto_asociado || 'N/A' }}</td>
-                    <td>{{ pedido.tipo_pedido_nombre }}</td>
-                    <td>{{ pedido.supervisor_nombre }}</td>
-                    <td>{{ formatDate(pedido.fecha_solicitud) }}</td>
-                    <td>{{ formatDate(pedido.fecha_estimada_entrega) || 'Pendiente' }}</td>
-                    <td>
-                      <span :class="['badge', estadoClass(pedido.estado)]">
-                        {{ formatEstado(pedido.estado) }}
-                      </span>
-                    </td>
-                    <td>
-                      <button class="btn btn-sm btn-icon" @click="verDetalles(pedido)">
-                        <i class="fas fa-eye"></i>
-                      </button>
-                      <button class="btn btn-sm btn-icon" @click="editarTrabajo(pedido)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-icon btn-danger" @click="eliminarTrabajo(pedido.id)"
-                        :disabled="loadingDelete === pedido.id">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <vue-good-table ref="vueGoodTableProduccion" :columns="columnsProduccion" max-height="45vh"
+              :fixedHeader="true" :rows="trabajosProduccion" :search-options="{
+                enabled: true,
+                placeholder: 'Buscar en pedidos de producción...',
+                externalQuery: searchQuery
+              }" :pagination-options="{
+                enabled: true,
+                mode: 'records',
+                perPage: 10,
+                perPageDropdown: [5, 10, 20, 50],
+                dropdownAllowAll: false,
+                nextLabel: 'Siguiente',
+                prevLabel: 'Anterior',
+                rowsPerPageLabel: 'Filas por página',
+                ofLabel: 'de',
+                pageLabel: 'página',
+                allLabel: 'Todos'
+              }" :sort-options="{
+                enabled: true,
+                initialSortBy: { field: 'fecha_solicitud', type: 'desc' }
+              }" :select-options="{
+                enabled: false
+              }" styleClass="vgt-table striped bordered" theme="Black-rhino">
+              <!-- Slot personalizado para cada celda -->
+              <template #table-row="props">
+                <!-- Columna de Proyecto -->
+                <span v-if="props.column.field === 'proyecto_asociado'">
+                  {{ props.row.proyecto_asociado || 'N/A' }}
+                </span>
+
+                <!-- Columna de Fecha de Solicitud -->
+                <span v-else-if="props.column.field === 'fecha_solicitud'">
+                  {{ formatDate(props.row.fecha_solicitud) }}
+                </span>
+
+                <!-- Columna de Fecha Estimada de Entrega -->
+                <span v-else-if="props.column.field === 'fecha_estimada_entrega'">
+                  {{ formatDate(props.row.fecha_estimada_entrega) || 'Pendiente' }}
+                </span>
+
+                <!-- Columna de Estado -->
+                <span v-else-if="props.column.field === 'estado'">
+                  <span :class="['badge', estadoClass(props.row.estado)]">
+                    {{ formatEstado(props.row.estado) }}
+                  </span>
+                </span>
+
+                <!-- Columna de Acciones -->
+                <span v-else-if="props.column.field === 'actions'">
+                  <div class="action-buttons">
+                    <va-button size="small" preset="plain" color="info" @click="verDetalles(props.row)"
+                      icon="visibility" class="mr-1"></va-button>
+                    <va-button size="small" preset="plain" color="warning" @click="editarTrabajo(props.row)" icon="edit"
+                      class="mr-1"></va-button>
+                    <va-button size="small" preset="plain" color="danger" @click="eliminarTrabajo(props.row.id)"
+                      icon="delete" :loading="loadingDelete === props.row.id"></va-button>
+                  </div>
+                </span>
+
+                <!-- Contenido por defecto -->
+                <span v-else>
+                  {{ props.formattedRow[props.column.field] }}
+                </span>
+              </template>
+
+              <!-- Slot para acciones en la parte superior de la tabla -->
+              <template #table-actions>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="table-info">
+                    <span class="text-muted">Pedidos en producción: {{ trabajosProduccion.length }}</span>
+                  </div>
+                  <div class="table-actions-buttons">
+                    <va-button color="success" size="small" @click="exportProduccionToCSV" icon="download" class="mr-2">
+                      Exportar CSV
+                    </va-button>
+                    <va-button color="primary" size="small" @click="loadPedidos" icon="refresh" :loading="loading">
+                      Recargar
+                    </va-button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Mensaje cuando no hay datos -->
+              <template #emptystate>
+                <div class="text-center py-4">
+                  <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                  <h5 class="text-muted">No hay pedidos en producción</h5>
+                  <p class="text-muted">Los pedidos pendientes y en proceso aparecerán aquí</p>
+                  <va-button color="primary" @click="showNuevoTrabajoModal = true" icon="add">
+                    Crear Nuevo Pedido
+                  </va-button>
+                </div>
+              </template>
+            </vue-good-table>
           </div>
         </div>
       </div>
@@ -207,65 +158,93 @@
       <div v-if="activeTab === 'historial'" class="tab-pane active">
         <div class="card">
           <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Solicitante</th>
-                    <th>Proyecto</th>
-                    <th>Tipo</th>
-                    <th>Supervisor</th>
-                    <th>Solicitud</th>
-                    <th>Completado</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="pedido in trabajosHistorial" :key="pedido.id">
-                    <td>{{ pedido.codigo_pedido }}</td>
-                    <td>{{ pedido.solicitante_nombre }}</td>
-                    <td>{{ pedido.proyecto_asociado || 'N/A' }}</td>
-                    <td>{{ pedido.tipo_pedido_nombre }}</td>
-                    <td>{{ pedido.supervisor_nombre }}</td>
-                    <td>{{ formatDate(pedido.fecha_solicitud) }}</td>
-                    <td>{{ formatDate(pedido.fecha_completado) }}</td>
-                    <td>
-                      <span :class="['badge', estadoClass(pedido.estado)]">
-                        {{ formatEstado(pedido.estado) }}
-                      </span>
-                    </td>
-                    <td>
-                      <button class="btn btn-sm btn-icon" @click="verDetalles(pedido)">
-                        <i class="fas fa-eye"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <vue-good-table ref="vueGoodTableHistorial" :columns="columnsHistorial" :rows="filteredHistorial"
+              :search-options="{
+                enabled: true,
+                placeholder: 'Buscar en historial de pedidos...',
+                externalQuery: searchQuery
+              }" :pagination-options="{
+                enabled: true,
+                mode: 'records',
+                perPage: 10,
+                perPageDropdown: [5, 10, 20, 50],
+                dropdownAllowAll: false,
+                nextLabel: 'Siguiente',
+                prevLabel: 'Anterior',
+                rowsPerPageLabel: 'Filas por página',
+                ofLabel: 'de',
+                pageLabel: 'página',
+                allLabel: 'Todos'
+              }" :sort-options="{
+                enabled: true,
+                initialSortBy: { field: 'fecha_completado', type: 'desc' }
+              }" :select-options="{
+                enabled: false
+              }" styleClass="vgt-table striped bordered" theme="nocturnal">
+              <!-- Slot personalizado para cada celda -->
+              <template #table-row="props">
+                <!-- Columna de Proyecto -->
+                <span v-if="props.column.field === 'proyecto_asociado'">
+                  {{ props.row.proyecto_asociado || 'N/A' }}
+                </span>
 
-            <!-- Paginación -->
-            <div class="pagination-container">
-              <div class="showing-info">
-                Mostrando {{ showingFrom }} a {{ showingTo }} de {{ filteredHistorial.length }} pedidos
-              </div>
-              <div class="pagination-controls">
-                <button class="btn btn-pagination" @click="prevPage" :disabled="currentPage === 1">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
+                <!-- Columna de Fecha de Solicitud -->
+                <span v-else-if="props.column.field === 'fecha_solicitud'">
+                  {{ formatDate(props.row.fecha_solicitud) }}
+                </span>
 
-                <button v-for="page in pages" :key="page" class="btn btn-pagination"
-                  :class="{ active: page === currentPage }" @click="goToPage(page)" :disabled="page === '...'">
-                  {{ page }}
-                </button>
+                <!-- Columna de Fecha Completado -->
+                <span v-else-if="props.column.field === 'fecha_completado'">
+                  {{ formatDate(props.row.fecha_completado) }}
+                </span>
 
-                <button class="btn btn-pagination" @click="nextPage" :disabled="currentPage === totalPages">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
+                <!-- Columna de Estado -->
+                <span v-else-if="props.column.field === 'estado'">
+                  <span :class="['badge', estadoClass(props.row.estado)]">
+                    {{ formatEstado(props.row.estado) }}
+                  </span>
+                </span>
+
+                <!-- Columna de Acciones -->
+                <span v-else-if="props.column.field === 'actions'">
+                  <div class="action-buttons">
+                    <va-button size="small" preset="plain" color="info" @click="verDetalles(props.row)"
+                      icon="visibility"></va-button>
+                  </div>
+                </span>
+
+                <!-- Contenido por defecto -->
+                <span v-else>
+                  {{ props.formattedRow[props.column.field] }}
+                </span>
+              </template>
+
+              <!-- Slot para acciones en la parte superior de la tabla -->
+              <template #table-actions>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="table-info">
+                    <span class="text-muted">Historial: {{ filteredHistorial.length }} pedidos completados</span>
+                  </div>
+                  <div class="table-actions-buttons">
+                    <va-button color="success" size="small" @click="exportHistorialToCSV" icon="download" class="mr-2">
+                      Exportar CSV
+                    </va-button>
+                    <va-button color="primary" size="small" @click="loadPedidos" icon="refresh" :loading="loading">
+                      Recargar
+                    </va-button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Mensaje cuando no hay datos -->
+              <template #emptystate>
+                <div class="text-center py-4">
+                  <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                  <h5 class="text-muted">No hay pedidos en el historial</h5>
+                  <p class="text-muted">Los pedidos completados y entregados aparecerán aquí</p>
+                </div>
+              </template>
+            </vue-good-table>
           </div>
         </div>
       </div>
