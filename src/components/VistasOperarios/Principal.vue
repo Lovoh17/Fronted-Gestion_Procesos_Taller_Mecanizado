@@ -367,5 +367,5 @@ onMounted(() => {
   loadTrabajos();
 });
 </script>
-<style src="src/assets/EstiloBase.css" scoped></style>
 <style src="src/components/VistasOperarios/styles/Principal.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

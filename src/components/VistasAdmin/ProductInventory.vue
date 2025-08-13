@@ -110,6 +110,21 @@
                 </select>
               </div>
 
+              <!-- Filtro Tipo de Materia Prima -->
+              <div class="space-y-1">
+                <label class="flex items-center text-sm font-medium text-gray-700">
+                  <i class="fas fa-layer-group mr-2 text-gray-500"></i>
+                  Tipo de Materia Prima
+                </label>
+                <select v-model="filters.materialType"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="">Todos</option>
+                  <option v-for="type in materialTypes" :key="type.id" :value="type.id">
+                    {{ type.nombre }}
+                  </option>
+                </select>
+              </div>
+
               <!-- Filtro Proveedor -->
               <div class="space-y-1">
                 <label class="flex items-center text-sm font-medium text-gray-700">
@@ -170,6 +185,12 @@
         <span v-if="filters.unit" class="filter-tag">
           Unidad: {{ units[filters.unit]?.nombre }}
           <va-button @click="filters.unit = ''" class="remove-filter"   >
+        ×
+      </va-button>
+        </span>
+        <span v-if="filters.materialType" class="filter-tag">
+          Tipo: {{ getMaterialTypeName(filters.materialType) }}
+          <va-button @click="filters.materialType = ''" class="remove-filter"   >
         ×
       </va-button>
         </span>
@@ -249,6 +270,42 @@
                   {{ props.row.proveedor_principal || 'N/A' }}
                 </span>
 
+                <!-- Columna de Descripción -->
+                <span v-else-if="props.column.field === 'descripcion'">
+                  <span :title="props.row.descripcion" class="description-text">
+                    {{ props.row.descripcion || 'N/A' }}
+                  </span>
+                </span>
+
+                <!-- Columna de Tipo de Materia Prima -->
+                <span v-else-if="props.column.field === 'tipo_materia_prima'">
+                  {{ getMaterialTypeName(props.row.tipo_materia_prima_id) }}
+                </span>
+
+                <!-- Columna de Tiempo de Reposición -->
+                <span v-else-if="props.column.field === 'tiempo_reposicion_display'">
+                  <span class="time-badge">
+                    <i class="fas fa-clock mr-1"></i>
+                    {{ props.row.tiempo_reposicion || 'N/A' }} días
+                  </span>
+                </span>
+
+                <!-- Columna de Es Controlado -->
+                <span v-else-if="props.column.field === 'es_controlado_display'">
+                  <span :class="props.row.es_controlado ? 'controlled-badge' : 'not-controlled-badge'">
+                    <i :class="props.row.es_controlado ? 'fas fa-shield-alt' : 'fas fa-shield'" class="mr-1"></i>
+                    {{ props.row.es_controlado ? 'Controlado' : 'No Controlado' }}
+                  </span>
+                </span>
+
+                <!-- Columna de Permite Fracción -->
+                <span v-else-if="props.column.field === 'permite_fraccion_display'">
+                  <span :class="props.row.permite_fraccion ? 'fraction-allowed' : 'fraction-not-allowed'">
+                    <i :class="props.row.permite_fraccion ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="mr-1"></i>
+                    {{ props.row.permite_fraccion ? 'Sí' : 'No' }}
+                  </span>
+                </span>
+
                 <!-- Contenido por defecto -->
                 <span v-else>
                   {{ props.formattedRow[props.column.field] }}
@@ -295,11 +352,14 @@
 </template>
 
 <script>
+import api from '@/api.js'
+
 export default {
   name: 'ProductInventory',
   data() {
     return {
       products: [],
+      materialTypes: [], // Tipos de materia prima desde la API
       searchQuery: '',
       sortField: 'codigo',
       sortOrder: 'asc',
@@ -316,7 +376,8 @@ export default {
         priceMin: null,
         priceMax: null,
         unit: '',
-        supplier: ''
+        supplier: '',
+        materialType: '' // Nuevo filtro para tipo de materia prima
       },
 
       units: {
@@ -349,10 +410,33 @@ export default {
           }
         },
         {
+          label: 'Descripción',
+          field: 'descripcion',
+          type: 'string',
+          sortable: true,
+          width: '200px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por descripción'
+          }
+        },
+        {
+          label: 'Tipo',
+          field: 'tipo_materia_prima',
+          type: 'string',
+          sortable: true,
+          width: '150px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por tipo'
+          }
+        },
+        {
           label: 'Stock',
           field: 'stock_display',
           type: 'string',
           sortable: true,
+          width: '120px',
           sortFn: (x, y, col, rowX, rowY) => {
             // Ordenar por el valor numérico de stock
             return Number(rowX.stock_total) - Number(rowY.stock_total)
@@ -363,6 +447,7 @@ export default {
           field: 'precio_display',
           type: 'string',
           sortable: true,
+          width: '100px',
           sortFn: (x, y, col, rowX, rowY) => {
             // Ordenar por el valor numérico de precio
             return Number(rowX.costo_unitario) - Number(rowY.costo_unitario)
@@ -373,9 +458,52 @@ export default {
           field: 'proveedor_principal',
           type: 'string',
           sortable: true,
+          width: '150px',
           filterOptions: {
             enabled: true,
             placeholder: 'Filtrar por proveedor'
+          }
+        },
+        {
+          label: 'Tiempo Repos.',
+          field: 'tiempo_reposicion_display',
+          type: 'string',
+          sortable: true,
+          width: '120px',
+          sortFn: (x, y, col, rowX, rowY) => {
+            return Number(rowX.tiempo_reposicion || 0) - Number(rowY.tiempo_reposicion || 0)
+          }
+        },
+        {
+          label: 'Controlado',
+          field: 'es_controlado_display',
+          type: 'string',
+          sortable: true,
+          width: '110px',
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Controlado', text: 'Controlado' },
+              { value: 'No Controlado', text: 'No Controlado' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos'
+          }
+        },
+        {
+          label: 'Permite Fracción',
+          field: 'permite_fraccion_display',
+          type: 'string',
+          sortable: true,
+          width: '130px',
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Sí', text: 'Sí' },
+              { value: 'No', text: 'No' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos'
           }
         },
         {
@@ -383,6 +511,7 @@ export default {
           field: 'estado_display',
           type: 'string',
           sortable: true,
+          width: '100px',
           sortFn: (x, y, col, rowX, rowY) => {
             // Ordenar por estado: disponible < bajo stock < agotado
             const statusOrder = { 'available': 0, 'low': 1, 'out': 2 }
@@ -454,6 +583,13 @@ export default {
         )
       }
 
+      // Filtro por tipo de materia prima
+      if (this.filters.materialType) {
+        filtered = filtered.filter(product =>
+          product.tipo_materia_prima_id == this.filters.materialType
+        )
+      }
+
       return filtered
     },
 
@@ -502,7 +638,8 @@ export default {
         this.filters.priceMin !== null ||
         this.filters.priceMax !== null ||
         this.filters.unit ||
-        this.filters.supplier
+        this.filters.supplier ||
+        this.filters.materialType
     },
 
     // Contar filtros activos
@@ -514,6 +651,7 @@ export default {
       if (this.filters.priceMax !== null && this.filters.priceMax !== '') count++
       if (this.filters.unit) count++
       if (this.filters.supplier) count++
+      if (this.filters.materialType) count++
       return count
     }
   },
@@ -527,20 +665,31 @@ export default {
     }
   },
   async created() {
-    await this.fetchProducts()
+    await Promise.all([
+      this.fetchProducts(),
+      this.fetchMaterialTypes()
+    ])
   },
   methods: {
     async fetchProducts() {
       this.loading = true
       try {
-        const response = await fetch('api/MateriaPrima')
-        if (!response.ok) throw new Error('Error en la respuesta del servidor')
-        this.products = await response.json()
+        this.products = await api.get('/MateriaPrima')
       } catch (error) {
         console.error('Error al cargar productos:', error)
         this.error = error
+        this.showToast('Error al cargar productos', 'error')
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchMaterialTypes() {
+      try {
+        this.materialTypes = await api.get('/Tipo_Materia_Prima')
+      } catch (error) {
+        console.error('Error al cargar tipos de materia prima:', error)
+        this.showToast('Error al cargar tipos de materia prima', 'error')
       }
     },
 
@@ -576,7 +725,8 @@ export default {
         priceMin: null,
         priceMax: null,
         unit: '',
-        supplier: ''
+        supplier: '',
+        materialType: ''
       }
       this.searchQuery = ''
       this.currentPage = 1
@@ -589,7 +739,8 @@ export default {
         priceMin: null,
         priceMax: null,
         unit: '',
-        supplier: ''
+        supplier: '',
+        materialType: ''
       }
     },
 
@@ -695,6 +846,12 @@ export default {
       }
     },
 
+    // Obtener nombre del tipo de materia prima
+    getMaterialTypeName(typeId) {
+      const type = this.materialTypes.find(t => t.id == typeId)
+      return type ? type.nombre : 'N/A'
+    },
+
     // Helper para mostrar notificaciones
     showToast(message, type = 'success') {
       // Implementa según tu librería de notificaciones
@@ -717,69 +874,6 @@ export default {
   padding: 2rem;
 
 }
-
-.header-section {
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 1.5rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.header-content:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 70px;
-  height: 70px;
-  background: #003366;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.8rem;
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #003366, #003366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
 /* Estilos para el primer panel de filtros (mejorado) */
 .bg-white {
   background-color: #fff;
@@ -1374,9 +1468,90 @@ export default {
     font-size: 0.9rem;
   }
 
-  .filter-tag {
+.filter-tag {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+}
+
+/* Estilos para las nuevas columnas */
+.description-text {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.time-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  color: #495057;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.controlled-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #d1ecf1;
+  color: #0c5460;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.not-controlled-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.fraction-allowed {
+  display: inline-flex;
+  align-items: center;
+  background-color: #d4edda;
+  color: #155724;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.fraction-not-allowed {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Responsive para las nuevas columnas */
+@media (max-width: 768px) {
+  .description-text {
+    max-width: 120px;
+  }
+  
+  .time-badge,
+  .controlled-badge,
+  .not-controlled-badge,
+  .fraction-allowed,
+  .fraction-not-allowed {
     font-size: 0.7rem;
     padding: 3px 6px;
   }
 }
 </style>
+<style src="src/assets/EstiloBase.css" scoped></style>
