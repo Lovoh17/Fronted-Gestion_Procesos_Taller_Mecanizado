@@ -16,7 +16,7 @@
           <va-button color="secondary" @click="exportToCSV" icon="download">
             Exportar
           </va-button>
-          <va-button color="#003366" @click="showNewOrderModal = true" icon="add">
+          <va-button color="#003366" @click="openNewOrderModal" icon="add">
             Nueva Orden
           </va-button>
         </div>
@@ -352,7 +352,7 @@
                 <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">No hay órdenes de trabajo disponibles</h5>
                 <p class="text-muted">Las órdenes creadas aparecerán aquí</p>
-                <va-button color="primary" @click="showNewOrderModal = true" icon="add">
+                <va-button color="primary" @click="openNewOrderModal" icon="add">
                   Crear Primera Orden
                 </va-button>
               </div>
@@ -361,6 +361,15 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de Nueva Orden de Trabajo -->
+    <WorkOrderModal
+      v-if="showNewOrderModal"
+      :pedido="newOrder"
+      mode="create"
+      @close="closeNewOrderModal"
+      @save="saveNewOrder"
+    />
   </div>
 </template>
 

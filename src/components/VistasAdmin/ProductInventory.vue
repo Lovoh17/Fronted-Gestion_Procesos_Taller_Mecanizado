@@ -1,6 +1,5 @@
 <template>
-  <div class="inventario-container">
-
+  <div class="inventario-container product-inventory-fullwidth">
     <!-- Header con la misma longitud que Inventario -->
     <div class="header-section">
       <div class="header-content">
@@ -21,7 +20,8 @@
               <i class="fas fa-boxes"></i>
               <span>Inventario</span>
             </button>
-            <button :class="['tab-btn', { active: currentView === 'InventoryMovements' }]" @click="switchView('InventoryMovements')">
+            <button :class="['tab-btn', { active: currentView === 'InventoryMovements' }]"
+              @click="switchView('InventoryMovements')">
               <i class="fas fa-exchange-alt"></i>
               <span>Movimientos</span>
             </button>
@@ -178,8 +178,8 @@
             </div>
 
             <div v-else>
-              <vue-good-table ref="vueGoodTableMovements" :columns="movementsColumns" max-height="45vh" :fixedHeader="false"
-                :rows="movements" :search-options="{
+              <vue-good-table ref="vueGoodTableMovements" :columns="movementsColumns" max-height="45vh"
+                :fixedHeader="false" :rows="movements" :search-options="{
                   enabled: true,
                   placeholder: 'Buscar movimientos por producto, código o usuario...',
                 }" :pagination-options="{
@@ -199,7 +199,7 @@
                   initialSortBy: { field: 'fecha_movimiento_formatted', type: 'desc' }
                 }" :select-options="{
                   enabled: false
-                }" styleClass="vgt-table striped bordered" theme="nocturnal">
+                }" styleClass="vgt-table striped bordered" theme="Rinoh">
 
                 <!-- Slot personalizado para cada celda de movimientos -->
                 <template #table-row="props">
@@ -216,13 +216,20 @@
                       'text-success': props.row.tipo_movimiento.toLowerCase() === 'entrada',
                       'text-danger': props.row.tipo_movimiento.toLowerCase() === 'salida'
                     }">
-                      {{ props.row.tipo_movimiento.toLowerCase() === 'entrada' ? '+' : '' }}{{ props.row.cantidad_display }}
+                      {{ props.row.tipo_movimiento.toLowerCase() === 'entrada' ? '+' : '' }}{{
+                        props.row.cantidad_display }}
                     </span>
                   </span>
 
                   <!-- Columna de Pedido ID con manejo de null -->
                   <span v-else-if="props.column.field === 'pedido_id'">
                     {{ props.row.pedido_id || 'N/A' }}
+                  </span>
+
+                  <!-- Columna de Acciones -->
+                  <span v-else-if="props.column.field === 'actions'">
+                    <va-button size="small" icon="visibility" color="info" :round="false"
+                      @click="openMovementModal(props.row)" title="Ver detalles del movimiento" class="action-btn" />
                   </span>
 
                   <!-- Contenido por defecto -->
@@ -238,7 +245,8 @@
                       <span class="text-muted">Total: {{ movements.length }} movimientos</span>
                     </div>
                     <div class="table-actions-buttons">
-                      <va-button color="success" size="small" @click="exportMovementsToCSV" icon="download" class="mr-2">
+                      <va-button color="success" size="small" @click="exportMovementsToCSV" icon="download"
+                        class="mr-2">
                         Exportar CSV
                       </va-button>
                       <va-button color="primary" size="small" @click="fetchMovements" icon="refresh">
@@ -270,9 +278,14 @@
     <ProductDetailsModal :is-visible="showProductModal" :product="selectedProduct" :material-types="materialTypes"
       :units="units" :can-edit="canEditProduct" @close="closeProductModal" @edit="editProduct"
       @update:is-visible="showProductModal = $event" @stock-updated="handleStockUpdate" @show-toast="showToast" />
+
+    <!-- Modal de detalles del movimiento -->
+    <InventoryMovementDetailsModal :is-visible="showMovementModal" :movement="selectedMovement"
+      @close="closeMovementModal" @update:is-visible="showMovementModal = $event"
+      @view-product="viewProductFromMovement" @show-toast="showToast" />
   </div>
 </template>
 
-<script src="./ProductInventory.js"></script>
-<style src="./ProductInventory.css" scoped></style>
+<script src="./scripts/ProductInventory.js"></script>
+<style src="src/assets/ProductInventory.css" scoped></style>
 <style src="src/assets/EstiloBase.css" scoped></style>

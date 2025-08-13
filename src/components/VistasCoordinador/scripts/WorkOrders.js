@@ -1,7 +1,12 @@
 import axios from 'axios'
+import WorkOrderModal from '../ComponentesCoordinador/WorkOrderModal.vue'
 
 export default {
   name: 'WorkOrdersDashboard',
+  
+  components: {
+    WorkOrderModal
+  },
   
   data() {
     return {
@@ -15,6 +20,25 @@ export default {
       selectedOrder: null,
       showNewOrderModal: false,
       showOrderModal: false,
+      
+      // Nuevo pedido para el modal
+      newOrder: {
+        id: null,
+        codigo_pedido: '',
+        tipo_pedido_id: null,
+        prioridad: 3,
+        fecha_requerida: '',
+        fecha_estimada_entrega: '',
+        proyecto_asociado: '',
+        costo_estimado: null,
+        precio_final: null,
+        trabajadores_asignados: [],
+        herramientas_asignadas: [],
+        materiales: [],
+        planos: [],
+        notas: '',
+        estado_id: 1
+      },
       
       // Filtros
       statusFilter: 'all',
@@ -458,6 +482,121 @@ export default {
       console.log(`${type.toUpperCase()}: ${message}`);
       // Aquí puedes integrar tu sistema de notificaciones
       alert(`${type.toUpperCase()}: ${message}`);
+    },
+    
+    // =========== MÉTODOS DEL MODAL DE NUEVA ORDEN ===========
+    
+    // Abrir modal para nueva orden
+    openNewOrderModal() {
+      this.resetNewOrder();
+      this.showNewOrderModal = true;
+      console.log('Abriendo modal de nueva orden');
+    },
+    
+    // Cerrar modal de nueva orden
+    closeNewOrderModal() {
+      this.showNewOrderModal = false;
+      this.resetNewOrder();
+      console.log('Cerrando modal de nueva orden');
+    },
+    
+    // Resetear los datos del nuevo pedido
+    resetNewOrder() {
+      this.newOrder = {
+        id: null,
+        codigo_pedido: this.generateOrderCode(),
+        tipo_pedido_id: null,
+        prioridad: 3,
+        fecha_requerida: '',
+        fecha_estimada_entrega: '',
+        proyecto_asociado: '',
+        costo_estimado: null,
+        precio_final: null,
+        trabajadores_asignados: [],
+        herramientas_asignadas: [],
+        materiales: [],
+        planos: [],
+        notas: '',
+        estado_id: 1
+      };
+    },
+    
+    // Generar código automático para la nueva orden
+    generateOrderCode() {
+      const currentYear = new Date().getFullYear();
+      const orderCount = this.orders.length + 1;
+      return `OT-${currentYear}-${String(orderCount).padStart(3, '0')}`;
+    },
+    
+    // Guardar nueva orden
+    async saveNewOrder(orderData) {
+      try {
+        console.log('Guardando nueva orden:', orderData);
+        
+        // Crear nueva orden con datos del modal
+        const newWorkOrder = {
+          id: this.generateOrderCode(),
+          client_name: 'Cliente por definir', // Esto debería venir del formulario
+          description: orderData.notas || 'Nueva orden de trabajo',
+          status: 'pending',
+          priority: this.mapPriorityToString(orderData.prioridad),
+          assigned_to_name: this.getAssignedWorkersNames(orderData.trabajadores_asignados),
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: orderData.fecha_requerida,
+          progress: 0,
+          estimated_hours: 0,
+          materials_cost: orderData.costo_estimado || 0,
+          labor_cost: 0,
+          notes: orderData.notas || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Datos específicos del pedido
+          codigo_pedido: orderData.codigo_pedido,
+          tipo_pedido_id: orderData.tipo_pedido_id,
+          proyecto_asociado: orderData.proyecto_asociado,
+          precio_final: orderData.precio_final,
+          trabajadores_asignados: orderData.trabajadores_asignados,
+          herramientas_asignadas: orderData.herramientas_asignadas,
+          materiales: orderData.materiales,
+          planos: orderData.planos
+        };
+        
+        // En producción, aquí harías una llamada a la API:
+        // const response = await axios.post('/api/work-orders', newWorkOrder);
+        // const savedOrder = response.data;
+        
+        // Agregar a la lista local
+        this.orders.unshift(newWorkOrder);
+        
+        // Cerrar modal y mostrar mensaje de éxito
+        this.closeNewOrderModal();
+        this.showToast('Orden de trabajo creada exitosamente', 'success');
+        
+      } catch (error) {
+        console.error('Error al crear nueva orden:', error);
+        this.showToast('Error al crear la orden de trabajo', 'error');
+      }
+    },
+    
+    // Mapear prioridad numérica a string
+    mapPriorityToString(prioridadNum) {
+      const priorityMap = {
+        1: 'urgent',
+        2: 'high', 
+        3: 'medium',
+        4: 'medium',
+        5: 'low'
+      };
+      return priorityMap[prioridadNum] || 'medium';
+    },
+    
+    // Obtener nombres de trabajadores asignados
+    getAssignedWorkersNames(trabajadorIds) {
+      if (!trabajadorIds || trabajadorIds.length === 0) {
+        return 'Sin asignar';
+      }
+      // En una implementación real, buscarías los nombres en una lista de trabajadores
+      return `${trabajadorIds.length} trabajador(es) asignado(s)`;
     }
   },
 

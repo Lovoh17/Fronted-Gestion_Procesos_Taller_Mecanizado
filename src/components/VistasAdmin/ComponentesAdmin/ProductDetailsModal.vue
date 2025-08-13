@@ -193,5 +193,5 @@
   </va-modal>
 </template>
 
-<script src="./ProductDetailsModal.js"></script>
-<style src="./ProductDetailsModal.css" scoped></style>
+<script src="./Script/ProductDetailsModal.js"></script>
+<style src="src/assets/ProductDetailsModal.css" scoped></style>
