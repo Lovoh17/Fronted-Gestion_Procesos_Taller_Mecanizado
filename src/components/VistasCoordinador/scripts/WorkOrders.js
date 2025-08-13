@@ -1,11 +1,13 @@
 import axios from 'axios'
 import WorkOrderModal from '../ComponentesCoordinador/WorkOrderModal.vue'
+import NewWorkOrderWizardModal from '../ComponentesCoordinador/NewWorkOrderWizardModal.vue'
 
 export default {
   name: 'WorkOrdersDashboard',
   
   components: {
-    WorkOrderModal
+    WorkOrderModal,
+    NewWorkOrderWizardModal
   },
   
   data() {
@@ -20,6 +22,7 @@ export default {
       selectedOrder: null,
       showNewOrderModal: false,
       showOrderModal: false,
+      showWizardModal: false,
       
       // Nuevo pedido para el modal
       newOrder: {
@@ -597,6 +600,153 @@ export default {
       }
       // En una implementación real, buscarías los nombres en una lista de trabajadores
       return `${trabajadorIds.length} trabajador(es) asignado(s)`;
+    },
+    
+    // =========== MÉTODOS DEL WIZARD MODAL ===========
+    
+    // Abrir el wizard modal
+    openWizardModal() {
+      this.showWizardModal = true;
+      console.log('Abriendo Wizard Modal de nueva orden');
+    },
+    
+    // Cerrar el wizard modal
+    onWizardClose() {
+      this.showWizardModal = false;
+      console.log('Cerrando Wizard Modal');
+    },
+    
+    // Manejar el guardado desde el wizard
+    async onOrderSave(orderData) {
+      try {
+        console.log('Guardando orden desde wizard:', orderData);
+        
+        // Mapear los datos del wizard al formato de la tabla
+        const newWorkOrder = {
+          id: orderData.codigo_pedido || this.generateOrderCode(),
+          client_name: this.extractClientFromOrderData(orderData),
+          description: orderData.notas || orderData.especificaciones_adicionales || 'Nueva orden creada desde wizard',
+          status: this.mapWizardStatusToTableStatus(orderData.estado || orderData.action),
+          priority: this.mapWizardPriorityToString(orderData.prioridad),
+          assigned_to_name: this.getAssignedTechniciansNames(orderData.tecnicos_asignados),
+          start_date: this.getFechaInicioFromOrderData(orderData),
+          end_date: orderData.fecha_requerida || new Date().toISOString().split('T')[0],
+          progress: 0,
+          estimated_hours: this.calculateTotalHours(orderData.tecnicos_asignados),
+          materials_cost: orderData.costo_materiales || 0,
+          labor_cost: orderData.costo_mano_obra || 0,
+          notes: orderData.notas || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          // Datos específicos del wizard
+          codigo_pedido: orderData.codigo_pedido,
+          tipo_pedido_id: orderData.tipo_pedido_id,
+          proyecto_asociado: orderData.proyecto_asociado,
+          precio_final: orderData.precio_final,
+          supervisor_id: orderData.supervisor_id,
+          plano_seleccionado: orderData.plano_seleccionado,
+          costo_total_estimado: orderData.costo_total_estimado,
+          herramientas_sugeridas: orderData.herramientas_sugeridas,
+          materiales_sugeridos: orderData.materiales_sugeridos
+        };
+        
+        // En producción, aquí harías una llamada a la API:
+        // const response = await axios.post('/api/work-orders', newWorkOrder);
+        // const savedOrder = response.data;
+        
+        // Agregar a la lista local
+        this.orders.unshift(newWorkOrder);
+        
+        // Mostrar mensaje de éxito según la acción
+        if (orderData.action === 'send_for_approval') {
+          this.showToast('Pedido enviado para aprobación exitosamente', 'success');
+        } else if (orderData.action === 'create_immediately') {
+          this.showToast('Pedido creado inmediatamente con éxito', 'success');
+        } else {
+          this.showToast('Orden de trabajo creada exitosamente', 'success');
+        }
+        
+      } catch (error) {
+        console.error('Error al crear orden desde wizard:', error);
+        this.showToast('Error al crear la orden de trabajo', 'error');
+      }
+    },
+    
+    // Manejar el guardado de borrador
+    onDraftSaved(draftData) {
+      console.log('Borrador guardado:', draftData);
+      this.showToast('Borrador guardado exitosamente', 'info');
+    },
+    
+    // Métodos auxiliares para el wizard
+    extractClientFromOrderData(orderData) {
+      // En el wizard no hay campo específico de cliente, 
+      // podríamos extraerlo del proyecto o usar un valor por defecto
+      if (orderData.proyecto_asociado) {
+        return `Cliente de ${orderData.proyecto_asociado}`;
+      }
+      return 'Cliente por definir';
+    },
+    
+    mapWizardStatusToTableStatus(wizardAction) {
+      const statusMap = {
+        'send_for_approval': 'pending',
+        'create_immediately': 'pending',
+        'Pendiente Aprobación': 'pending',
+        'Aprobado': 'pending'
+      };
+      return statusMap[wizardAction] || 'pending';
+    },
+    
+    mapWizardPriorityToString(prioridadNum) {
+      const priorityMap = {
+        1: 'urgent',
+        2: 'high', 
+        3: 'medium'
+      };
+      return priorityMap[prioridadNum] || 'medium';
+    },
+    
+    getAssignedTechniciansNames(tecnicosAsignados) {
+      if (!tecnicosAsignados || tecnicosAsignados.length === 0) {
+        return 'Sin asignar';
+      }
+      
+      // Filtrar técnicos que tienen ID asignado
+      const validTechnicians = tecnicosAsignados.filter(t => t.tecnico_id);
+      
+      if (validTechnicians.length === 0) {
+        return 'Sin asignar';
+      }
+      
+      if (validTechnicians.length === 1) {
+        return `Técnico ID: ${validTechnicians[0].tecnico_id}`;
+      }
+      
+      return `${validTechnicians.length} técnicos asignados`;
+    },
+    
+    calculateTotalHours(tecnicosAsignados) {
+      if (!tecnicosAsignados || tecnicosAsignados.length === 0) {
+        return 0;
+      }
+      
+      return tecnicosAsignados.reduce((total, tecnico) => {
+        return total + (parseFloat(tecnico.horas_asignadas) || 0);
+      }, 0);
+    },
+    
+    getFechaInicioFromOrderData(orderData) {
+      // Calcular fecha de inicio basada en la fecha requerida
+      // Por defecto, iniciar 7 días antes de la fecha requerida
+      if (orderData.fecha_requerida) {
+        const fechaRequerida = new Date(orderData.fecha_requerida);
+        const fechaInicio = new Date(fechaRequerida);
+        fechaInicio.setDate(fechaInicio.getDate() - 7);
+        return fechaInicio.toISOString().split('T')[0];
+      }
+      
+      return new Date().toISOString().split('T')[0];
     }
   },
 
