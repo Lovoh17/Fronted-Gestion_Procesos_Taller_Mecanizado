@@ -6,7 +6,7 @@
         Nuevo Pedido - Formulario de Creación
       </VaCardTitle>
 
-      <!-- SOLUCIÓN 1: Progress Bar con key para forzar re-render -->
+      <!-- Progress Bar-->
       <VaProgressBar :key="`progress-${currentStep}`" :value="progressPercentage" color="primary"
         class="wizard-progress" :model-value="progressPercentage" />
       <div class="step-indicator">
@@ -57,6 +57,10 @@
             <VaIcon name="engineering" class="step-icon" />
             Selección de Plano y Especificaciones
           </VaCardTitle>
+          <span class="ToDo">
+            TODO: version de plano desde api por implementar
+          </span>
+
           <VaCardContent>
             <div class="form-grid">
               <VaSelect v-model="formData.plano_id" label="Plano a Utilizar *" placeholder="Seleccione el plano"
@@ -100,9 +104,8 @@
             Asignación de Personal
           </VaCardTitle>
           <VaCardContent>
-            <VaSelect v-model="formData.supervisor_id" label="Supervisor/Encargado *"
-              placeholder="Seleccione el supervisor" :options="supervisoresOptions" text-by="nombre" value-by="id"
-              class="form-field full-width" />
+            <VaSelect v-model="formData.supervisor_id" label="Supervisor/Encargado *" width="100%"
+              placeholder="Seleccione el supervisor" :options="supervisoresOptions" text-by="nombre" value-by="id" />
 
             <!-- Técnicos Asignados -->
             <div class="tecnicos-section">
@@ -216,6 +219,9 @@
             <!-- Materiales Sugeridos del Plano -->
             <div v-if="materialesSugeridos.length > 0" class="materiales-sugeridos">
               <h4 class="section-subtitle">Materiales Sugeridos del Plano</h4>
+              <span class="ToDo">
+                TODO: debe venir de la API el listado de productos del plano seleccionado
+              </span>
 
               <div v-for="material in materialesSugeridos" :key="material.id" class="material-row">
                 <VaCard class="material-card">

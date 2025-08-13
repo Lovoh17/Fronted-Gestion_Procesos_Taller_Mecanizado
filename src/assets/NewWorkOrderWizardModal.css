@@ -1,6 +1,6 @@
 /* === Wizard Header === */
 .wizard-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   padding: 1rem 0;
 }
 
@@ -61,7 +61,7 @@
   gap: 0.75rem;
   color: var(--va-primary);
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .step-icon {
@@ -78,6 +78,13 @@
   align-items: start;
 }
 
+.ToDo{
+  background: yellow;
+  color: red;
+  padding: 2px 6px;
+  font-weight: bold;
+}
+
 .form-grid.three-columns {
   grid-template-columns: 1fr 1fr 1fr;
 }
@@ -91,15 +98,29 @@
   width: 100%;
 }
 
+.form-field.full-width .va-select {
+  width: 100% !important;
+}
+
+
 .form-field.full-width {
   grid-column: 1 / -1;
 }
 
 /* === Enhanced Description Field === */
 .form-field.full-width .va-textarea,
-.form-field.full-width .va-input {
+.form-field.full-width .va-input  {
   width: 100% !important;
 }
+
+.form-field.full-width .va-select {
+  width: 100% !important;
+}
+
+.va-select {
+  width: 100%;
+}
+
 
 .form-field.full-width .va-textarea {
   min-height: 120px;
@@ -144,7 +165,7 @@
   color: var(--va-text-primary);
   font-size: 1rem;
   font-weight: 600;
-  margin: 1.5rem 0 1rem 0;
+  margin: 1rem 0 1rem 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--va-background-secondary);
 }

@@ -1,3 +1,5 @@
+import api from '@/api.js'
+
 export default {
   name: 'NewWorkOrderWizardModal',
 
@@ -68,13 +70,8 @@ export default {
       autoSaveTimeout: null,
       lastSaved: null,
 
-      // Opciones para selects (simulated data)
-      tiposPedidoOptions: [
-        { id: 1, nombre: 'Interno' },
-        { id: 2, nombre: 'Externo' },
-        { id: 3, nombre: 'Prácticas Académicas' },
-        { id: 4, nombre: 'Investigación' }
-      ],
+      // Opciones para selects
+      tiposPedidoOptions: [],
 
       prioridadOptions: [
         { text: 'Alta (1)', value: 1 },
@@ -82,29 +79,7 @@ export default {
         { text: 'Baja (3)', value: 3 }
       ],
 
-      planosOptions: [
-        {
-          id: 1,
-          nombre: 'Plano Motor V8',
-          codigo: 'PLN-001',
-          estado: 'aprobado',
-          costo_estimado: 15000
-        },
-        {
-          id: 2,
-          nombre: 'Plano Chasis Deportivo',
-          codigo: 'PLN-002',
-          estado: 'aprobado',
-          costo_estimado: 25000
-        },
-        {
-          id: 3,
-          nombre: 'Plano Sistema Frenos',
-          codigo: 'PLN-003',
-          estado: 'revision',
-          costo_estimado: 8000
-        }
-      ],
+      planosOptions: [],
 
       versionesPlanoOptions: [
         { text: 'v1.0 (Última)', value: 'v1.0' },
@@ -119,55 +94,17 @@ export default {
       ],
 
       tecnicosOptions: [
-        { id: 1, nombre: 'Ana Martínez - Técnico Especialista', capacidad_horas_semana: 40 },
-        { id: 2, nombre: 'Luis Rivera - Técnico Senior', capacidad_horas_semana: 35 },
-        { id: 3, nombre: 'Pedro Jiménez - Técnico Junior', capacidad_horas_semana: 30 },
-        { id: 4, nombre: 'Sofia Castro - Técnico Especialista', capacidad_horas_semana: 40 }
+        { id: 1, nombre: 'Ana Martínez - Técnico Especialista' },
+        { id: 2, nombre: 'Luis Rivera - Técnico Senior' },
+        { id: 3, nombre: 'Pedro Jiménez - Técnico Junior' },
+        { id: 4, nombre: 'Sofia Castro - Técnico Especialista' }
       ],
 
-      todasHerramientasOptions: [
-        { id: 1, nombre: 'Torno CNC Haas ST-10', estado: 'disponible' },
-        { id: 2, nombre: 'Fresadora Vertical Bridgeport', estado: 'disponible' },
-        { id: 3, nombre: 'Taladro Radial', estado: 'mantenimiento' },
-        { id: 4, nombre: 'Soldadora TIG Miller', estado: 'disponible' },
-        { id: 5, nombre: 'Prensa Hidráulica 50T', estado: 'reservada' }
-      ],
+      todasHerramientasOptions: [],
 
-      todosMaterialesOptions: [
-        {
-          id: 1,
-          nombre: 'Acero AISI 1045',
-          stock_actual: 500,
-          unidad_medida: 'kg',
-          costo_unitario: 2.50,
-          stock_minimo: 100
-        },
-        {
-          id: 2,
-          nombre: 'Aluminio 6061-T6',
-          stock_actual: 200,
-          unidad_medida: 'kg',
-          costo_unitario: 3.80,
-          stock_minimo: 50
-        },
-        {
-          id: 3,
-          nombre: 'Bronce Fosforoso',
-          stock_actual: 25,
-          unidad_medida: 'kg',
-          costo_unitario: 8.20,
-          stock_minimo: 10
-        }
-      ],
+      todosMaterialesOptions: [],
 
-      unidadesMedidaOptions: [
-        { id: 1, nombre: 'kg' },
-        { id: 2, nombre: 'gramos' },
-        { id: 3, nombre: 'metros' },
-        { id: 4, nombre: 'centímetros' },
-        { id: 5, nombre: 'unidades' },
-        { id: 6, nombre: 'litros' }
-      ],
+      unidadesMedidaOptions: [],
 
       tiposStockOptions: [
         { text: 'Interno', value: 'interno' },
@@ -198,8 +135,6 @@ export default {
       // Asegurar que currentStep esté en el rango correcto
       const step = Math.max(1, Math.min(this.currentStep, this.totalSteps))
       const percentage = Math.round((step / this.totalSteps) * 100)
-
-      console.log(`Progress Debug - Step: ${step}/${this.totalSteps} = ${percentage}%`)
       return percentage
     },
 
@@ -247,8 +182,7 @@ export default {
     // Watcher específico para currentStep
     currentStep: {
       handler(newStep, oldStep) {
-        console.log(`Cambio de paso: ${oldStep} → ${newStep}`)
-        console.log(`Nuevo progreso: ${this.progressPercentage}%`)
+        // Se podría agregar lógica adicional aquí si es necesario
       },
       immediate: true
     },
@@ -264,7 +198,7 @@ export default {
 
   mounted() {
     this.setupAutoSave()
-    this.loadDraftFromStorage()
+    //this.loadDraftFromStorage()
   },
 
   beforeUnmount() {
@@ -280,16 +214,8 @@ export default {
     // === Métodos de Navegación del Wizard (CORREGIDOS) ===
     nextStep() {
       if (this.validateCurrentStep() && this.currentStep < this.totalSteps) {
-        console.log(`Antes: currentStep = ${this.currentStep}`)
-
         this.currentStep++
-
-        console.log(`Después: currentStep = ${this.currentStep}`)
-        console.log(`Nuevo progreso: ${this.progressPercentage}%`)
-
-        // Forzar actualización del DOM
         this.$nextTick(() => {
-          console.log(`Después de nextTick: ${this.progressPercentage}%`)
           this.updateStepData()
         })
       }
@@ -297,31 +223,14 @@ export default {
 
     previousStep() {
       if (this.currentStep > 1) {
-        console.log(`Antes: currentStep = ${this.currentStep}`)
-
         this.currentStep--
-
-        console.log(`Después: currentStep = ${this.currentStep}`)
-        console.log(`Nuevo progreso: ${this.progressPercentage}%`)
-
-        // Forzar actualización del DOM
-        this.$nextTick(() => {
-          console.log(`Después de nextTick: ${this.progressPercentage}%`)
-        })
       }
     },
 
     goToStep(step) {
       if (step >= 1 && step <= this.totalSteps) {
-        console.log(`Saltando de paso ${this.currentStep} a paso ${step}`)
-
         this.currentStep = step
-
-        console.log(`Nuevo progreso: ${this.progressPercentage}%`)
-
-        // Forzar actualización del DOM y datos
         this.$nextTick(() => {
-          console.log(`Después de nextTick: ${this.progressPercentage}%`)
           this.updateStepData()
         })
       }
@@ -393,16 +302,17 @@ export default {
     },
 
     // === Métodos de Inicialización ===
-    initializeWizard() {
-      console.log('Inicializando wizard...')
+    async initializeWizard() {
       this.currentStep = 1
       this.generateOrderCode()
-      this.loadDraftFromStorage()
-
-      // Asegurar que la reactividad funcione
-      this.$nextTick(() => {
-        console.log(`Wizard inicializado - Paso: ${this.currentStep}, Progreso: ${this.progressPercentage}%`)
-      })
+      //this.loadDraftFromStorage()
+      await Promise.all([
+        this.loadHerramientasFromAPI(),
+        this.loadMateriasPrimasFromAPI(),
+        this.loadTiposPedidoFromAPI(),
+        this.loadPlanosFromAPI(),
+        this.loadUnidadesMedidaFromAPI()
+      ])
     },
 
     generateOrderCode() {
@@ -422,9 +332,6 @@ export default {
       switch (this.currentStep) {
         case 2:
           this.loadPlanoData()
-          break
-        case 4:
-          this.loadHerramientasSugeridas()
           break
         case 5:
           this.loadMaterialesSugeridos()
@@ -446,8 +353,7 @@ export default {
 
     loadPlanoData() {
       if (this.selectedPlano) {
-        // Simular carga de herramientas y materiales del plano
-        this.loadHerramientasSugeridas()
+        // Simular carga de materiales del plano
         this.loadMaterialesSugeridos()
       }
     },
@@ -467,29 +373,6 @@ export default {
     },
 
     // === Métodos del Paso 4: Herramientas ===
-    loadHerramientasSugeridas() {
-      // Simular carga de herramientas sugeridas del plano
-      if (this.selectedPlano) {
-        this.herramientasSugeridas = [
-          {
-            id: 1,
-            nombre: 'Torno CNC Haas ST-10',
-            estado: 'disponible',
-            cantidad_sugerida: 1,
-            cantidad_solicitada: 1,
-            fecha_devolucion: null
-          },
-          {
-            id: 2,
-            nombre: 'Fresadora Vertical Bridgeport',
-            estado: 'disponible',
-            cantidad_sugerida: 1,
-            cantidad_solicitada: 1,
-            fecha_devolucion: null
-          }
-        ]
-      }
-    },
 
     addHerramientaAdicional() {
       this.formData.herramientas_adicionales.push({
@@ -515,39 +398,32 @@ export default {
 
     // === Métodos del Paso 5: Materiales ===
     loadMaterialesSugeridos() {
-      // Simular carga de materiales sugeridos del plano
-      if (this.selectedPlano) {
-        this.materialesSugeridos = [
-          {
-            id: 1,
-            nombre: 'Acero AISI 1045',
-            cantidad_sugerida: 50,
-            cantidad_solicitada: 50,
-            stock_actual: 500,
-            stock_suficiente: true,
-            unidad_medida: 'kg',
-            unidad_medida_id: 1,
-            tipo_stock_destino: 'interno',
-            desperdicio_estimado: 5,
-            costo_unitario: 2.50
-          },
-          {
-            id: 2,
-            nombre: 'Aluminio 6061-T6',
-            cantidad_sugerida: 20,
-            cantidad_solicitada: 20,
-            stock_actual: 15,
-            stock_suficiente: false,
-            unidad_medida: 'kg',
-            unidad_medida_id: 1,
-            tipo_stock_destino: 'interno',
-            desperdicio_estimado: 3,
-            costo_unitario: 3.80
-          }
-        ]
-
-        this.checkStockAlerts()
+      // Si no hay plano seleccionado o no hay materiales cargados, no hacer nada
+      if (!this.selectedPlano || this.todosMaterialesOptions.length === 0) {
+        return;
       }
+
+      // Usar los dos primeros materiales de la lista como sugeridos (simulación)
+      // En un sistema real, estos vendrían de la relación plano-materiales
+      const materialesSugeridos = this.todosMaterialesOptions.slice(0, 2).map((material, index) => {
+        const cantidad = index === 0 ? 50 : 20;
+        return {
+          id: material.id,
+          nombre: material.nombre,
+          cantidad_sugerida: cantidad,
+          cantidad_solicitada: cantidad,
+          stock_actual: parseFloat(material.stock_total) || 0,
+          stock_suficiente: (parseFloat(material.stock_total) || 0) >= cantidad,
+          unidad_medida: this.getUnidadMedida(material.unidad_base_id),
+          unidad_medida_id: material.unidad_base_id,
+          tipo_stock_destino: 'interno',
+          desperdicio_estimado: index === 0 ? 5 : 3,
+          costo_unitario: parseFloat(material.costo_unitario) || 0
+        };
+      });
+
+      this.materialesSugeridos = materialesSugeridos;
+      this.checkStockAlerts();
     },
 
     addMaterialAdicional() {
@@ -691,7 +567,8 @@ export default {
       this.lastSaved = new Date()
     },
 
-    loadDraftFromStorage() {
+    /**
+     *     loadDraftFromStorage() {
       const savedDraft = localStorage.getItem('workOrderWizardDraft')
       if (savedDraft) {
         try {
@@ -711,6 +588,8 @@ export default {
         }
       }
     },
+     */
+
 
     saveAsDraft() {
       this.autoSaveToStorage()
@@ -789,6 +668,266 @@ export default {
       setTimeout(() => {
         this.resetWizard()
       }, 300)
+    },
+
+    // === Métodos de carga de datos desde API ===
+    async loadHerramientasFromAPI() {
+      try {
+        const response = await api.get('/Herramienta')
+        this.todasHerramientasOptions = response.map(herramienta => ({
+          id: herramienta.id,
+          nombre: herramienta.nombre,
+          modelo: herramienta.modelo,
+          fabricante: herramienta.fabricante,
+          numero_serie: herramienta.numero_serie,
+          codigo_inventario: herramienta.codigo_inventario,
+          estado: this.mapEstadoHerramienta(herramienta.estado_herramienta_id),
+          estado_id: herramienta.estado_herramienta_id,
+          vida_util_horas: parseFloat(herramienta.vida_util_horas) || 0,
+          horas_uso_actual: parseFloat(herramienta.horas_uso_actual) || 0,
+          zona_trabajo_id: herramienta.zonas_trabajo_id,
+          fecha_adquisicion: herramienta.fecha_adquisicion,
+          costo_adquisicion: parseFloat(herramienta.costo_adquisicion) || 0,
+          valor_actual: parseFloat(herramienta.valor_actual) || 0,
+          especificaciones_tecnicas: herramienta.especificaciones_tecnicas,
+          imagen_ruta: herramienta.imagen_ruta,
+          fecha_ultimo_mantenimiento: herramienta.fecha_ultimo_mantenimiento,
+          fecha_proximo_mantenimiento: herramienta.fecha_proximo_mantenimiento,
+          notas: herramienta.notas,
+          // Campos calculados útiles
+          porcentaje_uso: herramienta.vida_util_horas > 0
+            ? Math.round((herramienta.horas_uso_actual / herramienta.vida_util_horas) * 100)
+            : 0,
+          disponible_para_uso: this.isHerramientaDisponible(herramienta.estado_herramienta_id),
+          requiere_mantenimiento: this.requiresMantenimiento(herramienta.fecha_proximo_mantenimiento)
+        }))
+      } catch (error) {
+        console.error('Error al cargar herramientas:', error)
+        this.showValidationError('Error al cargar las herramientas disponibles')
+        // Mantener array vacío como fallback
+        this.todasHerramientasOptions = []
+      }
+    },
+
+    mapEstadoHerramienta(estadoId) {
+      // Mapear estado_herramienta_id a texto legible
+      const estados = {
+        1: 'disponible',
+        2: 'en_uso',
+        3: 'mantenimiento',
+        4: 'reservada',
+        5: 'fuera_servicio'
+      }
+      return estados[estadoId] || 'desconocido'
+    },
+
+    isHerramientaDisponible(estadoId) {
+      // Solo disponible si el estado es 'disponible' (id: 1)
+      return estadoId === 1
+    },
+
+    requiresMantenimiento(fechaProximoMantenimiento) {
+      if (!fechaProximoMantenimiento) return false
+
+      const hoy = new Date()
+      const fechaMantenimiento = new Date(fechaProximoMantenimiento)
+      const diasHastaMantenimiento = Math.ceil((fechaMantenimiento - hoy) / (1000 * 60 * 60 * 24))
+
+      // Requiere mantenimiento si faltan menos de 30 días o ya pasó la fecha
+      return diasHastaMantenimiento <= 30
+    },
+
+    // === Métodos para cargar materias primas desde API ===
+    async loadMateriasPrimasFromAPI() {
+      try {
+        const response = await api.get('/MateriaPrima')
+        this.todosMaterialesOptions = response.map(materiaPrima => ({
+          id: materiaPrima.id,
+          codigo: materiaPrima.codigo,
+          nombre: materiaPrima.nombre,
+          descripcion: materiaPrima.descripcion,
+          tipo_materia_prima_id: materiaPrima.tipo_materia_prima_id,
+          unidad_base_id: materiaPrima.unidad_base_id,
+          stock_minimo: parseFloat(materiaPrima.stock_minimo) || 0,
+          stock_maximo: parseFloat(materiaPrima.stock_maximo) || 0,
+          unidades_completas: parseFloat(materiaPrima.unidades_completas) || 0,
+          fracciones: parseFloat(materiaPrima.fracciones) || 0,
+          stock_total: parseFloat(materiaPrima.stock_total) || 0,
+          fraccion_unidad_id: materiaPrima.fraccion_unidad_id,
+          permite_fraccion: materiaPrima.permite_fraccion,
+          pertenece_a_stock_id: materiaPrima.pertenece_a_stock_id,
+          costo_unitario: parseFloat(materiaPrima.costo_unitario) || 0,
+          proveedor_principal: materiaPrima.proveedor_principal,
+          tiempo_reposicion: parseInt(materiaPrima.tiempo_reposicion) || 0,
+          es_controlado: materiaPrima.es_controlado,
+          // Campos calculados
+          stock_suficiente: parseFloat(materiaPrima.stock_total) > parseFloat(materiaPrima.stock_minimo),
+          necesita_reposicion: parseFloat(materiaPrima.stock_total) <= parseFloat(materiaPrima.stock_minimo)
+        }))
+
+        // Si ya estamos en el paso de materiales, recargar los materiales sugeridos
+        if (this.currentStep === 5) {
+          this.loadMaterialesSugeridos()
+        }
+      } catch (error) {
+        console.error('Error al cargar materias primas:', error)
+        this.showValidationError('Error al cargar las materias primas disponibles')
+        // Mantener array vacío como fallback
+        this.todosMaterialesOptions = []
+      }
+    },
+
+    getUnidadMedida(unidadId) {
+      const unidad = this.unidadesMedidaOptions.find(u => u.id === parseInt(unidadId))
+      return unidad ? unidad.nombre : 'unidad'
+    },
+
+    // === Métodos para cargar tipos de pedido desde API ===
+    async loadTiposPedidoFromAPI() {
+      try {
+        const response = await api.get('/Tipo_Pedido')
+        this.tiposPedidoOptions = response.map(tipo => ({
+          id: tipo.id,
+          nombre: tipo.nombre,
+          descripcion: tipo.descripcion,
+          requiere_aprobacion: tipo.requiere_aprobacion,
+          // Campos adicionales para lógica del componente
+          es_interno: tipo.nombre.toLowerCase().includes('interno'),
+          es_externo: tipo.nombre.toLowerCase().includes('externo'),
+          es_urgente: tipo.nombre.toLowerCase().includes('urgente'),
+          es_practicas: tipo.nombre.toLowerCase().includes('práctica') || tipo.nombre.toLowerCase().includes('estudiante')
+        }))
+      } catch (error) {
+        console.error('Error al cargar tipos de pedido:', error)
+        this.showValidationError('Error al cargar los tipos de pedido disponibles')
+        // Fallback con datos básicos
+        this.tiposPedidoOptions = [
+          { id: 1, nombre: 'Interno', descripcion: 'Pedido interno', requiere_aprobacion: false },
+          { id: 2, nombre: 'Externo', descripcion: 'Pedido externo', requiere_aprobacion: true }
+        ]
+      }
+    },
+
+    // === Métodos para cargar planos desde API ===
+    async loadPlanosFromAPI() {
+      try {
+        const response = await api.get('/plano')
+        this.planosOptions = response
+          .filter(plano => plano.estado === 'aprobado') // Solo mostrar planos aprobados
+          .map(plano => ({
+            id: parseInt(plano.id),
+            nombre: plano.nombre,
+            descripcion: plano.descripcion,
+            version: plano.version,
+            notas: plano.notas,
+            tipo_pedidos_id: parseInt(plano.tipo_pedidos_id),
+            creado_por: plano.creado_por,
+            estado: plano.estado,
+            archivo_ruta: plano.archivo_ruta,
+            timestamp: plano.timestamp,
+            // Campos calculados para compatibilidad
+            codigo: this.generatePlanoCode(plano),
+            costo_estimado: this.estimatePlanoCost(plano),
+            // Campos adicionales útiles
+            version_display: `v${plano.version}`,
+            es_aprobado: plano.estado === 'aprobado',
+            tiene_archivo: plano.archivo_ruta && plano.archivo_ruta.trim() !== '',
+            extension_archivo: this.getFileExtension(plano.archivo_ruta)
+          }))
+
+        // Ordenar por nombre para mejor UX
+        this.planosOptions.sort((a, b) => a.nombre.localeCompare(b.nombre))
+        
+      } catch (error) {
+        console.error('Error al cargar planos:', error)
+        this.showValidationError('Error al cargar los planos disponibles')
+        // Fallback con datos básicos
+        this.planosOptions = [
+          {
+            id: 1,
+            nombre: 'Plano Básico',
+            descripcion: 'Plano por defecto',
+            version: '1.0',
+            estado: 'aprobado',
+            codigo: 'PLN-001',
+            costo_estimado: 5000
+          }
+        ]
+      }
+    },
+
+    // Métodos auxiliares para planos
+    generatePlanoCode(plano) {
+      // Generar código basado en el ID y versión
+      const id = String(plano.id).padStart(3, '0')
+      const versionClean = plano.version.replace(/[^\d.]/g, '')
+      return `PLN-${id}-v${versionClean}`
+    },
+
+    estimatePlanoCost(plano) {
+      // Estimación básica de costo basada en el tipo de pedido
+      const baseCosts = {
+        1: 8000,   // Proyecto Interno
+        2: 15000,  // Proyecto Externo  
+        3: 5000,   // Prácticas Estudiantes
+        4: 12000,  // Reparación Urgente
+        5: 7000    // Pruebas Calidad
+      }
+      
+      const tipoCosto = baseCosts[parseInt(plano.tipo_pedidos_id)] || 8000
+      
+      // Ajuste por versión (versiones más altas = más refinadas = más costosas)
+      const versionMultiplier = Math.max(1, parseFloat(plano.version) || 1)
+      
+      return Math.round(tipoCosto * versionMultiplier)
+    },
+
+    getFileExtension(filePath) {
+      if (!filePath) return ''
+      const parts = filePath.split('.')
+      return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
+    },
+
+    // === Métodos para cargar unidades de medida desde API ===
+    async loadUnidadesMedidaFromAPI() {
+      try {
+        const response = await api.get('/Unidad_Medida')
+        this.unidadesMedidaOptions = response.map(unidad => ({
+          id: unidad.id,
+          nombre: unidad.nombre,
+          abreviatura: unidad.abreviatura,
+          tipo: unidad.tipo,
+          // Campos adicionales útiles
+          nombre_completo: `${unidad.nombre} (${unidad.abreviatura})`,
+          es_longitud: unidad.tipo === 'longitud',
+          es_peso: unidad.tipo === 'peso',
+          es_volumen: unidad.tipo === 'volumen',
+          es_cantidad: unidad.tipo === 'cantidad'
+        }))
+
+        // Ordenar por tipo y luego por nombre
+        this.unidadesMedidaOptions.sort((a, b) => {
+          if (a.tipo === b.tipo) {
+            return a.nombre.localeCompare(b.nombre)
+          }
+          return a.tipo.localeCompare(b.tipo)
+        })
+
+        // Si ya estamos en el paso de materiales, recargar los materiales sugeridos
+        if (this.currentStep === 5) {
+          this.loadMaterialesSugeridos()
+        }
+      } catch (error) {
+        console.error('Error al cargar unidades de medida:', error)
+        this.showValidationError('Error al cargar las unidades de medida disponibles')
+        // Fallback con unidades básicas
+        this.unidadesMedidaOptions = [
+          { id: 1, nombre: 'Metro', abreviatura: 'm', tipo: 'longitud' },
+          { id: 2, nombre: 'Kilogramo', abreviatura: 'kg', tipo: 'peso' },
+          { id: 3, nombre: 'Litro', abreviatura: 'L', tipo: 'volumen' },
+          { id: 4, nombre: 'Unidad', abreviatura: 'u', tipo: 'cantidad' }
+        ]
+      }
     },
 
     resetWizard() {
