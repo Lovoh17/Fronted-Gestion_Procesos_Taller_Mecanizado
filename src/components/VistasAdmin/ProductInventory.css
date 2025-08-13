@@ -345,3 +345,67 @@
     font-size: 0.85rem;
   }
 }
+
+/* ======= ESTILOS PARA MOVIMIENTOS DE INVENTARIO ======= */
+
+/* Badges para tipos de movimiento */
+.movement-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.movement-entry {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.movement-exit {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.movement-adjustment {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.movement-transfer {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Clases para colores de cantidad */
+.text-success {
+  color: #28a745 !important;
+  font-weight: 600;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+  font-weight: 600;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+  font-weight: 600;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+  font-weight: 600;
+}
+
+/* Responsive para movimientos */
+@media (max-width: 768px) {
+  .movement-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+}

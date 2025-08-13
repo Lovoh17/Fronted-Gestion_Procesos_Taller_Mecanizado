@@ -8,6 +8,10 @@ export default {
   },
   data() {
     return {
+      // Control de vistas
+      currentView: 'Inventory', // 'Inventory' para inventario, 'InventoryMovements' para movimientos
+      
+      // Datos del inventario
       products: [],
       materialTypes: [], // Tipos de materia prima desde la API
       searchQuery: '',
@@ -18,6 +22,10 @@ export default {
       itemsPerPage: 25,
       loading: false,
       error: null,
+      
+      // Datos de movimientos
+      movements: [],
+      loadingMovements: false,
 
       // Modal de detalles del producto
       showProductModal: false,
@@ -171,6 +179,130 @@ export default {
           width: '80px',
           thClass: 'text-center',
           tdClass: 'text-center'
+        }
+      ],
+      
+      // Configuración de columnas para tabla de movimientos
+      movementsColumns: [
+        {
+          label: 'ID',
+          field: 'id',
+          type: 'string',
+          sortable: true,
+          width: '60px'
+        },
+        {
+          label: 'Fecha',
+          field: 'fecha_movimiento_formatted',
+          type: 'string',
+          sortable: true,
+          width: '130px',
+          sortFn: (x, y, col, rowX, rowY) => {
+            // Ordenar por la fecha original
+            return new Date(rowX.fecha_movimiento) - new Date(rowY.fecha_movimiento)
+          }
+        },
+        {
+          label: 'Material ID',
+          field: 'material_id',
+          type: 'string',
+          sortable: true,
+          width: '100px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por material'
+          }
+        },
+        {
+          label: 'Tipo Movimiento',
+          field: 'tipo_movimiento',
+          type: 'string',
+          sortable: true,
+          width: '130px',
+          filterOptions: {
+            enabled: true,
+            filterDropdownItems: [
+              { value: 'Entrada', text: 'Entrada' },
+              { value: 'Salida', text: 'Salida' }
+            ],
+            filterMultiselect: false,
+            placeholder: 'Todos'
+          }
+        },
+        {
+          label: 'Cantidad',
+          field: 'cantidad_display',
+          type: 'string',
+          sortable: true,
+          width: '100px',
+          sortFn: (x, y, col, rowX, rowY) => {
+            return Number(rowX.cantidad) - Number(rowY.cantidad)
+          }
+        },
+        {
+          label: 'Unidad',
+          field: 'unidad_medida_display',
+          type: 'string',
+          sortable: true,
+          width: '80px'
+        },
+        {
+          label: 'Origen',
+          field: 'origen_stock_id',
+          type: 'string',
+          sortable: true,
+          width: '80px'
+        },
+        {
+          label: 'Destino',
+          field: 'destino_stock_id',
+          type: 'string',
+          sortable: true,
+          width: '80px'
+        },
+        {
+          label: 'Motivo',
+          field: 'motivo',
+          type: 'string',
+          sortable: true,
+          width: '200px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por motivo'
+          }
+        },
+        {
+          label: 'Documento',
+          field: 'documento_referencia',
+          type: 'string',
+          sortable: true,
+          width: '150px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por documento'
+          }
+        },
+        {
+          label: 'Usuario ID',
+          field: 'usuario_id',
+          type: 'string',
+          sortable: true,
+          width: '100px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por usuario'
+          }
+        },
+        {
+          label: 'Pedido ID',
+          field: 'pedido_id',
+          type: 'string',
+          sortable: true,
+          width: '100px',
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por pedido'
+          }
         }
       ]
     }
@@ -616,6 +748,167 @@ export default {
         console.warn('⚠️', message)
       } else {
         console.info('ℹ️', message)
+      }
+    },
+    
+    // =========== MÉTODOS DE CAMBIO DE VISTA ===========
+    
+    // Cambiar entre vista de inventario y movimientos
+    switchView(view) {
+      console.log(`Cambiando vista a: ${view}`)
+      this.currentView = view
+      
+      // Cargar datos según la vista seleccionada
+      if (view === 'InventoryMovements' && this.movements.length === 0) {
+        this.fetchMovements()
+      }
+    },
+    
+    // =========== MÉTODOS DE MOVIMIENTOS ===========
+    
+    // Cargar movimientos de inventario
+    async fetchMovements() {
+      this.loadingMovements = true
+      try {
+        // Llamada real a la API para obtener movimientos de inventario
+        const rawMovements = await api.get('/Historial_Movimiento_Stock')
+        
+        // Procesar los datos para agregar campos calculados para la tabla
+        this.movements = rawMovements.map(movement => {
+          return {
+            ...movement,
+            // Campo calculado para mostrar cantidad con unidad
+            cantidad_display: `${movement.cantidad} ${this.getUnitName(movement.unidad_medida_id)}`,
+            // Campo calculado para mostrar unidad de medida
+            unidad_medida_display: this.getUnitName(movement.unidad_medida_id),
+            // Formatear fecha para mejor visualización
+            fecha_movimiento_formatted: new Date(movement.fecha_movimiento).toLocaleString('es-ES')
+          }
+        })
+        
+        console.log('Movimientos cargados:', this.movements.length)
+      } catch (error) {
+        console.error('Error al cargar movimientos:', error)
+        this.showToast('Error al cargar movimientos', 'error')
+      } finally {
+        this.loadingMovements = false
+      }
+    },
+    
+    // Generar datos mock para movimientos (temporal)
+    async generateMockMovements() {
+      // Simular delay de API
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      const mockMovements = [
+        {
+          id: 1,
+          fecha_movimiento: '2024-01-15 10:30:00',
+          codigo_producto: 'ACE001',
+          nombre_producto: 'Acero Inoxidable 316L',
+          tipo_movimiento: 'entrada',
+          tipo_movimiento_display: 'Entrada',
+          cantidad: 50,
+          cantidad_display: '50 kg',
+          stock_anterior: 100,
+          stock_actual: 150,
+          motivo: 'Compra a proveedor',
+          usuario: 'admin@empresa.com'
+        },
+        {
+          id: 2,
+          fecha_movimiento: '2024-01-15 14:20:00',
+          codigo_producto: 'ACE001',
+          nombre_producto: 'Acero Inoxidable 316L',
+          tipo_movimiento: 'salida',
+          tipo_movimiento_display: 'Salida',
+          cantidad: 25,
+          cantidad_display: '25 kg',
+          stock_anterior: 150,
+          stock_actual: 125,
+          motivo: 'Uso en producción - Orden #1001',
+          usuario: 'operador@empresa.com'
+        },
+        {
+          id: 3,
+          fecha_movimiento: '2024-01-16 09:15:00',
+          codigo_producto: 'ALU002',
+          nombre_producto: 'Aluminio 6061-T6',
+          tipo_movimiento: 'entrada',
+          tipo_movimiento_display: 'Entrada',
+          cantidad: 75,
+          cantidad_display: '75 m',
+          stock_anterior: 200,
+          stock_actual: 275,
+          motivo: 'Reposición de stock',
+          usuario: 'admin@empresa.com'
+        },
+        {
+          id: 4,
+          fecha_movimiento: '2024-01-16 16:45:00',
+          codigo_producto: 'LAT003',
+          nombre_producto: 'Latón C360',
+          tipo_movimiento: 'ajuste',
+          tipo_movimiento_display: 'Ajuste',
+          cantidad: -5,
+          cantidad_display: '-5 kg',
+          stock_anterior: 80,
+          stock_actual: 75,
+          motivo: 'Ajuste por inventario físico',
+          usuario: 'supervisor@empresa.com'
+        },
+        {
+          id: 5,
+          fecha_movimiento: '2024-01-17 11:30:00',
+          codigo_producto: 'HIE004',
+          nombre_producto: 'Hierro Fundido',
+          tipo_movimiento: 'transferencia',
+          tipo_movimiento_display: 'Transferencia',
+          cantidad: 30,
+          cantidad_display: '30 kg',
+          stock_anterior: 120,
+          stock_actual: 90,
+          motivo: 'Transferencia a almacén secundario',
+          usuario: 'almacenista@empresa.com'
+        }
+      ]
+      
+      return mockMovements
+    },
+    
+    // Formatear tipo de movimiento para mostrar
+    getMovementTypeDisplay(type) {
+      const types = {
+        'entrada': 'Entrada',
+        'salida': 'Salida',
+        'ajuste': 'Ajuste',
+        'transferencia': 'Transferencia'
+      }
+      return types[type] || type
+    },
+    
+    // Obtener clase CSS para el tipo de movimiento
+    getMovementTypeClass(type) {
+      const classes = {
+        'entrada': 'movement-entry',
+        'salida': 'movement-exit'
+      }
+      return classes[type] || 'movement-entry' // Por defecto entrada
+    },
+    
+    // Exportar movimientos a CSV
+    exportMovementsToCSV() {
+      try {
+        if (this.$refs.vueGoodTableMovements) {
+          const fileName = `movimientos_inventario_${new Date().toISOString().split('T')[0]}.csv`
+          this.$refs.vueGoodTableMovements.exportCsv(fileName)
+          this.showToast('Movimientos exportados exitosamente', 'success')
+        } else {
+          this.showToast('Error al exportar: tabla de movimientos no encontrada', 'error')
+        }
+      } catch (error) {
+        console.error('Error exportando movimientos:', error)
+        this.showToast('Error al exportar movimientos', 'error')
       }
     }
   }
