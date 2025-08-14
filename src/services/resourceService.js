@@ -1,79 +1,78 @@
 import { apiUtils } from './config.js';
+import { mockResourceService } from '../mock/rolesData.js';
+import { mockConfig } from '../config/mockConfig.js';
+
+// Flag para determinar si usar datos mock
+const USE_MOCK_DATA = mockConfig.USE_MOCK_DATA && mockConfig.services.resources;
 
 /**
- * Servicio de gestión de recursos - Operaciones CRUD básicas
+ * Servicio de gestión de recursos auxiliares - Solo operaciones de lectura
  */
 export const resourceService = {
-  // ==================== ROLES ====================
   /**
-   * Obtener todos los roles
-   * @returns {Promise<Object>} - Lista de roles
+   * Obtener todos los elementos de un endpoint
+   * @param {string} endpoint - Endpoint de la API
+   * @param {Object} filters - Filtros opcionales
+   * @returns {Promise<Object>} - Lista de elementos
    */
-  async getAllRoles() {
-    return await apiUtils.get('/api/Puesto');
+  async getAll(endpoint, filters = {}) {
+    return await apiUtils.get(`/api/${endpoint}`, filters);
   },
 
   /**
-   * Obtener rol por ID
-   * @param {number|string} id - ID del rol
-   * @returns {Promise<Object>} - Datos del rol
+   * Obtener un elemento por ID de un endpoint
+   * @param {string} endpoint - Endpoint de la API
+   * @param {number|string} id - ID del elemento
+   * @returns {Promise<Object>} - Datos del elemento
    */
-  async getRoleById(id) {
-    return await apiUtils.get(`/api/Puesto/${id}`);
+  async getById(endpoint, id) {
+    return await apiUtils.get(`/api/${endpoint}/${id}`);
   },
 
-  // ==================== ESTADOS DE USUARIO ====================
-  /**
-   * Obtener todos los estados de usuario
-   * @returns {Promise<Object>} - Lista de estados
-   */
-  async getAllUserStates() {
-    return await apiUtils.get('/api/EstadoUsuario');
+  // Métodos convenientes para endpoints comunes
+  async getRoles(filters = {}) {
+    if (USE_MOCK_DATA) {
+      return await mockResourceService.getRoles();
+    }
+    return this.getAll('Puesto', filters);
   },
 
-  /**
-   * Obtener estado por ID
-   * @param {number|string} id - ID del estado
-   * @returns {Promise<Object>} - Datos del estado
-   */
-  async getUserStateById(id) {
-    return await apiUtils.get(`/api/EstadoUsuario/${id}`);
+  async getUserStates(filters = {}) {
+    if (USE_MOCK_DATA) {
+      return await mockResourceService.getUserStates();
+    }
+    return this.getAll('EstadoUsuario', filters);
   },
 
-  // ==================== TURNOS ====================
-  /**
-   * Obtener todos los turnos
-   * @returns {Promise<Object>} - Lista de turnos
-   */
-  async getAllTurnos() {
-    return await apiUtils.get('/api/Turno');
+  async getTurnos(filters = {}) {
+    if (USE_MOCK_DATA) {
+      return await mockResourceService.getTurnos();
+    }
+    return this.getAll('Turno', filters);
   },
 
-  /**
-   * Obtener turno por ID
-   * @param {number|string} id - ID del turno
-   * @returns {Promise<Object>} - Datos del turno
-   */
-  async getTurnoById(id) {
-    return await apiUtils.get(`/api/Turno/${id}`);
+  async getZonasTrabajo(filters = {}) {
+    if (USE_MOCK_DATA) {
+      return await mockResourceService.getZonasTrabajo();
+    }
+    return this.getAll('ZonaTrabajo', filters);
   },
 
-  // ==================== ZONAS DE TRABAJO ====================
-  /**
-   * Obtener todas las zonas de trabajo
-   * @returns {Promise<Object>} - Lista de zonas
-   */
-  async getAllZonasTrabajo() {
-    return await apiUtils.get('/api/ZonaTrabajo');
+  // Alias para compatibilidad con componentes existentes
+  async getAllRoles(filters = {}) {
+    return this.getRoles(filters);
   },
 
-  /**
-   * Obtener zona por ID
-   * @param {number|string} id - ID de la zona
-   * @returns {Promise<Object>} - Datos de la zona
-   */
-  async getZonaTrabajoById(id) {
-    return await apiUtils.get(`/api/ZonaTrabajo/${id}`);
+  async getAllUserStates(filters = {}) {
+    return this.getUserStates(filters);
+  },
+
+  async getAllTurnos(filters = {}) {
+    return this.getTurnos(filters);
+  },
+
+  async getAllZonasTrabajo(filters = {}) {
+    return this.getZonasTrabajo(filters);
   }
 };
 

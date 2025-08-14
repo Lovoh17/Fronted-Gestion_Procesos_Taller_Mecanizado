@@ -181,5 +181,119 @@ export const apiUtils = {
   }
 };
 
+/**
+ * Maneja errores de servicios de forma consistente
+ * @param {Error} error - Error capturado
+ * @param {string} operation - Nombre de la operación que falló
+ * @returns {Object} - Información del error formateada
+ */
+export const handleServiceError = (error, operation = 'operación') => {
+  let message = `Error al ${operation}`;
+  let statusCode = null;
+  let errorData = null;
+
+  if (error.response) {
+    // Error de respuesta del servidor
+    statusCode = error.response.status;
+    errorData = error.response.data;
+    
+    if (errorData && errorData.message) {
+      message = errorData.message;
+    } else if (errorData && errorData.error) {
+      message = errorData.error;
+    } else {
+      switch (statusCode) {
+        case 400:
+          message = `Solicitud inválida al ${operation}`;
+          break;
+        case 401:
+          message = 'No autorizado para realizar esta operación';
+          break;
+        case 403:
+          message = 'No tienes permisos para realizar esta operación';
+          break;
+        case 404:
+          message = 'Recurso no encontrado';
+          break;
+        case 409:
+          message = 'Conflicto: el recurso ya existe o hay datos duplicados';
+          break;
+        case 422:
+          message = 'Datos de entrada inválidos';
+          break;
+        case 500:
+          message = 'Error interno del servidor';
+          break;
+        default:
+          message = `Error del servidor (${statusCode}) al ${operation}`;
+      }
+    }
+  } else if (error.request) {
+    // Error de red
+    message = 'Error de conexión con el servidor. Verifica tu conexión a internet.';
+  } else {
+    // Error de configuración u otro
+    message = error.message || `Error desconocido al ${operation}`;
+  }
+
+  return {
+    message,
+    statusCode,
+    errorData,
+    originalError: error
+  };
+};
+
+/**
+ * Valida la respuesta de un servicio
+ * @param {Object} response - Respuesta del servicio
+ * @param {string} defaultErrorMessage - Mensaje de error por defecto
+ * @returns {Object} - { isValid, data, message }
+ */
+export const validateServiceResponse = (response, defaultErrorMessage = 'Error en la respuesta del servicio') => {
+  // Verificar si la respuesta existe
+  if (!response) {
+    return {
+      isValid: false,
+      data: null,
+      message: 'No se recibió respuesta del servidor'
+    };
+  }
+
+  // Verificar si la respuesta indica éxito
+  if (response.success === false) {
+    return {
+      isValid: false,
+      data: null,
+      message: response.message || defaultErrorMessage
+    };
+  }
+
+  // Si la respuesta tiene success: true
+  if (response.success === true) {
+    return {
+      isValid: true,
+      data: response.data,
+      message: response.message || 'Operación exitosa'
+    };
+  }
+
+  // Para respuestas que no tienen el campo success pero tienen datos
+  if (response.data !== undefined) {
+    return {
+      isValid: true,
+      data: response.data,
+      message: response.message || 'Operación exitosa'
+    };
+  }
+
+  // Si llegamos aquí, la respuesta no tiene el formato esperado
+  return {
+    isValid: false,
+    data: null,
+    message: defaultErrorMessage
+  };
+};
+
 export default apiClient;
 export { API_CONFIG };
