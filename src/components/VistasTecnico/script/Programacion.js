@@ -1,7 +1,13 @@
 import axios from 'axios'
+import ProgramacionFullCalendarComponent from '../ProgramacionFullCalendarComponent.vue'
+import MaintenanceDetailsModal from '../MaintenanceDetailsModal.vue'
 
 export default {
   name: 'MaintenanceCalendar',
+  components: {
+    ProgramacionFullCalendarComponent,
+    MaintenanceDetailsModal
+  },
   data() {
     return {
       currentDate: new Date(),
@@ -33,6 +39,9 @@ export default {
         current.setDate(current.getDate() + 1);
       }
       return days;
+    },
+    showModal() {
+      return !!this.selectedMaintenance;
     }
   },
   async mounted() {
@@ -179,6 +188,13 @@ export default {
     },
     closeModal() {
       this.selectedMaintenance = null;
+    },
+    
+    editMaintenance(maintenance) {
+      console.log('Editar mantenimiento:', maintenance);
+      // Aquí se puede agregar la lógica para navegar a la página de edición
+      // o abrir un modal de edición
+      // this.$router.push(`/mantenimiento/editar/${maintenance.id}`)
     },
     getStatusCount(status) {
       return this.maintenances.filter(m => {
