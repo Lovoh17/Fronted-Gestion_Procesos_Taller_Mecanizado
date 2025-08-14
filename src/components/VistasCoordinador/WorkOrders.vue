@@ -145,6 +145,11 @@
                   <span class="text-xs font-medium">{{ props.row.progress }}%</span>
                 </div>
               </span>
+              
+              <!-- Columna de Costo Estimado -->
+              <span v-else-if="props.column.field === 'costo_estimado'">
+                {{ formatCurrency(props.row.costo_estimado) }}
+              </span>
 
               <!-- Columna de Acciones -->
               <span v-else-if="props.column.field === 'actions'">
@@ -153,7 +158,7 @@
                     class="mr-1"></va-button>
                   <va-button size="small" preset="plain" color="warning" @click="editOrder(props.row)" icon="edit"
                     class="mr-1"></va-button>
-                  <va-button v-if="props.row.status !== 'completed'" size="small" preset="plain" color="success"
+                  <va-button v-if="props.row.status !== 'completado'" size="small" preset="plain" color="success"
                     @click="completeOrder(props.row)" icon="check_circle" class="mr-1"></va-button>
                   <va-button size="small" preset="plain" color="danger" @click="deleteOrder(props.row.id)"
                     icon="delete"></va-button>

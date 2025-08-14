@@ -8,13 +8,13 @@
             <i class="fas fa-tools"></i>
           </div>
           <div class="header-text">
-            <h1 class="header-title">Gestión de Producción</h1>
-            <p class="header-subtitle">Administra y controla los procesos productivos</p>
+            <h1 class="header-title">Gestión de Mantenimiento</h1>
+            <p class="header-subtitle">Administra y controla el mantenimiento de herramientas</p>
           </div>
         </div>
         <div class="header-actions">
           <va-button color="#003366" @click="openCreateModal = true" icon="add">
-            Nuevo Pedido
+            Nuevo Mantenimiento
           </va-button>
         </div>
       </div>
@@ -41,7 +41,7 @@
         </div>
 
         <div v-else>
-          <vue-good-table ref="vueGoodTable" :fixedHeader="true" :columns="tableColumns" max-height="45vh"
+          <vue-good-table ref="vueGoodTable" :columns="tableColumns" max-height="45vh"
             :rows="mantenimientos" :search-options="{
               enabled: true,
               placeholder: 'Buscar mantenimientos por nombre, herramienta o tipo...',
@@ -73,15 +73,37 @@
               </span>
 
               <!-- Columna de Herramienta -->
-              <span v-else-if="props.column.field === 'herramienta_id'">
-                {{ getHerramientaName(props.row.herramienta_id) }}
+              <span v-else-if="props.column.field === 'herramienta_nombre'">
+                {{ props.row.herramienta_nombre }}
               </span>
 
               <!-- Columna de Tipo de Mantenimiento -->
-              <span v-else-if="props.column.field === 'tipo_mantenimiento_id'">
+              <span v-else-if="props.column.field === 'tipo_mantenimiento_nombre'">
                 <span :class="['badge', tipoMantenimientoClass(props.row.tipo_mantenimiento_id)]">
-                  {{ getTipoMantenimientoName(props.row.tipo_mantenimiento_id) }}
+                  {{ props.row.tipo_mantenimiento_nombre }}
                 </span>
+              </span>
+              
+              <!-- Columna de Técnico -->
+              <span v-else-if="props.column.field === 'tecnico_nombre'">
+                {{ props.row.tecnico_nombre }}
+              </span>
+              
+              <!-- Columna de Prioridad -->
+              <span v-else-if="props.column.field === 'prioridad_nombre'">
+                <span :class="['badge', prioridadClass(props.row.prioridad_id)]">
+                  {{ props.row.prioridad_nombre }}
+                </span>
+              </span>
+              
+              <!-- Columna de Costo Estimado -->
+              <span v-else-if="props.column.field === 'costo_estimado'">
+                {{ formatCurrency(props.row.costo_estimado) }}
+              </span>
+              
+              <!-- Columna de Horas -->
+              <span v-else-if="props.column.field === 'horas_trabajo'">
+                {{ props.row.horas_trabajo ? props.row.horas_trabajo + 'h' : 'N/A' }}
               </span>
 
               <!-- Columna de Fecha Programada -->

@@ -39,7 +39,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ stats.prestamos }}</div>
-          <div class="stat-label">Préstamos</div>
+          <div class="stat-label">Entradas</div>
         </div>
       </div>
       <div class="stat-card">
@@ -53,20 +53,20 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon warning">
-          <i class="fas fa-clock"></i>
+          <i class="fas fa-exchange-alt"></i>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ stats.activos }}</div>
-          <div class="stat-label">Activos</div>
+          <div class="stat-label">Transferencias</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon danger">
-          <i class="fas fa-exclamation-triangle"></i>
+          <i class="fas fa-tools"></i>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ stats.vencidos }}</div>
-          <div class="stat-label">Vencidos</div>
+          <div class="stat-label">Ajustes</div>
         </div>
       </div>
       <div class="stat-card cost-stat">
@@ -74,9 +74,9 @@
           <i class="fas fa-calculator"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ stats.totalHoras }}h</div>
-          <div class="stat-sublabel">S/ {{ stats.totalCosto }}</div>
-          <div class="stat-label">Horas / Costo Total</div>
+          <div class="stat-number">{{ stats.totalHoras }}</div>
+          <div class="stat-sublabel">{{ stats.totalCosto }}</div>
+          <div class="stat-label">Entrada / Salida</div>
         </div>
       </div>
     </div>
@@ -84,7 +84,7 @@
     <!-- Controles de tabla -->
     <div class="table-controls">
       <div class="search-box">
-        <input type="text" v-model="searchTerm" placeholder="Buscar movimientos por herramienta, usuario o proyecto..."
+        <input type="text" v-model="searchTerm" placeholder="Buscar movimientos por material, usuario o pedido..."
           class="search-input" />
         <i class="fas fa-search search-icon"></i>
       </div>
@@ -171,84 +171,68 @@
                 </span>
               </div>
               <div class="detail-item">
-                <label>Estado:</label>
-                <span :class="getStatusBadgeClass(selectedMovimiento.estado)">
-                  {{ selectedMovimiento.estado }}
-                </span>
+                <label>Motivo:</label>
+                <span>{{ selectedMovimiento.motivo }}</span>
               </div>
               <div class="detail-item">
-                <label>Departamento:</label>
-                <span>{{ selectedMovimiento.departamento }}</span>
+                <label>Documento:</label>
+                <span>{{ selectedMovimiento.documentoReferencia }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Herramienta -->
+          <!-- Material y Cantidad -->
           <div class="detail-section">
-            <h4><i class="fas fa-tools"></i> Herramienta</h4>
+            <h4><i class="fas fa-cube"></i> Material y Cantidad</h4>
             <div class="detail-grid">
               <div class="detail-item full-width">
-                <label>Nombre:</label>
-                <span>{{ selectedMovimiento.herramienta }}</span>
+                <label>Material:</label>
+                <span>{{ selectedMovimiento.materialNombre }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Cantidad:</label>
+                <span>{{ selectedMovimiento.cantidad }} {{ selectedMovimiento.unidadNombre }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Usuario y Proyecto -->
+          <!-- Stock Origen y Destino -->
           <div class="detail-section">
-            <h4><i class="fas fa-user"></i> Usuario y Proyecto</h4>
+            <h4><i class="fas fa-warehouse"></i> Movimiento de Stock</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Origen:</label>
+                <span>{{ selectedMovimiento.origenNombre }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Destino:</label>
+                <span>{{ selectedMovimiento.destinoNombre }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Usuario y Pedido -->
+          <div class="detail-section">
+            <h4><i class="fas fa-user"></i> Usuario y Pedido</h4>
             <div class="detail-grid">
               <div class="detail-item">
                 <label>Usuario:</label>
-                <span>{{ selectedMovimiento.usuario }}</span>
+                <span>{{ selectedMovimiento.usuarioNombre }}</span>
               </div>
-              <div class="detail-item full-width">
-                <label>Proyecto:</label>
-                <span>{{ selectedMovimiento.proyecto }}</span>
+              <div class="detail-item">
+                <label>Pedido:</label>
+                <span>{{ selectedMovimiento.pedidoCodigo }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Fechas y Tiempos -->
+          <!-- Fechas -->
           <div class="detail-section">
-            <h4><i class="fas fa-calendar"></i> Fechas y Tiempos</h4>
+            <h4><i class="fas fa-calendar"></i> Información de Fecha</h4>
             <div class="detail-grid">
-              <div class="detail-item">
+              <div class="detail-item full-width">
                 <label>Fecha Movimiento:</label>
                 <span>{{ formatDateTime(selectedMovimiento.fechaMovimiento) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Fecha Devolución:</label>
-                <span v-if="selectedMovimiento.fechaDevolucion">
-                  {{ formatDateTime(selectedMovimiento.fechaDevolucion) }}
-                </span>
-                <span v-else class="fecha-pendiente">Pendiente</span>
-              </div>
-              <div class="detail-item">
-                <label>Duración:</label>
-                <span>{{ calcularDuracionPrestamo(selectedMovimiento.fechaMovimiento,
-                  selectedMovimiento.fechaDevolucion)
-                  }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Horas de Uso:</label>
-                <span class="hours-badge">{{ selectedMovimiento.horasUso }}h</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Costos -->
-          <div class="detail-section">
-            <h4><i class="fas fa-dollar-sign"></i> Información de Costos</h4>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Costo Total:</label>
-                <span class="currency">{{ formatCurrency(selectedMovimiento.costo) }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Costo por Hora:</label>
-                <span class="currency">{{ formatCurrency(selectedMovimiento.costo / selectedMovimiento.horasUso)
-                  }}</span>
               </div>
             </div>
           </div>
@@ -258,25 +242,6 @@
             <h4><i class="fas fa-comment"></i> Observaciones</h4>
             <div class="detail-content">
               <p>{{ selectedMovimiento.observaciones }}</p>
-            </div>
-          </div>
-
-          <!-- Aprobación -->
-          <div class="detail-section">
-            <h4><i class="fas fa-check"></i> Aprobación</h4>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <label>Aprobado por:</label>
-                <span>{{ selectedMovimiento.aprobadoPor }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ubicación Origen:</label>
-                <span>{{ selectedMovimiento.ubicacionOrigen }}</span>
-              </div>
-              <div class="detail-item">
-                <label>Ubicación Destino:</label>
-                <span>{{ selectedMovimiento.ubicacionDestino }}</span>
-              </div>
             </div>
           </div>
         </div>

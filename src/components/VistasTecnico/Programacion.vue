@@ -82,8 +82,8 @@
                   class="maintenance-item"
                 >
                   <div class="maintenance-content">
-                    <div :class="['priority-dot', `priority-${getPriorityClass(maintenance.prioridad)}`]"></div>
-                    <span class="maintenance-title">{{ maintenance.descripcion || maintenance.tipo_mantenimiento || 'Sin descripción' }}</span>
+                    <div :class="['priority-dot', `priority-${getPriorityClass(maintenance.prioridad_id)}`]"></div>
+                    <span class="maintenance-title">{{ maintenance.nombre || maintenance.descripcion_problema || getTipoMantenimientoNombre(maintenance.tipo_mantenimiento_id) }}</span>
                   </div>
                 </div>
                 <div v-if="getMaintenancesForDate(day).length > 2" class="more-items">
@@ -150,8 +150,8 @@
               class="upcoming-item"
             >
               <div class="upcoming-header">
-                <div :class="['priority-dot', `priority-${getPriorityClass(maintenance.prioridad)}`]"></div>
-                <span class="upcoming-title">{{ maintenance.descripcion || maintenance.tipo_mantenimiento || 'Sin descripción' }}</span>
+                <div :class="['priority-dot', `priority-${getPriorityClass(maintenance.prioridad_id)}`]"></div>
+                <span class="upcoming-title">{{ maintenance.nombre || maintenance.descripcion_problema || getTipoMantenimientoNombre(maintenance.tipo_mantenimiento_id) }}</span>
               </div>
               <div class="upcoming-date">
                 <i class="material-icons">event</i>
@@ -180,10 +180,10 @@
 
         <div class="modal-body">
           <div class="detail-section">
-            <h4>{{ selectedMaintenance.descripcion || selectedMaintenance.tipo_mantenimiento || 'Mantenimiento' }}</h4>
+            <h4>{{ selectedMaintenance.nombre || selectedMaintenance.descripcion_problema || getTipoMantenimientoNombre(selectedMaintenance.tipo_mantenimiento_id) }}</h4>
             <div class="priority-badge">
-              <div :class="['priority-dot', `priority-${getPriorityClass(selectedMaintenance.prioridad)}`]"></div>
-              <span>{{ formatPriority(selectedMaintenance.prioridad) }} prioridad</span>
+              <div :class="['priority-dot', `priority-${getPriorityClass(selectedMaintenance.prioridad_id)}`]"></div>
+              <span>{{ formatPriority(selectedMaintenance.prioridad_id) }} prioridad</span>
             </div>
           </div>
 
@@ -203,30 +203,46 @@
               </div>
               <p>{{ formatDate(selectedMaintenance.fecha_programada) }}</p>
             </div>
+
+            <div class="detail-item" v-if="selectedMaintenance.fecha_inicio">
+              <div class="detail-label">
+                <i class="material-icons">play_arrow</i>
+                Fecha de Inicio
+              </div>
+              <p>{{ formatDate(selectedMaintenance.fecha_inicio) }}</p>
+            </div>
+
+            <div class="detail-item" v-if="selectedMaintenance.fecha_fin">
+              <div class="detail-label">
+                <i class="material-icons">stop</i>
+                Fecha de Finalización
+              </div>
+              <p>{{ formatDate(selectedMaintenance.fecha_fin) }}</p>
+            </div>
           </div>
 
-          <div class="detail-item" v-if="selectedMaintenance.tecnico_asignado">
+          <div class="detail-item" v-if="selectedMaintenance.tecnico_asignado_id">
             <div class="detail-label">
               <i class="material-icons">person</i>
-              Técnico Asignado
+              Técnico Asignado ID
             </div>
-            <p>{{ selectedMaintenance.tecnico_asignado }}</p>
+            <p>{{ selectedMaintenance.tecnico_asignado_id }}</p>
           </div>
 
-          <div class="detail-item" v-if="selectedMaintenance.equipo">
+          <div class="detail-item">
             <div class="detail-label">
               <i class="material-icons">build</i>
-              Equipo
+              Herramienta
             </div>
-            <p>{{ selectedMaintenance.equipo }}</p>
+            <p>{{ getHerramientaNombre(selectedMaintenance.herramienta_id) }}</p>
           </div>
 
-          <div class="detail-item" v-if="selectedMaintenance.tipo_mantenimiento">
+          <div class="detail-item">
             <div class="detail-label">
               <i class="material-icons">settings</i>
               Tipo de Mantenimiento
             </div>
-            <p>{{ selectedMaintenance.tipo_mantenimiento }}</p>
+            <p>{{ getTipoMantenimientoNombre(selectedMaintenance.tipo_mantenimiento_id) }}</p>
           </div>
 
           <div class="detail-item">
@@ -234,17 +250,51 @@
               <i class="material-icons">info</i>
               Estado
             </div>
-            <span :class="['status-badge', `status-${getStatusClass(selectedMaintenance.estado)}`]">
-              {{ formatStatus(selectedMaintenance.estado) }}
+            <span :class="['status-badge', `status-${getStatusClass(selectedMaintenance.estado_id)}`]">
+              {{ formatStatus(selectedMaintenance.estado_id) }}
             </span>
           </div>
 
-          <div class="detail-item" v-if="selectedMaintenance.observaciones">
+          <div class="detail-item" v-if="selectedMaintenance.costo_estimado">
             <div class="detail-label">
-              <i class="material-icons">notes</i>
-              Observaciones
+              <i class="material-icons">attach_money</i>
+              Costo Estimado
             </div>
-            <p>{{ selectedMaintenance.observaciones }}</p>
+            <p>${{ selectedMaintenance.costo_estimado }}</p>
+          </div>
+
+          <div class="detail-item" v-if="selectedMaintenance.costo_real">
+            <div class="detail-label">
+              <i class="material-icons">money_off</i>
+              Costo Real
+            </div>
+            <p>${{ selectedMaintenance.costo_real }}</p>
+          </div>
+
+          <div class="detail-item" v-if="selectedMaintenance.horas_trabajo">
+            <div class="detail-label">
+              <i class="material-icons">access_time</i>
+              Horas de Trabajo
+            </div>
+            <p>{{ selectedMaintenance.horas_trabajo }} horas</p>
+          </div>
+
+          <div class="detail-item" v-if="selectedMaintenance.acciones_realizadas">
+            <div class="detail-label">
+              <i class="material-icons">done_all</i>
+              Acciones Realizadas
+            </div>
+            <p>{{ selectedMaintenance.acciones_realizadas }}</p>
+          </div>
+
+          <div class="detail-item" v-if="selectedMaintenance.repuestos_utilizados && selectedMaintenance.repuestos_utilizados.length > 0">
+            <div class="detail-label">
+              <i class="material-icons">construction</i>
+              Repuestos Utilizados
+            </div>
+            <ul>
+              <li v-for="repuesto in selectedMaintenance.repuestos_utilizados" :key="repuesto">{{ repuesto }}</li>
+            </ul>
           </div>
 
           <!-- Mostrar todos los campos adicionales -->

@@ -56,31 +56,34 @@ export default {
       // Configuración de columnas para vue-good-table-next
       tableColumns: [
         {
-          label: 'ID',
-          field: 'id',
+          label: 'Código',
+          field: 'codigo_pedido',
           type: 'string',
           sortable: true,
-          width: '120px'
-        },
-        {
-          label: 'Cliente',
-          field: 'client_name',
-          type: 'string',
-          sortable: true,
+          width: '140px',
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por cliente'
+            placeholder: 'Filtrar por código'
           }
         },
         {
-          label: 'Descripción',
-          field: 'description',
+          label: 'Proyecto',
+          field: 'proyecto_asociado',
           type: 'string',
           sortable: true,
-          width: '250px',
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por descripción'
+            placeholder: 'Filtrar por proyecto'
+          }
+        },
+        {
+          label: 'Tipo',
+          field: 'tipo_pedido_nombre',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por tipo'
           }
         },
         {
@@ -91,11 +94,12 @@ export default {
           filterOptions: {
             enabled: true,
             filterDropdownItems: [
-              { value: 'pending', text: 'Pendiente' },
-              { value: 'in_progress', text: 'En Progreso' },
-              { value: 'completed', text: 'Completada' },
-              { value: 'delayed', text: 'Retrasada' },
-              { value: 'cancelled', text: 'Cancelada' }
+              { value: 'pendiente', text: 'Pendiente' },
+              { value: 'aprobado', text: 'Aprobado' },
+              { value: 'en_proceso', text: 'En Proceso' },
+              { value: 'pausado', text: 'Pausado' },
+              { value: 'completado', text: 'Completado' },
+              { value: 'cancelado', text: 'Cancelado' }
             ],
             filterMultiselect: false,
             placeholder: 'Todos los estados'
@@ -109,27 +113,26 @@ export default {
           filterOptions: {
             enabled: true,
             filterDropdownItems: [
-              { value: 'low', text: 'Baja' },
-              { value: 'medium', text: 'Media' },
-              { value: 'high', text: 'Alta' },
-              { value: 'urgent', text: 'Urgente' }
+              { value: 'alta', text: 'Alta' },
+              { value: 'media', text: 'Media' },
+              { value: 'baja', text: 'Baja' }
             ],
             filterMultiselect: false,
             placeholder: 'Todas las prioridades'
           }
         },
         {
-          label: 'Asignado a',
-          field: 'assigned_to_name',
+          label: 'Supervisor',
+          field: 'supervisor_nombre',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por asignado'
+            placeholder: 'Filtrar por supervisor'
           }
         },
         {
-          label: 'F. Inicio',
+          label: 'F. Solicitud',
           field: 'start_date',
           type: 'date',
           dateInputFormat: 'yyyy-MM-dd',
@@ -137,12 +140,19 @@ export default {
           sortable: true
         },
         {
-          label: 'F. Fin',
+          label: 'F. Requerida',
           field: 'end_date',
           type: 'date',
           dateInputFormat: 'yyyy-MM-dd',
           dateOutputFormat: 'dd/MM/yyyy',
           sortable: true
+        },
+        {
+          label: 'Costo Est.',
+          field: 'costo_estimado',
+          type: 'number',
+          sortable: true,
+          width: '120px'
         },
         {
           label: 'Progreso',
@@ -171,20 +181,21 @@ export default {
         // Filtro por prioridad
         const matchesPriority = this.priorityFilter === 'all' || order.priority === this.priorityFilter;
         
-        // Filtro por cliente
+        // Filtro por proyecto
         const matchesClient = this.clientFilter === 'all' || 
-          order.client_name.toLowerCase().includes(this.clientFilter.toLowerCase());
+          (order.proyecto_asociado && order.proyecto_asociado.toLowerCase().includes(this.clientFilter.toLowerCase()));
           
-        // Filtro por asignado
+        // Filtro por supervisor
         const matchesAssigned = this.assignedToFilter === 'all' || 
-          order.assigned_to_name.toLowerCase().includes(this.assignedToFilter.toLowerCase());
+          (order.supervisor_nombre && order.supervisor_nombre.toLowerCase().includes(this.assignedToFilter.toLowerCase()));
         
         // Filtro por búsqueda
         const matchesSearch = this.searchQuery === '' ||
-          order.description.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.client_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.id.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          order.assigned_to_name.toLowerCase().includes(this.searchQuery.toLowerCase());
+          (order.codigo_pedido && order.codigo_pedido.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (order.proyecto_asociado && order.proyecto_asociado.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (order.tipo_pedido_nombre && order.tipo_pedido_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (order.supervisor_nombre && order.supervisor_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (order.notas && order.notas.toLowerCase().includes(this.searchQuery.toLowerCase()));
           
         // Filtro por fecha
         const matchesDate = (!this.dateRange.start || new Date(order.start_date) >= new Date(this.dateRange.start)) &&
@@ -200,19 +211,19 @@ export default {
     },
     
     pendingOrders() {
-      return this.orders.filter(order => order.status === 'pending').length;
+      return this.orders.filter(order => order.status === 'pendiente').length;
     },
     
     inProgressOrders() {
-      return this.orders.filter(order => order.status === 'in_progress').length;
+      return this.orders.filter(order => order.status === 'en_proceso' || order.status === 'aprobado').length;
     },
     
     completedOrders() {
-      return this.orders.filter(order => order.status === 'completed').length;
+      return this.orders.filter(order => order.status === 'completado').length;
     },
     
     delayedOrders() {
-      return this.orders.filter(order => order.status === 'delayed').length;
+      return this.orders.filter(order => order.status === 'pausado').length;
     },
     
     // Contadores de filtros activos
@@ -245,104 +256,110 @@ export default {
       try {
         this.loading = true;
         
-        // Simulamos datos realistas de órdenes de trabajo
-        // En producción, esto vendría de una API
-        this.orders = this.generateMockOrders();
+        // Cargar datos desde la API
+        const response = await axios.get('/api/Pedido');
+        const rawOrders = response.data;
         
-        // Si tienes una API real, descomenta esto:
-        // const response = await axios.get('/api/work-orders');
-        // this.orders = response.data;
+        // Transformar datos de la API al formato esperado por la tabla
+        this.orders = await Promise.all(rawOrders.map(async (order) => {
+          return {
+            ...order,
+            // Mapear campos para la tabla
+            status: this.mapEstadoIdToStatus(order.estado_id),
+            priority: this.mapPrioridadToString(order.prioridad),
+            start_date: order.fecha_solicitud ? order.fecha_solicitud.split('T')[0] : null,
+            end_date: order.fecha_requerida,
+            progress: this.calculateProgress(order),
+            // Resolver nombres desde IDs
+            tipo_pedido_nombre: await this.resolveTipoPedido(order.tipo_pedido_id),
+            supervisor_nombre: await this.resolveUsuario(order.supervisor_id),
+            // Formatear costos
+            costo_estimado: parseFloat(order.costo_estimado) || 0,
+            costo_real: parseFloat(order.costo_real) || 0,
+            precio_final: parseFloat(order.precio_final) || 0
+          };
+        }));
         
       } catch (error) {
-        console.error('Error cargando órdenes de trabajo:', error);
         this.showToast('Error al cargar órdenes de trabajo', 'error');
       } finally {
         this.loading = false;
       }
     },
     
-    // Genera datos mock para demostración
-    generateMockOrders() {
-      const statuses = ['pending', 'in_progress', 'completed', 'delayed', 'cancelled'];
-      const priorities = ['low', 'medium', 'high', 'urgent'];
-      const clients = ['Empresa ABC SA', 'Industrias XYZ', 'Manufacturas DEF', 'Compañía GHI', 'Corporación JKL'];
-      const technicians = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Martín', 'Luis Rodríguez', 'Sofia Torres'];
-      const workTypes = [
-        'Mantenimiento preventivo de maquinaria',
-        'Reparación de sistema hidráulico',
-        'Instalación de equipo nuevo',
-        'Calibración de instrumentos',
-        'Soldadura especializada',
-        'Inspección de calidad',
-        'Modificación de pieza',
-        'Actualización de software',
-        'Limpieza y lubricación',
-        'Reemplazo de componentes'
-      ];
-      
-      const orders = [];
-      
-      for (let i = 1; i <= 40; i++) {
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - Math.floor(Math.random() * 60));
-        
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + Math.floor(Math.random() * 21) + 1);
-        
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const priority = priorities[Math.floor(Math.random() * priorities.length)];
-        
-        // Calcular progreso basado en el estado
-        let progress = 0;
-        switch (status) {
-          case 'pending':
-            progress = 0;
-            break;
-          case 'in_progress':
-            progress = Math.floor(Math.random() * 80) + 10;
-            break;
-          case 'completed':
-            progress = 100;
-            break;
-          case 'delayed':
-            progress = Math.floor(Math.random() * 70) + 10;
-            break;
-          case 'cancelled':
-            progress = Math.floor(Math.random() * 50);
-            break;
-        }
-        
-        orders.push({
-          id: `OT-${new Date().getFullYear()}-${String(i).padStart(3, '0')}`,
-          client_name: clients[Math.floor(Math.random() * clients.length)],
-          description: workTypes[Math.floor(Math.random() * workTypes.length)],
-          status: status,
-          priority: priority,
-          assigned_to_name: technicians[Math.floor(Math.random() * technicians.length)],
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          progress: progress,
-          estimated_hours: Math.floor(Math.random() * 40) + 8,
-          materials_cost: Math.floor(Math.random() * 5000) + 500,
-          labor_cost: Math.floor(Math.random() * 3000) + 800,
-          notes: this.generateOrderNotes(status),
-          createdAt: startDate.toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      }
-      
-      return orders;
+    // Métodos de mapeo y resolución de datos
+    mapEstadoIdToStatus(estadoId) {
+      const estadoMap = {
+        1: 'pendiente',
+        2: 'aprobado', 
+        3: 'en_proceso',
+        4: 'pausado',
+        5: 'completado',
+        6: 'cancelado'
+      };
+      return estadoMap[estadoId] || 'pendiente';
     },
     
-    generateOrderNotes(status) {
-      const notes = {
-        pending: ['Orden recibida, esperando asignación', 'Materiales en proceso de compra', 'Pendiente de aprobación del cliente'],
-        in_progress: ['Trabajo en desarrollo según cronograma', 'Se requiere material adicional', 'Avanza según lo planificado'],
-        completed: ['Trabajo completado exitosamente', 'Cliente satisfecho con el resultado', 'Entregado dentro del plazo'],
-        delayed: ['Retraso por falta de materiales', 'Complicaciones técnicas imprevistas', 'Esperando repuestos'],
-        cancelled: ['Cancelado por el cliente', 'Cambio en los requerimientos', 'Problemas de presupuesto']
+    mapPrioridadToString(prioridad) {
+      const prioridadMap = {
+        1: 'alta',
+        2: 'media', 
+        3: 'baja'
       };
-      return notes[status][Math.floor(Math.random() * notes[status].length)];
+      return prioridadMap[prioridad] || 'media';
+    },
+    
+    calculateProgress(order) {
+      // Calcular progreso basado en el estado y fechas
+      if (order.estado_id === 5) return 100; // Completado
+      if (order.estado_id === 6) return 0;   // Cancelado
+      if (order.estado_id === 1) return 0;   // Pendiente
+      
+      // Para estados en progreso, calcular basado en fechas
+      if (order.fecha_solicitud && order.fecha_requerida) {
+        const inicio = new Date(order.fecha_solicitud);
+        const fin = new Date(order.fecha_requerida);
+        const ahora = new Date();
+        
+        if (ahora < inicio) return 0;
+        if (ahora > fin) return 100;
+        
+        const totalTime = fin - inicio;
+        const elapsedTime = ahora - inicio;
+        return Math.min(Math.round((elapsedTime / totalTime) * 100), 95);
+      }
+      
+      // Progreso por defecto según estado
+      const defaultProgress = {
+        2: 25,  // Aprobado
+        3: 50,  // En proceso
+        4: 30   // Pausado
+      };
+      
+      return defaultProgress[order.estado_id] || 0;
+    },
+    
+    async resolveTipoPedido(tipoId) {
+      const tipos = {
+        1: 'Suministros',
+        2: 'Equipamiento', 
+        3: 'Servicios',
+        4: 'Mantenimiento',
+        5: 'Reparación'
+      };
+      return tipos[tipoId] || `Tipo ${tipoId}`;
+    },
+    
+    async resolveUsuario(usuarioId) {
+      if (!usuarioId) return 'Sin asignar';
+      
+      try {
+        const response = await axios.get(`/api/Usuario/${usuarioId}`);
+        const usuario = response.data;
+        return `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || `Usuario ${usuarioId}`;
+      } catch (error) {
+        return `Usuario ${usuarioId}`;
+      }
     },
     
     // Métodos de UI
@@ -378,22 +395,40 @@ export default {
       // Implementar lógica de edición
     },
     
-    completeOrder(order) {
+    async completeOrder(order) {
       if (confirm('¿Está seguro de marcar esta orden como completada?')) {
-        const index = this.orders.findIndex(o => o.id === order.id);
-        if (index !== -1) {
-          this.orders[index].status = 'completed';
-          this.orders[index].progress = 100;
+        try {
+          // Actualizar en la API
+          await axios.patch(`/api/Pedido/${order.id}`, {
+            estado_id: 5, // Estado completado
+            fecha_completado: new Date().toISOString()
+          });
+          
+          // Actualizar localmente
+          const index = this.orders.findIndex(o => o.id === order.id);
+          if (index !== -1) {
+            this.orders[index].status = 'completado';
+            this.orders[index].estado_id = 5;
+            this.orders[index].progress = 100;
+            this.orders[index].fecha_completado = new Date().toISOString();
+          }
+          
           this.showToast('Orden marcada como completada', 'success');
+        } catch (error) {
+          this.showToast('Error al completar la orden', 'error');
         }
       }
     },
     
-    deleteOrder(orderId) {
+    async deleteOrder(orderId) {
       if (confirm('¿Está seguro de que desea eliminar esta orden de trabajo?')) {
         try {
           this.loadingDelete = orderId;
           
+          // Eliminar en la API
+          await axios.delete(`/api/Pedido/${orderId}`);
+          
+          // Eliminar localmente
           this.orders = this.orders.filter(o => o.id !== orderId);
           this.showToast('Orden eliminada correctamente', 'success');
         } catch (error) {
@@ -407,41 +442,41 @@ export default {
     // Métodos de formato
     formatStatus(status) {
       const statuses = {
-        'pending': 'Pendiente',
-        'in_progress': 'En Progreso',
-        'completed': 'Completada',
-        'delayed': 'Retrasada',
-        'cancelled': 'Cancelada'
+        'pendiente': 'Pendiente',
+        'aprobado': 'Aprobado',
+        'en_proceso': 'En Proceso',
+        'pausado': 'Pausado',
+        'completado': 'Completado',
+        'cancelado': 'Cancelado'
       };
       return statuses[status] || status;
     },
     
     statusClass(status) {
       return {
-        'pending': 'badge-warning',
-        'in_progress': 'badge-info',
-        'completed': 'badge-success',
-        'delayed': 'badge-danger',
-        'cancelled': 'badge-secondary'
+        'pendiente': 'badge-warning',
+        'aprobado': 'badge-info',
+        'en_proceso': 'badge-primary',
+        'pausado': 'badge-danger',
+        'completado': 'badge-success',
+        'cancelado': 'badge-secondary'
       }[status] || 'badge-light';
     },
     
     formatPriority(priority) {
       const priorities = {
-        'low': 'Baja',
-        'medium': 'Media',
-        'high': 'Alta',
-        'urgent': 'Urgente'
+        'baja': 'Baja',
+        'media': 'Media', 
+        'alta': 'Alta'
       };
       return priorities[priority] || priority;
     },
     
     priorityClass(priority) {
       return {
-        'low': 'badge-secondary',
-        'medium': 'badge-info',
-        'high': 'badge-warning',
-        'urgent': 'badge-danger'
+        'baja': 'badge-secondary',
+        'media': 'badge-info',
+        'alta': 'badge-danger'
       }[priority] || 'badge-light';
     },
     
@@ -475,14 +510,12 @@ export default {
           this.showToast('Error al exportar: tabla no encontrada', 'error');
         }
       } catch (error) {
-        console.error('Error exportando CSV:', error);
         this.showToast('Error al exportar tabla', 'error');
       }
     },
     
     // Helper para mostrar notificaciones
     showToast(message, type = 'success') {
-      console.log(`${type.toUpperCase()}: ${message}`);
       // Aquí puedes integrar tu sistema de notificaciones
       alert(`${type.toUpperCase()}: ${message}`);
     },
@@ -493,14 +526,12 @@ export default {
     openNewOrderModal() {
       this.resetNewOrder();
       this.showNewOrderModal = true;
-      console.log('Abriendo modal de nueva orden');
     },
     
     // Cerrar modal de nueva orden
     closeNewOrderModal() {
       this.showNewOrderModal = false;
       this.resetNewOrder();
-      console.log('Cerrando modal de nueva orden');
     },
     
     // Resetear los datos del nuevo pedido
@@ -534,7 +565,6 @@ export default {
     // Guardar nueva orden
     async saveNewOrder(orderData) {
       try {
-        console.log('Guardando nueva orden:', orderData);
         
         // Crear nueva orden con datos del modal
         const newWorkOrder = {
@@ -576,7 +606,6 @@ export default {
         this.showToast('Orden de trabajo creada exitosamente', 'success');
         
       } catch (error) {
-        console.error('Error al crear nueva orden:', error);
         this.showToast('Error al crear la orden de trabajo', 'error');
       }
     },
@@ -607,19 +636,16 @@ export default {
     // Abrir el wizard modal
     openWizardModal() {
       this.showWizardModal = true;
-      console.log('Abriendo Wizard Modal de nueva orden');
     },
     
     // Cerrar el wizard modal
     onWizardClose() {
       this.showWizardModal = false;
-      console.log('Cerrando Wizard Modal');
     },
     
     // Manejar el guardado desde el wizard
     async onOrderSave(orderData) {
       try {
-        console.log('Guardando orden desde wizard:', orderData);
         
         // Mapear los datos del wizard al formato de la tabla
         const newWorkOrder = {
@@ -667,14 +693,12 @@ export default {
         }
         
       } catch (error) {
-        console.error('Error al crear orden desde wizard:', error);
         this.showToast('Error al crear la orden de trabajo', 'error');
       }
     },
     
     // Manejar el guardado de borrador
     onDraftSaved(draftData) {
-      console.log('Borrador guardado:', draftData);
       this.showToast('Borrador guardado exitosamente', 'info');
     },
     
