@@ -1,0 +1,191 @@
+/* Estilos específicos para el modal de Vuestic */
+.maintenance-details {
+  max-width: 100%;
+}
+
+.maintenance-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  font-size: 1.5rem;
+  color: var(--va-primary);
+}
+
+.header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.maintenance-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  line-height: 1.4;
+}
+
+.priority-badge {
+  align-self: flex-start;
+}
+
+/* Layout para fechas */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+/* Footer de acciones */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Espaciado para chips */
+.ma-1 {
+  margin: 0.25rem;
+}
+
+/* Estilos para grid layout */
+.grid {
+  display: grid;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+/* Estilos para flexbox */
+.flex {
+  display: flex;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.space-x-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-left: 0.75rem;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+.min-w-0 {
+  min-width: 0px;
+}
+
+/* Estilos para padding y margin */
+.p-3 {
+  padding: 0.75rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.pb-3 {
+  padding-bottom: 0.75rem;
+}
+
+.pt-0 {
+  padding-top: 0;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+/* Estilos para background */
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+/* Estilos para border radius */
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+/* Estilos para texto */
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.text-gray-900 {
+  color: #111827;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+/* Estilos responsivos */
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .maintenance-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .header-info {
+    width: 100%;
+  }
+
+  .maintenance-title {
+    font-size: 1.125rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .maintenance-title {
+    font-size: 1rem;
+  }
+}

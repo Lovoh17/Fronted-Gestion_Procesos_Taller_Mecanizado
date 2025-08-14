@@ -553,46 +553,5 @@
 </template>
 
 <script src="./scripts/ControlCalidad.js"></script>
-<style scoped>
-.qc-stats {
-  margin-bottom: 2rem;
-  display: flex;
-  gap: 1rem;
-}
-
-.stat-card {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  height: 90%;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.qc-stats .va-col {
-  display: flex;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .stat-card {
-    min-height: 60px;
-  }
-}
-</style>
+<style src="src/assets/ControlCalidad.css"></style>
 <style src="src/assets/EstiloBase.css"></style>

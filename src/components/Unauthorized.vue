@@ -27,24 +27,6 @@
     </div>
   </template>
   
-  <script setup>
-  import { useRouter } from 'vue-router';
-  import { useAuthStore } from '@/stores/auth';
-  import { computed } from 'vue';
-  
-  const router = useRouter();
-  const authStore = useAuthStore();
-  
-  const showLogout = computed(() => !!authStore.user);
-  
-  const goBack = () => {
-    router.go(-1);
-  };
-  
-  const logout = () => {
-    authStore.logout();
-    router.push('/login');
-  };
-  </script>
+<script src="./scripts/Unauthorized.js"></script>
   
 <style scoped src="../assets/Unauthorized.css"></style>

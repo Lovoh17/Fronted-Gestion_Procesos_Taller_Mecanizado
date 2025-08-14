@@ -1,21 +1,9 @@
 <template>
-  <VaModal 
-    v-model="showModal"
-    :title="title"
-    :close-button="!loading"
-    :no-outside-dismiss="loading"
-    :no-escape-dismiss="loading"
-    size="small"
-    @close="cancel"
-  >
+  <VaModal v-model="showModal" :title="title" :close-button="!loading" :no-outside-dismiss="loading"
+    :no-escape-dismiss="loading" size="small" @close="cancel">
     <template #header>
       <div class="confirm-header">
-        <VaIcon 
-          name="warning" 
-          size="large"
-          color="warning"
-          class="confirm-icon"
-        />
+        <VaIcon name="warning" size="large" color="warning" class="confirm-icon" />
         <h3 class="confirm-title">{{ title }}</h3>
       </div>
     </template>
@@ -29,22 +17,11 @@
 
     <template #footer>
       <div class="confirm-actions">
-        <VaButton
-          preset="secondary"
-          @click="cancel"
-          :disabled="loading"
-          class="cancel-button"
-        >
+        <VaButton preset="secondary" @click="cancel" :disabled="loading" class="cancel-button">
           {{ cancelText }}
         </VaButton>
-        
-        <VaButton
-          color="danger"
-          @click="confirm"
-          :disabled="loading"
-          :loading="loading"
-          class="confirm-button"
-        >
+
+        <VaButton color="danger" @click="confirm" :disabled="loading" :loading="loading" class="confirm-button">
           {{ confirmText }}
         </VaButton>
       </div>
@@ -85,9 +62,9 @@ export default {
       default: false
     }
   },
-  
+
   emits: ['update:modelValue', 'confirm', 'cancel'],
-  
+
   computed: {
     showModal: {
       get() {

@@ -1,0 +1,57 @@
+/* Estilos para settings.vue */
+
+.configuracion-view {
+  padding: 20px;
+}
+
+.main-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-button.active {
+  border-bottom-color: #007bff;
+  color: #007bff;
+  font-weight: bold;
+}
+
+.sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.subtab-button {
+  padding: 8px 16px;
+  border: 1px solid #dee2e6;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.subtab-button.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.subtab-button:hover:not(.active) {
+  background: #e9ecef;
+}

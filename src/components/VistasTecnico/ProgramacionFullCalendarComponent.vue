@@ -72,6 +72,6 @@
   </div>
 </template>
 
-<script src="./ProgramacionFullCalendarComponent.js"></script>
+<script src="./script/ProgramacionFullCalendarComponent.js"></script>
 
-<style src="./ProgramacionFullCalendarComponent.css"></style>
+<style src="src/assets/ProgramacionFullCalendarComponent.css"></style>

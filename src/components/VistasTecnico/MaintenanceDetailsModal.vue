@@ -1,5 +1,5 @@
 <template>
-  <VaModal v-if="visible" :model-value="visible" title="Detalles del Mantenimientodasdsa" size="large"
+  <VaModal v-if="visible" :model-value="visible" title="Detalles del Mantenimiento" size="large"
     :close-button="true" hide-default-actions @close="closeModal">
 
     <!-- Información principal del mantenimiento -->
@@ -228,6 +228,5 @@
   </VaModal>
 </template>
 
-<script src="./MaintenanceDetailsModal.js"></script>
-
-<style scoped src="./MaintenanceDetailsModal.css"></style>
+<script src="./script/MaintenanceDetailsModal.js"></script>
+<style scoped src="../../assets/MaintenanceDetailsModal.css"></style>
