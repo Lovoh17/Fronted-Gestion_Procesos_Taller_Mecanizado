@@ -1,3 +1,4 @@
+import axios from 'axios'
 
 export default {
   name: 'UserModal',
@@ -21,7 +22,7 @@ export default {
         apellido: '',
         email: '',
         telefono: '',
-        puesto_id: 2, // Default: empleado
+        puesto_id: '', 
         password: '',
         confirmPassword: '',
         direccion: '',
@@ -32,7 +33,10 @@ export default {
       },
       errors: {},
       showPassword: false,
-      isPasswordModified: false
+      isPasswordModified: false,
+      puestoOptions: [],
+      turnoOptions: [],
+      loadingOptions: false
     }
   },
 
@@ -107,7 +111,7 @@ export default {
         direccion: this.form.direccion.trim(),
         estado_id: this.form.estado ? 1 : 0,
         habilidades_tecnicas: this.form.habilidades_tecnicas,
-        turno_id: this.form.turno_id,
+        turno_id: this.form.turno_id?.value !== undefined ? this.form.turno_id.value : this.form.turno_id,
         es_subcontratado: this.form.es_subcontratado
       };
       
@@ -191,13 +195,13 @@ export default {
         apellido: '',
         email: '',
         telefono: '',
-        puesto_id: 2,
+        puesto_id: '',
         password: '',
         confirmPassword: '',
         direccion: '',
-        estado: true,
+        estado: '',
         habilidades_tecnicas: '',
-        turno_id: null,
+        turno_id: '',
         es_subcontratado: false
       };
       this.errors = {};
@@ -205,8 +209,97 @@ export default {
       this.isPasswordModified = false;
     },
 
+    async loadPuestos() {
+      try {
+        const response = await axios.get('/api/puesto')
+        
+        if (response.data && response.data.success) {
+          this.puestoOptions = response.data.data?.map(puesto => ({
+            value: puesto.id,
+            text: puesto.nombre_puesto
+          })) || []
+        } else if (Array.isArray(response.data)) {
+          this.puestoOptions = response.data.map(puesto => ({
+            value: puesto.id,
+            text: puesto.nombre_puesto
+          }))
+        } else {
+          this.puestoOptions = []
+        }
+        
+        console.log(`✅ ${this.puestoOptions.length} puestos cargados`)
+      } catch (error) {
+        console.error('❌ Error cargando puestos:', error)
+        // Fallback con opciones estáticas
+        this.puestoOptions = [
+          { value: 1, text: 'Jefe de Taller' },
+          { value: 2, text: 'Supervisor Soldadura' },
+          { value: 3, text: 'Soldador Certificado' },
+          { value: 4, text: 'Ayudante Soldadura' },
+          { value: 5, text: 'Almacenista' }
+        ]
+      }
+    },
+
+    async loadTurnos() {
+      try {
+        const response = await axios.get('/api/turno')
+        
+        if (response.data && response.data.success) {
+          this.turnoOptions = [
+            { value: null, text: 'Sin turno asignado' },
+            ...(response.data.data?.map(turno => ({
+              value: turno.id,
+              text: `${turno.nombre} (${turno.hora_inicio} - ${turno.hora_fin})`
+            })) || [])
+          ]
+        } else if (Array.isArray(response.data)) {
+          this.turnoOptions = [
+            { value: null, text: 'Sin turno asignado' },
+            ...response.data.map(turno => ({
+              value: turno.id,
+              text: `${turno.nombre} (${turno.hora_inicio} - ${turno.hora_fin})`
+            }))
+          ]
+        } else {
+          this.turnoOptions = [{ value: null, text: 'Sin turno asignado' }]
+        }
+        
+        console.log(`✅ ${this.turnoOptions.length - 1} turnos cargados`)
+      } catch (error) {
+        console.error('❌ Error cargando turnos:', error)
+        // Fallback con opciones estáticas
+        this.turnoOptions = [
+          { value: null, text: 'Sin turno asignado' },
+          { value: 1, text: 'Matutino (08:00 - 16:00)' },
+          { value: 2, text: 'Vespertino (16:00 - 00:00)' },
+          { value: 3, text: 'Nocturno (00:00 - 08:00)' },
+          { value: 4, text: 'Fin de Semana (08:00 - 14:00)' },
+          { value: 5, text: 'Flexible (10:00 - 18:00)' }
+        ]
+      }
+    },
+
+    async loadOptions() {
+      this.loadingOptions = true
+      try {
+        await Promise.all([
+          this.loadPuestos(),
+          this.loadTurnos()
+        ])
+      } catch (error) {
+        console.error('❌ Error cargando opciones del modal:', error)
+      } finally {
+        this.loadingOptions = false
+      }
+    },
+
     closeModal() {
       this.$emit('close');
     }
+  },
+
+  async mounted() {
+    await this.loadOptions()
   }
 };

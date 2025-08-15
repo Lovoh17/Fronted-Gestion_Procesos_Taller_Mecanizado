@@ -85,48 +85,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script src="./scripts/RegisterForm.js"></script>
 
-const router = useRouter()
-
-const formData = ref({
-  name: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
-const isSubmitting = ref(false)
-const errorMessage = ref('')
-
-const handleSubmit = async () => {
-  // Validación de contraseñas
-  if (formData.value.password !== formData.value.confirmPassword) {
-    errorMessage.value = 'Las contraseñas no coinciden'
-    return
-  }
-  
-  // Validación de longitud mínima
-  if (formData.value.password.length < 6) {
-    errorMessage.value = 'La contraseña debe tener al menos 6 caracteres'
-    return
-  }
-
-  isSubmitting.value = true
-  errorMessage.value = ''
-  
-  try {
-    // Simulación de registro
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Redirección después de registro exitoso
-    router.push({ name: 'Login' })
-  } catch (error) {
-    errorMessage.value = error.response?.data?.message || 'Error al registrar. Por favor intenta nuevamente.'
-  } finally {
-    isSubmitting.value = false
-  }
-}
-</script>
+<style src="../assets/RegisterForm.css" scoped></style>

@@ -1,4 +1,5 @@
 import { VueGoodTable } from 'vue-good-table-next';
+import axios from 'axios';
 
 export default {
   name: 'HistorialMovimientosView',
@@ -17,6 +18,30 @@ export default {
           sortable: true
         },
         {
+          label: 'Material',
+          field: 'materialNombre',
+          type: 'text',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por material...'
+          }
+        },
+        {
+          label: 'Cantidad',
+          field: 'cantidad',
+          type: 'number',
+          sortable: true,
+          width: '100px'
+        },
+        {
+          label: 'Unidad',
+          field: 'unidadNombre',
+          type: 'text',
+          sortable: true,
+          width: '80px'
+        },
+        {
           label: 'Tipo Movimiento',
           field: 'tipoMovimiento',
           type: 'text',
@@ -24,58 +49,42 @@ export default {
           filterOptions: {
             enabled: true,
             filterDropdownItems: [
-              { value: 'Préstamo', text: 'Préstamo' },
-              { value: 'Devolución', text: 'Devolución' },
+              { value: 'Entrada', text: 'Entrada' },
+              { value: 'Salida', text: 'Salida' },
               { value: 'Transferencia', text: 'Transferencia' },
-              { value: 'Mantenimiento', text: 'Mantenimiento' },
-              { value: 'Reparación', text: 'Reparación' }
+              { value: 'Ajuste', text: 'Ajuste' },
+              { value: 'Devolución', text: 'Devolución' }
             ]
           }
         },
         {
-          label: 'Herramienta',
-          field: 'herramienta',
+          label: 'Stock Origen',
+          field: 'origenNombre',
           type: 'text',
           sortable: true,
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por herramienta...'
+            placeholder: 'Filtrar por origen...'
+          }
+        },
+        {
+          label: 'Stock Destino',
+          field: 'destinoNombre',
+          type: 'text',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por destino...'
           }
         },
         {
           label: 'Usuario',
-          field: 'usuario',
+          field: 'usuarioNombre',
           type: 'text',
           sortable: true,
           filterOptions: {
             enabled: true,
             placeholder: 'Filtrar por usuario...'
-          }
-        },
-        {
-          label: 'Departamento',
-          field: 'departamento',
-          type: 'text',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            filterDropdownItems: [
-              { value: 'Producción', text: 'Producción' },
-              { value: 'Mantenimiento', text: 'Mantenimiento' },
-              { value: 'Control de Calidad', text: 'Control de Calidad' },
-              { value: 'Ingeniería', text: 'Ingeniería' },
-              { value: 'Almacén', text: 'Almacén' }
-            ]
-          }
-        },
-        {
-          label: 'Proyecto',
-          field: 'proyecto',
-          type: 'text',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por proyecto...'
           }
         },
         {
@@ -90,43 +99,26 @@ export default {
           }
         },
         {
-          label: 'Fecha Devolución',
-          field: 'fechaDevolucion',
-          type: 'date',
-          dateInputFormat: 'yyyy-MM-dd HH:mm:ss',
-          dateOutputFormat: 'dd/MM/yyyy HH:mm',
-          sortable: true,
-          filterOptions: {
-            enabled: true
-          }
-        },
-        {
-          label: 'Estado',
-          field: 'estado',
+          label: 'Motivo',
+          field: 'motivo',
           type: 'text',
           sortable: true,
           filterOptions: {
             enabled: true,
-            filterDropdownItems: [
-              { value: 'Activo', text: 'Activo' },
-              { value: 'Completado', text: 'Completado' },
-              { value: 'Pendiente', text: 'Pendiente' },
-              { value: 'Vencido', text: 'Vencido' },
-              { value: 'Cancelado', text: 'Cancelado' }
-            ]
+            placeholder: 'Filtrar por motivo...'
           }
         },
         {
-          label: 'Horas Uso',
-          field: 'horasUso',
-          type: 'number',
+          label: 'Documento',
+          field: 'documentoReferencia',
+          type: 'text',
           sortable: true,
-          width: '100px'
+          width: '120px'
         },
         {
-          label: 'Costo',
-          field: 'costo',
-          type: 'number',
+          label: 'Pedido',
+          field: 'pedidoCodigo',
+          type: 'text',
           sortable: true,
           width: '120px'
         },
@@ -134,12 +126,19 @@ export default {
           label: 'Acciones',
           field: 'acciones',
           sortable: false,
-          width: '150px'
+          width: '100px'
         }
       ],
 
-      // Datos mock para demostración
-      movimientos: this.generateMockData(),
+      // Datos de la API
+      movimientos: [],
+      
+      // Cache para resolución de IDs
+      materialesCache: {},
+      unidadesMedidaCache: {},
+      tiposStockCache: {},
+      usuariosCache: {},
+      pedidosCache: {},
 
       // Configuración de filtros
       filtros: {
@@ -233,24 +232,29 @@ export default {
     // Estadísticas
     stats() {
       const total = this.movimientos.length;
-      const prestamos = this.movimientos.filter(m => m.tipoMovimiento === 'Préstamo').length;
+      const entradas = this.movimientos.filter(m => m.tipoMovimiento === 'Entrada').length;
+      const salidas = this.movimientos.filter(m => m.tipoMovimiento === 'Salida').length;
+      const transferencias = this.movimientos.filter(m => m.tipoMovimiento === 'Transferencia').length;
+      const ajustes = this.movimientos.filter(m => m.tipoMovimiento === 'Ajuste').length;
       const devoluciones = this.movimientos.filter(m => m.tipoMovimiento === 'Devolución').length;
-      const activos = this.movimientos.filter(m => m.estado === 'Activo').length;
-      const completados = this.movimientos.filter(m => m.estado === 'Completado').length;
-      const vencidos = this.movimientos.filter(m => m.estado === 'Vencido').length;
       
-      const totalHoras = this.movimientos.reduce((sum, m) => sum + m.horasUso, 0);
-      const totalCosto = this.movimientos.reduce((sum, m) => sum + m.costo, 0);
+      // Calcular estadísticas adicionales basadas en los movimientos
+      const totalCantidadEntrada = this.movimientos
+        .filter(m => m.tipoMovimiento === 'Entrada')
+        .reduce((sum, m) => sum + m.cantidad, 0);
+        
+      const totalCantidadSalida = this.movimientos
+        .filter(m => m.tipoMovimiento === 'Salida')
+        .reduce((sum, m) => sum + m.cantidad, 0);
 
       return {
         total,
-        prestamos,
+        prestamos: entradas, // Mapear entradas como préstamos para compatibilidad con template
         devoluciones,
-        activos,
-        completados,
-        vencidos,
-        totalHoras: totalHoras.toFixed(1),
-        totalCosto: totalCosto.toFixed(2)
+        activos: transferencias, // Mapear transferencias como activos
+        vencidos: ajustes, // Mapear ajustes como vencidos
+        totalHoras: totalCantidadEntrada.toFixed(1),
+        totalCosto: totalCantidadSalida.toFixed(1)
       };
     },
 
@@ -273,100 +277,165 @@ export default {
     }
   },
 
+  // Lifecycle hooks
+  async mounted() {
+    await this.loadMovimientos();
+  },
+  
   methods: {
-    // Generar datos mock
-    generateMockData() {
-      const tiposMovimiento = ['Préstamo', 'Devolución', 'Transferencia', 'Mantenimiento', 'Reparación'];
-      const estados = ['Activo', 'Completado', 'Pendiente', 'Vencido', 'Cancelado'];
-      const departamentos = ['Producción', 'Mantenimiento', 'Control de Calidad', 'Ingeniería', 'Almacén'];
-      
-      const herramientas = [
-        'Torno CNC Haas ST-20',
-        'Fresadora CNC Mazak VTC-20C',
-        'Centro de Mecanizado Doosan DNM 400',
-        'Rectificadora Cylindrical Jones & Shipman',
-        'Prensa Hidráulica 100T',
-        'Sierra de Cinta DoALL C-320SA',
-        'Taladro Radial WMW BR40x1000',
-        'Soldadora TIG Miller Dynasty 350',
-        'Compresor Atlas Copco GA22',
-        'Grúa Puente 5T Demag',
-        'Esmeriladora Pedestal Baldor',
-        'Banco de Trabajo Hidráulico',
-        'Micrómetro Digital Mitutoyo',
-        'Calibre Pie de Rey Starrett',
-        'Martillo Neumático Chicago',
-        'Taladro de Columna Jet'
-      ];
-      
-      const usuarios = [
-        'Carlos Mendoza',
-        'Ana García',
-        'Roberto Silva',
-        'María López',
-        'José Rodríguez',
-        'Elena Martín',
-        'Miguel Torres',
-        'Carmen Ruiz',
-        'David Fernández',
-        'Laura Jiménez',
-        'Antonio Morales',
-        'Isabel Santos'
-      ];
-
-      const proyectos = [
-        'Proyecto Alpha - Componentes Automotriz',
-        'Proyecto Beta - Piezas Aeronáuticas',
-        'Proyecto Gamma - Maquinaria Industrial',
-        'Proyecto Delta - Equipos Médicos',
-        'Proyecto Epsilon - Componentes Navales',
-        'Proyecto Zeta - Herramientas de Precisión',
-        'Proyecto Eta - Moldes y Matrices',
-        'Proyecto Theta - Prototipos de Investigación'
-      ];
-
-      const movimientos = [];
-      
-      for (let i = 1; i <= 75; i++) {
-        const fechaBase = new Date();
-        fechaBase.setDate(fechaBase.getDate() - Math.floor(Math.random() * 90));
+    // Cargar movimientos desde la API
+    async loadMovimientos() {
+      try {
+        this.isLoading = true;
         
-        const tipoMovimiento = tiposMovimiento[Math.floor(Math.random() * tiposMovimiento.length)];
-        const estado = estados[Math.floor(Math.random() * estados.length)];
-        const departamento = departamentos[Math.floor(Math.random() * departamentos.length)];
+        // Cargar datos base para cache
+        await Promise.all([
+          this.loadMateriales(),
+          this.loadUnidadesMedida(),
+          this.loadTiposStock(),
+          this.loadUsuarios(),
+          this.loadPedidos()
+        ]);
         
-        // Determinar fecha de devolución basada en el tipo y estado
-        let fechaDevolucion = null;
-        if (tipoMovimiento === 'Devolución' || estado === 'Completado') {
-          fechaDevolucion = new Date(fechaBase);
-          fechaDevolucion.setDate(fechaDevolucion.getDate() + Math.floor(Math.random() * 14) + 1);
-        }
-
-        // Calcular horas de uso y costo
-        const horasUso = tipoMovimiento === 'Préstamo' ? Math.floor(Math.random() * 48) + 1 : 0;
-        const costoPorHora = Math.floor(Math.random() * 50) + 10;
-        const costo = horasUso * costoPorHora;
-
-        movimientos.push({
-          id: i,
-          tipoMovimiento,
-          herramienta: herramientas[Math.floor(Math.random() * herramientas.length)],
-          usuario: usuarios[Math.floor(Math.random() * usuarios.length)],
-          departamento,
-          proyecto: proyectos[Math.floor(Math.random() * proyectos.length)],
-          fechaMovimiento: fechaBase.toISOString(),
-          fechaDevolucion: fechaDevolucion ? fechaDevolucion.toISOString() : null,
-          estado,
-          horasUso,
-          costo,
-          observaciones: `Observaciones del movimiento ${i}`,
-          aprobadoPor: usuarios[Math.floor(Math.random() * usuarios.length)],
-          ubicacionOrigen: departamento,
-          ubicacionDestino: departamentos[Math.floor(Math.random() * departamentos.length)]
-        });
+        // Cargar movimientos de stock
+        const response = await axios.get('/api/Historial_Movimiento_Stock');    
+        const movimientosRaw = response.data;
+        
+        // Transformar datos resolviendo foreign keys
+        this.movimientos = await Promise.all(
+          movimientosRaw.map(async (movimiento) => {
+            return {
+              id: movimiento.id || 0,
+              materialId: movimiento.material_id,
+              materialNombre: await this.resolveMaterial(movimiento.material_id),
+              cantidad: parseFloat(movimiento.cantidad) || 0,
+              unidadId: movimiento.unidad_medida_id,
+              unidadNombre: await this.resolveUnidadMedida(movimiento.unidad_medida_id),
+              origenId: movimiento.origen_stock_id,
+              origenNombre: await this.resolveTipoStock(movimiento.origen_stock_id),
+              destinoId: movimiento.destino_stock_id,
+              destinoNombre: await this.resolveTipoStock(movimiento.destino_stock_id),
+              usuarioId: movimiento.usuario_id,
+              usuarioNombre: await this.resolveUsuario(movimiento.usuario_id),
+              fechaMovimiento: movimiento.fecha_movimiento,
+              tipoMovimiento: this.mapTipoMovimiento(movimiento.tipo_movimiento),
+              motivo: movimiento.motivo || 'Sin especificar',
+              documentoReferencia: movimiento.documento_referencia || 'N/A',
+              pedidoId: movimiento.pedido_id,
+              pedidoCodigo: await this.resolvePedido(movimiento.pedido_id),
+              // Campos para compatibilidad con el template existente
+              observaciones: movimiento.motivo || 'Sin observaciones',
+              tipoMovimientoBadge: this.mapTipoMovimiento(movimiento.tipo_movimiento)
+            };
+          })
+        );
+        
+        // Ordenar por fecha descendente
+        this.movimientos.sort((a, b) => new Date(b.fechaMovimiento) - new Date(a.fechaMovimiento));
+        
+      } catch (error) {
+        this.showToast('Error al cargar historial de movimientos', 'error');
+      } finally {
+        this.isLoading = false;
       }
-
-      return movimientos.sort((a, b) => new Date(b.fechaMovimiento) - new Date(a.fechaMovimiento));
+    },
+    
+    // Cargar materiales para cache
+    async loadMateriales() {
+      try {
+        const response = await axios.get('/api/MateriaPrima');
+        response.data.forEach(material => {
+          this.materialesCache[material.id] = material.nombre;
+        });
+      } catch (error) {
+        // Fallback silencioso
+      }
+    },
+    
+    // Cargar unidades de medida para cache
+    async loadUnidadesMedida() {
+      try {
+        const response = await axios.get('/api/Unidad_Medida');
+        response.data.forEach(unidad => {
+          this.unidadesMedidaCache[unidad.id] = unidad.nombre;
+        });
+      } catch (error) {
+        // Fallback silencioso
+      }
+    },
+    
+    // Cargar tipos de stock para cache
+    async loadTiposStock() {
+      try {
+        const response = await axios.get('/api/Tipo_Stock');
+        response.data.forEach(tipo => {
+          this.tiposStockCache[tipo.id] = tipo.nombre;
+        });
+      } catch (error) {
+        // Fallback silencioso
+      }
+    },
+    
+    // Cargar usuarios para cache
+    async loadUsuarios() {
+      try {
+        const response = await axios.get('/api/Usuario');
+        response.data.forEach(usuario => {
+          this.usuariosCache[usuario.id] = `${usuario.nombre} ${usuario.apellido}`.trim();
+        });
+      } catch (error) {
+        // Fallback silencioso
+      }
+    },
+    
+    // Cargar pedidos para cache
+    async loadPedidos() {
+      try {
+        const response = await axios.get('/api/Pedido');
+        response.data.forEach(pedido => {
+          this.pedidosCache[pedido.id] = pedido.codigo_pedido || `Pedido ${pedido.id}`;
+        });
+      } catch (error) {
+        // Fallback silencioso
+      }
+    },
+    
+    // Resolvers para foreign keys
+    async resolveMaterial(materialId) {
+      if (!materialId) return 'Material no especificado';
+      return this.materialesCache[materialId] || `Material ${materialId}`;
+    },
+    
+    async resolveUnidadMedida(unidadId) {
+      if (!unidadId) return 'unidad';
+      return this.unidadesMedidaCache[unidadId] || 'unidad';
+    },
+    
+    async resolveTipoStock(tipoId) {
+      if (!tipoId) return 'Stock no especificado';
+      return this.tiposStockCache[tipoId] || `Stock ${tipoId}`;
+    },
+    
+    async resolveUsuario(usuarioId) {
+      if (!usuarioId) return 'Usuario no especificado';
+      return this.usuariosCache[usuarioId] || `Usuario ${usuarioId}`;
+    },
+    
+    async resolvePedido(pedidoId) {
+      if (!pedidoId) return 'Sin pedido';
+      return this.pedidosCache[pedidoId] || `Pedido ${pedidoId}`;
+    },
+    
+    // Mapear tipo de movimiento
+    mapTipoMovimiento(tipoMovimiento) {
+      const mapeo = {
+        'entrada': 'Entrada',
+        'salida': 'Salida',
+        'transferencia': 'Transferencia',
+        'ajuste': 'Ajuste',
+        'devolucion': 'Devolución'
+      };
+      return mapeo[tipoMovimiento] || tipoMovimiento;
     },
 
     // Formatear fecha y hora
@@ -393,11 +462,11 @@ export default {
     // Obtener clase de badge para tipo de movimiento
     getTipoMovimientoBadgeClass(tipo) {
       const classes = {
-        'Préstamo': 'tipo-prestamo',
-        'Devolución': 'tipo-devolucion',
+        'Entrada': 'tipo-entrada',
+        'Salida': 'tipo-salida', 
         'Transferencia': 'tipo-transferencia',
-        'Mantenimiento': 'tipo-mantenimiento',
-        'Reparación': 'tipo-reparacion'
+        'Ajuste': 'tipo-ajuste',
+        'Devolución': 'tipo-devolucion'
       };
       return `tipo-badge ${classes[tipo] || 'tipo-default'}`;
     },
@@ -444,6 +513,12 @@ export default {
     showSuccessMessage(message) {
       // Implementar sistema de notificaciones
       console.log('✅', message);
+    },
+    
+    // Mostrar toast de notificación
+    showToast(message, type = 'info') {
+      // Implementar sistema de notificaciones toast
+      console.log(`${type.toUpperCase()}: ${message}`);
     },
 
     // Calcular duración del préstamo

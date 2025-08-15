@@ -1,0 +1,731 @@
+/* === Wizard Header === */
+.wizard-header {
+  margin-bottom: 1rem;
+  padding: 1rem 0;
+}
+
+.va-card-title {
+  color: var(--univo-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.wizard-progress {
+  margin-bottom: 1rem;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.step-text {
+  color: var(--va-primary);
+  font-weight: 600;
+}
+
+.step-title {
+  color: var(--univo-primary);
+  font-weight: 500;
+}
+
+/* === Wizard Content === */
+.wizard-content {
+  min-height: 100%;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.step-content {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Card Titles with Icons === */
+.step-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--va-primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.step-icon {
+  font-size: 1.3rem;
+  color: var(--va-primary);
+}
+
+/* === Improved Form Layout === */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: start;
+}
+
+.ToDo{
+  background: yellow;
+  color: red;
+  padding: 2px 6px;
+  font-weight: bold;
+}
+
+.form-grid.three-columns {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.form-grid.four-columns {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.form-field {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.form-field.full-width .va-select {
+  width: 100% !important;
+}
+
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+/* === Enhanced Description Field === */
+.form-field.full-width .va-textarea,
+.form-field.full-width .va-input  {
+  width: 100% !important;
+}
+
+.form-field.full-width .va-select {
+  width: 100% !important;
+}
+
+.va-select {
+  width: 100%;
+}
+
+
+.form-field.full-width .va-textarea {
+  min-height: 120px;
+}
+
+/* === Improved Step 1 Specific Layout === */
+.step-content .form-grid:first-of-type {
+  margin-bottom: 1.5rem;
+}
+
+.step-content .form-grid:nth-of-type(2) {
+  margin-bottom: 1.5rem;
+}
+
+/* Enhanced spacing for proyecto asociado field */
+.step-content .form-field.full-width:nth-of-type(3) {
+  margin-bottom: 1.5rem;
+}
+
+/* Description field with enhanced styling */
+.step-content .form-field.full-width:last-of-type {
+  margin-bottom: 0;
+}
+
+.step-content .form-field.full-width:last-of-type .va-textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+/* === Better Visual Hierarchy === */
+.va-card-content {
+  padding: 1.5rem !important;
+}
+
+.va-card-title {
+  padding: 1.5rem 1.5rem 0 1.5rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* === Section Subtitles === */
+.section-subtitle {
+  color: var(--va-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1rem 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--va-background-secondary);
+}
+
+/* === Paso 2: Plano Preview === */
+.plano-preview {
+  margin-top: 1.5rem;
+}
+
+.preview-card {
+  background: var(--va-background-secondary);
+  border: 1px solid var(--va-background-border);
+}
+
+.plano-info p {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* === Paso 3: Personal === */
+.tecnicos-section {
+  margin-top: 1.5rem;
+}
+
+.tecnico-row {
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--va-background-border);
+  border-radius: 0.5rem;
+  background: var(--va-background-secondary);
+}
+
+.remove-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.add-tecnico-btn {
+  margin-top: 1rem;
+}
+
+.competencias-card {
+  margin-top: 1.5rem;
+  background: var(--va-success-lighten);
+  border-color: var(--va-success);
+}
+
+.team-summary p {
+  margin: 0.25rem 0;
+}
+
+/* === Paso 4: Herramientas === */
+.herramientas-sugeridas,
+.herramientas-adicionales {
+  margin-bottom: 2rem;
+}
+
+.herramienta-row,
+.herramienta-adicional-row {
+  margin-bottom: 1rem;
+}
+
+.herramienta-card,
+.material-card {
+  background: var(--va-background-secondary);
+  border: 1px solid var(--va-background-border);
+}
+
+.herramienta-info,
+.material-info {
+  position: relative;
+}
+
+.herramienta-header,
+.material-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.herramienta-header h5,
+.material-header h5 {
+  margin: 0;
+  color: var(--va-text-primary);
+  font-weight: 600;
+}
+
+/* === Paso 5: Materiales === */
+.materiales-sugeridos,
+.materiales-adicionales {
+  margin-bottom: 2rem;
+}
+
+.material-row,
+.material-adicional-row {
+  margin-bottom: 1rem;
+}
+
+.stock-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stock-label {
+  font-size: 0.85rem;
+  color: var(--va-text-secondary);
+}
+
+.material-calculations {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--va-background-primary);
+  border-radius: 0.375rem;
+  border: 1px solid var(--va-background-border);
+}
+
+.material-calculations p {
+  margin: 0.25rem 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stock-alerts {
+  margin-top: 1.5rem;
+}
+
+.stock-alerts ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.stock-alerts li {
+  margin: 0.5rem 0;
+}
+
+/* === Paso 6: Costos === */
+.costos-resumen {
+  margin-bottom: 2rem;
+}
+
+.costo-card {
+  background: var(--va-background-secondary);
+  border: 1px solid var(--va-background-border);
+}
+
+.costo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.costo-item.total {
+  border-top: 2px solid var(--va-primary);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.costo-valor {
+  font-weight: 600;
+  color: var(--va-primary);
+}
+
+.presupuesto-alert {
+  margin-top: 1.5rem;
+}
+
+/* === Paso 7: Revisión === */
+.revision-completa {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.revision-section {
+  background: var(--va-background-secondary);
+  border: 1px solid var(--va-background-border);
+}
+
+.revision-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.revision-grid div {
+  padding: 0.5rem 0;
+}
+
+.tecnicos-resumen ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.tecnicos-resumen li {
+  margin: 0.25rem 0;
+}
+
+.presupuesto-final {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.presupuesto-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.timeline-info p {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* === Wizard Footer === */
+.wizard-footer {
+  padding: 1rem 0 0 0;
+  border-top: 1px solid var(--va-background-border);
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.final-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* === Enhanced Responsive Design === */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-grid.three-columns,
+  .form-grid.four-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .revision-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .herramienta-header,
+  .material-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .navigation-buttons {
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .final-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .step-indicator {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
+  }
+
+  .wizard-content {
+    max-height: 60vh;
+  }
+
+  .va-card-content {
+    padding: 1rem !important;
+  }
+
+  .va-card-title {
+    padding: 1rem 1rem 0 1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .wizard-header {
+    margin-bottom: 1rem;
+  }
+
+  .wizard-content {
+    min-height: 400px;
+    max-height: 50vh;
+  }
+
+  .step-card-title {
+    font-size: 1rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .tecnico-row,
+  .herramienta-card,
+  .material-card {
+    padding: 0.75rem;
+  }
+
+  .remove-btn {
+    position: static;
+    margin-top: 0.5rem;
+    align-self: flex-end;
+  }
+
+  .form-grid {
+    gap: 0.75rem;
+  }
+
+  .step-content .form-field.full-width:last-of-type .va-textarea {
+    min-height: 100px;
+  }
+}
+
+/* === Custom Scrollbar === */
+.wizard-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wizard-content::-webkit-scrollbar-track {
+  background: var(--va-background-primary);
+  border-radius: 3px;
+}
+
+.wizard-content::-webkit-scrollbar-thumb {
+  background: var(--va-background-border);
+  border-radius: 3px;
+}
+
+.wizard-content::-webkit-scrollbar-thumb:hover {
+  background: var(--va-text-secondary);
+}
+
+/* === Animation for Step Transitions === */
+.step-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* === Estilos adicionales para la barra de progreso === */
+
+/* Barra de progreso mejorada */
+.wizard-progress {
+  height: 10px !important;
+  border-radius: 5px;
+  background-color: var(--va-background-secondary);
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+.wizard-progress.progress-updating {
+  animation: progressPulse 0.3s ease-out;
+}
+
+@keyframes progressPulse {
+  0% {
+    transform: scaleY(0.95);
+  }
+
+  50% {
+    transform: scaleY(1.05);
+  }
+
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/* Asegurar que la barra interna se actualice */
+.wizard-progress .va-progress-bar__progress {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: linear-gradient(90deg, var(--va-primary), var(--va-primary-darken)) !important;
+}
+
+/* Debug info styling */
+.debug-info {
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  border: 1px dashed #ccc;
+}
+
+/* Indicador de paso mejorado */
+.step-indicator {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.step-text {
+  font-weight: 700;
+  color: var(--va-primary);
+  font-size: 0.95rem;
+}
+
+.step-title {
+  font-weight: 500;
+  color: var(--va-text-primary);
+  font-size: 1rem;
+}
+
+/* Barra de progreso alternativa (custom) si VaProgressBar falla */
+.custom-progress-bar {
+  margin-bottom: 1rem;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background-color: var(--va-background-secondary);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--va-background-border);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--va-primary), var(--va-primary-darken));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 5px;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--va-text-secondary);
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .wizard-progress {
+    height: 8px !important;
+  }
+
+  .step-indicator {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.25rem;
+  }
+
+  .step-text {
+    font-size: 0.85rem;
+  }
+
+  .step-title {
+    font-size: 0.9rem;
+  }
+}
+
+/* === Focus States === */
+.va-input:focus-within,
+.va-select:focus-within,
+.va-textarea:focus-within,
+.va-date-input:focus-within {
+  transform: none;
+  box-shadow: 0 0 0 2px var(--va-primary-lighten);
+}
+
+/* === Loading States === */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+/* === Success/Error States === */
+.success-highlight {
+  border-color: var(--va-success) !important;
+  background-color: var(--va-success-lighten) !important;
+}
+
+.error-highlight {
+  border-color: var(--va-danger) !important;
+  background-color: var(--va-danger-lighten) !important;
+}
+
+/* === Print Styles === */
+@media print {
+
+  .wizard-header,
+  .wizard-footer {
+    display: none;
+  }
+
+  .wizard-content {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .step-content {
+    page-break-inside: avoid;
+  }
+
+  .revision-section {
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+}

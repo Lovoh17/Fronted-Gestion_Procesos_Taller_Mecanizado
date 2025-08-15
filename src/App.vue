@@ -136,7 +136,7 @@ const currentSidebar = computed(() => {
 }
 
 .content-container {
-  padding: 1rem;
+  padding: 1rem 0rem;
 }
 
 /* Transiciones */

@@ -31,29 +31,6 @@
     </div>
   </template>
   
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  import { useRouter, useRoute } from 'vue-router';
-  
-  const router = useRouter();
-  const route = useRoute();
-  const currentPath = ref('');
-  const isAuthenticated = ref(false);
-  
-  // Simulación de verificación de autenticación sin depender del store
-  onMounted(() => {
-    currentPath.value = route.path;
-    // Verificación simple de autenticación (puedes personalizar esto)
-    isAuthenticated.value = localStorage.getItem('authToken') !== null;
-  });
-  
-  const goBack = () => {
-    if (window.history.length > 1) {
-      router.go(-1);
-    } else {
-      router.push('/');
-    }
-  };
-  </script>
+<script src="./scripts/NotFound.js"></script>
 
 <style src="src/assets/NotFound.css" ></style>

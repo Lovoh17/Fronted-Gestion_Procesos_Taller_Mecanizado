@@ -14,6 +14,7 @@ export default {
     const tiposMantenimiento = ref({})
     const herramientas = ref({})
     const estadosMantenimiento = ref({})
+    const prioridades = ref({})
     
     // Modal states
     const showModal = ref(false)
@@ -28,27 +29,42 @@ export default {
         field: 'nombre',
         sortable: true,
         width: '200px',
-        type: 'text'
+        type: 'text',
+        filterOptions: {
+          enabled: true,
+          placeholder: 'Filtrar por nombre'
+        }
       },
       {
         label: 'Herramienta',
-        field: 'herramienta_id',
+        field: 'herramienta_nombre',
         sortable: true,
         width: '180px',
-        type: 'text'
+        type: 'text',
+        filterOptions: {
+          enabled: true,
+          placeholder: 'Filtrar por herramienta'
+        }
       },
       {
         label: 'Tipo',
-        field: 'tipo_mantenimiento_id',
+        field: 'tipo_mantenimiento_nombre',
         sortable: true,
         width: '150px',
         type: 'text'
       },
       {
-        label: 'Fecha Programada',
-        field: 'fecha_programada',
+        label: 'Técnico',
+        field: 'tecnico_nombre',
         sortable: true,
         width: '150px',
+        type: 'text'
+      },
+      {
+        label: 'F. Programada',
+        field: 'fecha_programada',
+        sortable: true,
+        width: '130px',
         type: 'date',
         dateInputFormat: 'yyyy-MM-dd',
         dateOutputFormat: 'dd/MM/yyyy'
@@ -59,6 +75,27 @@ export default {
         sortable: true,
         width: '120px',
         type: 'text'
+      },
+      {
+        label: 'Prioridad',
+        field: 'prioridad_nombre',
+        sortable: true,
+        width: '100px',
+        type: 'text'
+      },
+      {
+        label: 'Costo Est.',
+        field: 'costo_estimado',
+        sortable: true,
+        width: '110px',
+        type: 'number'
+      },
+      {
+        label: 'Horas',
+        field: 'horas_trabajo',
+        sortable: true,
+        width: '80px',
+        type: 'number'
       },
       {
         label: 'Acciones',
@@ -107,7 +144,18 @@ export default {
     }
 
     const getEstadoName = (id) => {
-      return estadosMantenimiento.value[id]?.nombre || 'Desconocido'
+      return estadosMantenimiento.value[id]?.nombre_estado || 'Desconocido'
+    }
+
+    const getPrioridadName = (id) => {
+      const prioridadMap = {
+        1: 'Crítica',
+        2: 'Alta', 
+        3: 'Media',
+        4: 'Baja',
+        5: 'Muy Baja'
+      }
+      return prioridadMap[id] || 'Media'
     }
 
     const formatDate = (dateString) => {
@@ -135,22 +183,50 @@ export default {
 
     const estadoClass = (estadoId) => {
       const classMap = {
-        1: 'badge-success',    // Completado
-        2: 'badge-warning',    // Pendiente
-        3: 'badge-danger',     // Vencido
-        4: 'badge-info',       // En Proceso
+        1: 'badge-warning',    // Pendiente
+        2: 'badge-info',       // En Proceso
+        3: 'badge-success',    // Completado
+        4: 'badge-danger',     // Cancelado
+        5: 'badge-secondary'   // Reprogramado
       }
       return classMap[estadoId] || 'badge-secondary'
+    }
+
+    const prioridadClass = (prioridadId) => {
+      const classMap = {
+        1: 'badge-danger',     // Crítica
+        2: 'badge-warning',    // Alta
+        3: 'badge-info',       // Media
+        4: 'badge-secondary',  // Baja
+        5: 'badge-light'       // Muy Baja
+      }
+      return classMap[prioridadId] || 'badge-info'
     }
 
     // Métodos de API
     const fetchMantenimientos = async () => {
       try {
         const response = await axios.get('/api/Mantenimiento')
-        // Asegurar que siempre sea un array
-        mantenimientos.value = Array.isArray(response.data) ? response.data : []
+        const rawData = Array.isArray(response.data) ? response.data : []
+        
+        // Transformar datos y enriquecer con nombres
+        mantenimientos.value = await Promise.all(rawData.map(async (item) => {
+          return {
+            ...item,
+            // Resolver nombres desde IDs
+            herramienta_nombre: await resolveHerramienta(item.herramienta_id),
+            tipo_mantenimiento_nombre: await resolveTipoMantenimiento(item.tipo_mantenimiento_id),
+            tecnico_nombre: await resolveUsuario(item.tecnico_asignado_id),
+            prioridad_nombre: getPrioridadName(item.prioridad_id),
+            // Formatear números
+            costo_estimado: parseFloat(item.costo_estimado) || 0,
+            costo_real: parseFloat(item.costo_real) || 0,
+            horas_trabajo: parseFloat(item.horas_trabajo) || 0,
+            // Manejar arrays
+            repuestos_utilizados: Array.isArray(item.repuestos_utilizados) ? item.repuestos_utilizados : []
+          }
+        }))
       } catch (err) {
-        console.error('Error fetching mantenimientos:', err)
         mantenimientos.value = []
         throw err
       }
@@ -183,9 +259,43 @@ export default {
         const response = await axios.get('/api/EstadoMantenimiento')
         estadosMantenimiento.value = arrayToMap(response.data)
       } catch (err) {
-        console.error('Error fetching estados:', err)
         estadosMantenimiento.value = {}
         throw err
+      }
+    }
+
+    // Métodos de resolución de nombres
+    const resolveHerramienta = async (herramientaId) => {
+      if (!herramientaId) return 'Sin especificar'
+      
+      try {
+        const response = await axios.get(`/api/Herramienta/${herramientaId}`)
+        return response.data.nombre || `Herramienta ${herramientaId}`
+      } catch (error) {
+        return `Herramienta ${herramientaId}`
+      }
+    }
+
+    const resolveTipoMantenimiento = async (tipoId) => {
+      const tipos = {
+        1: 'Preventivo',
+        2: 'Correctivo',
+        3: 'Calibración',
+        4: 'Limpieza',
+        5: 'Inspección'
+      }
+      return tipos[tipoId] || `Tipo ${tipoId}`
+    }
+
+    const resolveUsuario = async (usuarioId) => {
+      if (!usuarioId) return 'Sin asignar'
+      
+      try {
+        const response = await axios.get(`/api/Usuario/${usuarioId}`)
+        const usuario = response.data
+        return `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || `Usuario ${usuarioId}`
+      } catch (error) {
+        return `Usuario ${usuarioId}`
       }
     }
 
@@ -195,13 +305,13 @@ export default {
       
       try {
         await Promise.all([
-          fetchMantenimientos(),
           fetchTiposMantenimiento(),
           fetchHerramientas(),
           fetchEstadosMantenimiento()
         ])
+        // Cargar mantenimientos después para poder resolver las referencias
+        await fetchMantenimientos()
       } catch (err) {
-        console.error('Error al cargar datos:', err)
         error.value = 'Error al cargar los datos'
       } finally {
         loading.value = false
@@ -235,7 +345,6 @@ export default {
         showModal.value = false
         await fetchMantenimientos()
       } catch (err) {
-        console.error('Error al guardar mantenimiento:', err)
         error.value = 'Error al guardar el mantenimiento'
       }
     }
@@ -246,7 +355,6 @@ export default {
           await axios.delete(`/api/Mantenimiento/${id}`)
           await fetchMantenimientos()
         } catch (err) {
-          console.error('Error al eliminar mantenimiento:', err)
           error.value = 'Error al eliminar el mantenimiento'
         }
       }
@@ -254,21 +362,36 @@ export default {
 
     // Métodos adicionales para la tabla
     const exportToCSV = () => {
-      const csvData = mantenimientos.value.map(m => ({
-        Nombre: m.nombre,
-        Herramienta: getHerramientaName(m.herramienta_id),
-        Tipo: getTipoMantenimientoName(m.tipo_mantenimiento_id),
-        'Fecha Programada': formatDate(m.fecha_programada),
-        Estado: getEstadoName(m.estado_id)
-      }))
-      
-      console.log('Exportando CSV:', csvData)
-      // Aquí implementarías la lógica de exportación real
+      try {
+        const csvData = mantenimientos.value.map(m => ({
+          Nombre: m.nombre,
+          Herramienta: m.herramienta_nombre,
+          Tipo: m.tipo_mantenimiento_nombre,
+          Técnico: m.tecnico_nombre,
+          'Fecha Programada': formatDate(m.fecha_programada),
+          Estado: getEstadoName(m.estado_id),
+          Prioridad: m.prioridad_nombre,
+          'Costo Estimado': formatCurrency(m.costo_estimado),
+          'Horas Trabajo': m.horas_trabajo
+        }))
+        
+        // Aquí implementarías la lógica de exportación real
+        alert('Datos preparados para exportación CSV')
+      } catch (error) {
+        error.value = 'Error al exportar datos'
+      }
     }
 
-    const testConnection = () => {
-      console.log('Probando conexión...')
-      // Implementar test de conexión
+    const testConnection = async () => {
+      try {
+        loading.value = true
+        await axios.get('/api/Mantenimiento')
+        alert('Conexión exitosa con la API')
+      } catch (err) {
+        alert('Error de conexión con la API')
+      } finally {
+        loading.value = false
+      }
     }
 
     // Lifecycle
@@ -288,6 +411,7 @@ export default {
       tiposMantenimiento,
       herramientas,
       estadosMantenimiento,
+      prioridades,
       
       // Modal
       showModal,
@@ -302,10 +426,12 @@ export default {
       getTipoMantenimientoName,
       getHerramientaName,
       getEstadoName,
+      getPrioridadName,
       formatDate,
       formatCurrency,
       tipoMantenimientoClass,
       estadoClass,
+      prioridadClass,
       
       // Métodos CRUD
       openCreateModal,

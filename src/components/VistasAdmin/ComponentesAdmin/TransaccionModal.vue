@@ -3,11 +3,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h3>{{ transaccion.id ? 'Editar Transacción' : 'Detalles de Transacción' }}</h3>
-        <va-button  @click="close"    icon="times">
-        
-          
-        
-      </va-button>
+        <va-button @click="close" icon="times"></va-button>
       </div>
       
       <div class="modal-body">
@@ -55,19 +51,18 @@
           </div>
           
           <div class="form-actions">
-            <va-button type="button"  @click="close" color="secondary"   icon="spinner">
-        
+            <va-button type="button" @click="close" color="secondary" icon="times">
               Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="loading">
-              <span v-if="loading">
-                 Guardando...
-              </span>
-              <span v-else>
-                <i class="fas fa-save"></i> Guardar
-              </span>
+            </va-button>
             
-      </va-button>
+            <va-button type="submit" color="primary" :disabled="loading" :loading="loading">
+              <template v-if="!loading">
+                <i class="fas fa-save"></i> Guardar
+              </template>
+              <template v-else>
+                Guardando...
+              </template>
+            </va-button>
           </div>
         </form>
       </div>

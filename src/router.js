@@ -79,6 +79,13 @@ const routes = [
     component: () => import('@/components/VistasAdmin/Dashboard.vue'),
     meta: { public: true }
   },
+  ,
+  {
+    path: '/rrhh',
+    name: 'rrhh',
+    component: () => import('@/components/VistasAdmin/RRHH.vue'),
+    meta: { public: true }
+  },
   {
     path: '/admin/transacciones',
     name: 'Transacciones',

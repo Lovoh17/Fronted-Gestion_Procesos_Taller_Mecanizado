@@ -29,28 +29,29 @@
         </div>
 
         <div v-else>
-          <vue-good-table ref="vueGoodTable" :columns="tableColumns" max-height="45vh" :fixedHeader="true" :rows="users" :search-options="{
-            enabled: true,
-            placeholder: 'Buscar usuarios por nombre, email o ID...',
-            externalQuery: searchQuery
-          }" :pagination-options="{
-            enabled: true,
-            mode: 'records',
-            perPage: 10,
-            perPageDropdown: [5, 10, 20, 50],
-            dropdownAllowAll: false,
-            nextLabel: 'Siguiente',
-            prevLabel: 'Anterior',
-            rowsPerPageLabel: 'Filas por página',
-            ofLabel: 'de',
-            pageLabel: 'página',
-            allLabel: 'Todos'
-          }" :sort-options="{
+          <vue-good-table ref="vueGoodTable" :columns="tableColumns" max-height="50vh"
+            :fixedHeader="!showAddUserModal && !showEditUserModal" :rows="users" :search-options="{
+              enabled: true,
+              placeholder: 'Buscar usuarios por nombre, email o ID...',
+              externalQuery: searchQuery
+            }" :pagination-options="{
+              enabled: true,
+              mode: 'records',
+              perPage: 10,
+              perPageDropdown: [5, 10, 20, 50],
+              dropdownAllowAll: false,
+              nextLabel: 'Siguiente',
+              prevLabel: 'Anterior',
+              rowsPerPageLabel: 'Filas por página',
+              ofLabel: 'de',
+              pageLabel: 'página',
+              allLabel: 'Todos'
+            }" :sort-options="{
               enabled: true,
               initialSortBy: { field: 'id', type: 'asc' }
             }" :select-options="{
               enabled: false
-            }" styleClass="vgt-table striped bordered" theme="nocturnal">
+            }" styleClass="vgt-table striped bordered" theme="Rinoh">
             <!-- Slot personalizado para cada celda -->
             <template #table-row="props">
               <!-- Columna de Nombre completo -->
@@ -60,15 +61,15 @@
 
               <!-- Columna de Tipo de Usuario -->
               <span v-else-if="props.column.field === 'type'">
-                <span :class="['badge', userTypeClass(props.row.type || props.row.puesto_id)]">
-                  {{ formatUserType(props.row.type || props.row.puesto_id) }}
+                <span :class="['badge', userTypeClass(props.row.puesto_id)]">
+                  {{ getRolDescripcion(props.row.puesto_id) }}
                 </span>
               </span>
 
               <!-- Columna de Estado -->
               <span v-else-if="props.column.field === 'status'">
-                <span :class="['badge', statusClass(props.row.status || props.row.estado_id)]">
-                  {{ formatStatus(props.row.status || props.row.estado_id) }}
+                <span :class="['badge', statusClass(props.row.estado_id)]">
+                  {{ getEstadoNombre(props.row.estado_id) }}
                 </span>
               </span>
 
@@ -105,9 +106,6 @@
                 <div class="table-actions-buttons">
                   <va-button color="success" size="small" @click="exportToCSV" icon="download" class="mr-2">
                     Exportar CSV
-                  </va-button>
-                  <va-button color="info" size="small" @click="testConnection" icon="wifi" class="mr-2">
-                    Test Conexión
                   </va-button>
                   <va-button color="primary" size="small" @click="loadUsers" icon="refresh">
                     Recargar

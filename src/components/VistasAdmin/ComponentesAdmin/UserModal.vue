@@ -1,6 +1,6 @@
 <template>
   <VaModal :model-value="true" :title="isEditing ? 'Editar Empleado' : 'Nuevo Empleado'" size="large"
-    :close-button="!loading" :no-outside-dismiss="loading" hide-default-actions @close="closeModal">
+    :close-button="false" :no-outside-dismiss="loading" hide-default-actions @close="closeModal">
 
     <form @submit.prevent="submitForm">
       <div class="user-form">
@@ -23,9 +23,10 @@
 
           <!-- Puesto y Turno con VaSelect -->
           <div class="form-row">
-            <VaSelect v-model="form.puesto_id" label="Puesto *" :options="puestoOptions" :error="!!errors.puesto_id"
-              :error-messages="errors.puesto_id" class="form-field" required />
-            <VaSelect v-model="form.turno_id" label="Turno" :options="turnoOptions" class="form-field" clearable />
+            <VaSelect v-model="form.puesto_id" label="Puesto *" :options="puestoOptions" placeholder="Coordinador"
+              :error="!!errors.puesto_id" :error-messages="errors.puesto_id" class="form-field" required />
+            <VaSelect v-model="form.turno_id" label="Turno" :options="turnoOptions" placeholder="Matutino"
+              class="form-field" clearable />
           </div>
 
           <!-- Sección de contraseña -->

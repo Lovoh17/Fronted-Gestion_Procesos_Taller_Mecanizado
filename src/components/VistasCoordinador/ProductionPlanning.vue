@@ -110,7 +110,7 @@
 
 <style src="src/assets/EstiloBase.css" scoped></style>
 <script src="./scripts/ProductionPlanning.js"></script>
-<style src="src/components/VistasCoordinador/styles/ProductionPlanning.css" scoped></style>
+<style src="src/components/VistasCoordinador/styles/ProductionPlanning.css" ></style>
 
 
 

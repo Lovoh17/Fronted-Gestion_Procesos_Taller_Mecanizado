@@ -57,7 +57,7 @@
         <div class="card">
           <div class="card-body">
             <vue-good-table ref="vueGoodTableProduccion" :columns="columnsProduccion" max-height="45vh"
-              :fixedHeader="true" :rows="trabajosProduccion" :search-options="{
+              :rows="trabajosProduccion" :search-options="{
                 enabled: true,
                 placeholder: 'Buscar en pedidos de producción...',
                 externalQuery: searchQuery
@@ -259,4 +259,4 @@
 </template>
 
 <script src="./ComponentesAdmin/Script/Ordenes.js"></script>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>
