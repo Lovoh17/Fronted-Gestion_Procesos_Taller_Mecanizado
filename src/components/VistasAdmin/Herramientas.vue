@@ -1,6 +1,6 @@
 <template>
   <div class="herramientas-container">
-    <!-- Header con  -->
+    <!-- Header con glassmorphism -->
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">
@@ -94,40 +94,50 @@
 
           <div class="form-actions">
             <va-button type="submit" color="primary" icon="save">
-
               {{ editing ? 'Actualizar' : 'Guardar' }}
-
             </va-button>
             <va-button type="button" @click="resetForm" color="secondary" icon="times">
-
               Cancelar
-
             </va-button>
           </div>
         </form>
       </div>
     </transition>
 
-    <!-- Listado de herramientas -->
+    <!-- Grid de herramientas mejorado -->
     <div class="tools-list">
       <div v-if="loading" class="loading">
-        <i class="fas fa-spinner fa-spin"></i> Cargando herramientas...
+        <i class="fas fa-spinner fa-spin"></i> 
+        Cargando herramientas...
       </div>
 
       <div v-if="!loading && filteredHerramientas.length === 0" class="no-results">
-        No se encontraron herramientas
+        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+        <p>No se encontraron herramientas</p>
       </div>
 
-      <div v-for="herramienta in filteredHerramientas" :key="herramienta.id" class="tool-card">
+      <div v-for="(herramienta, index) in filteredHerramientas" 
+           :key="herramienta.id" 
+           class="tool-card"
+           :style="{ 'animation-delay': `${index * 0.1}s` }">
+        
         <div class="tool-header">
+          <!-- Imagen o ícono por defecto -->
           <div class="tool-image"
-            :style="{ 'background-image': 'url(' + (herramienta.imagen_ruta || defaultImage) + ')' }"></div>
+               :style="herramienta.imagen_ruta ? 
+                       { 'background-image': `url(${herramienta.imagen_ruta})` } : {}">
+            <i v-if="!herramienta.imagen_ruta" :class="getToolIcon(herramienta.nombre)"></i>
+          </div>
+          
+          <!-- Badge de estado -->
+          <div class="tool-status" :class="'status-' + herramienta.estado_herramienta_id">
+            {{ getEstadoName(herramienta.estado_herramienta_id) }}
+          </div>
+
+          <!-- Título superpuesto -->
           <div class="tool-title">
             <h3>{{ herramienta.nombre }}</h3>
             <span class="tool-model">{{ herramienta.modelo }}</span>
-            <span class="tool-status" :class="'status-' + herramienta.estado_herramienta_id">
-              {{ getEstadoName(herramienta.estado_herramienta_id) }}
-            </span>
           </div>
         </div>
 
@@ -156,7 +166,8 @@
 
         <div class="progress-container">
           <div class="progress-label">
-            Vida útil: {{ calcularPorcentajeUso(herramienta) }}%
+            <span>Vida útil</span>
+            <span>{{ calcularPorcentajeUso(herramienta) }}%</span>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" :style="{ width: calcularPorcentajeUso(herramienta) + '%' }"></div>
@@ -164,22 +175,22 @@
         </div>
 
         <div class="tool-actions">
-          <va-button @click="editHerramienta(herramienta.id)" icon="edit">
+          <va-button @click="editHerramienta(herramienta.id)" icon="edit" size="small">
             Editar
           </va-button>
-          <va-button @click="showDetails(herramienta)" color="info" icon="info-circle">
+          <va-button @click="showDetails(herramienta)" color="info" icon="info-circle" size="small">
             Detalles
           </va-button>
-          <va-button @click="confirmDelete(herramienta.id)" icon="trash-alt">
+          <va-button @click="confirmDelete(herramienta.id)" icon="trash-alt" size="small">
             Eliminar
           </va-button>
         </div>
       </div>
     </div>
 
-    <!-- Modal de detalles -->
+    <!-- Modal de detalles mejorado -->
     <transition name="modal">
-      <div v-if="selectedHerramienta" class="modal-overlay">
+      <div v-if="selectedHerramienta" class="modal-overlay" @click.self="selectedHerramienta = null">
         <div class="modal-container">
           <div class="modal-header">
             <h3>Detalles completos</h3>
@@ -188,7 +199,10 @@
           </div>
           <div class="modal-content">
             <div class="modal-image"
-              :style="{ 'background-image': 'url(' + (selectedHerramienta.imagen_ruta || defaultImage) + ')' }"></div>
+                 :style="selectedHerramienta.imagen_ruta ? 
+                         { 'background-image': `url(${selectedHerramienta.imagen_ruta})` } : {}">
+              <i v-if="!selectedHerramienta.imagen_ruta" :class="getToolIcon(selectedHerramienta.nombre)" style="font-size: 4rem;"></i>
+            </div>
             <div class="modal-details">
               <h4>{{ selectedHerramienta.nombre }} - {{ selectedHerramienta.modelo }}</h4>
               <div class="detail-row">
@@ -223,8 +237,7 @@
               </div>
               <div class="detail-row">
                 <span class="detail-label">Uso:</span>
-                <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas ||
-                  'N/A' }} horas</span>
+                <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas || 'N/A' }} horas</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">Último mantenimiento:</span>
@@ -256,7 +269,7 @@
       </div>
     </transition>
 
-    <!-- Modal de confirmación  -->
+    <!-- Modal de confirmación -->
     <va-modal v-model="showDeleteModal" title="Confirmar eliminación" size="small" hide-default-actions>
       <div>
         <p>¿Estás seguro de que deseas eliminar la herramienta <strong>{{ herramientaToDeleteName }}</strong>?</p>

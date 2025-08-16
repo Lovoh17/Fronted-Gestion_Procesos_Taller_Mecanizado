@@ -360,25 +360,96 @@ export default {
       }
     }
 
-    // Métodos adicionales para la tabla
+    // Función para convertir datos a CSV
+    const convertToCSV = (data) => {
+      if (!data || data.length === 0) {
+        return ''
+      }
+
+      // Obtener las cabeceras
+      const headers = Object.keys(data[0])
+      
+      // Crear el contenido CSV
+      const csvContent = [
+        // Cabeceras
+        headers.map(header => `"${header}"`).join(','),
+        // Datos
+        ...data.map(row => 
+          headers.map(header => {
+            const value = row[header]
+            // Manejar valores nulos/undefined
+            if (value === null || value === undefined) {
+              return '""'
+            }
+            // Convertir a string y escapar comillas
+            const stringValue = String(value).replace(/"/g, '""')
+            return `"${stringValue}"`
+          }).join(',')
+        )
+      ].join('\n')
+
+      return csvContent
+    }
+
+    // Función para descargar archivo CSV
+    const downloadCSV = (csvContent, filename) => {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        link.setAttribute('download', filename)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    }
+
+    // Método principal de exportación CSV
     const exportToCSV = () => {
       try {
+        if (!mantenimientos.value || mantenimientos.value.length === 0) {
+          alert('No hay datos para exportar')
+          return
+        }
+
+        // Preparar los datos para el CSV con los nombres resueltos
         const csvData = mantenimientos.value.map(m => ({
-          Nombre: m.nombre,
-          Herramienta: m.herramienta_nombre,
-          Tipo: m.tipo_mantenimiento_nombre,
-          Técnico: m.tecnico_nombre,
-          'Fecha Programada': formatDate(m.fecha_programada),
-          Estado: getEstadoName(m.estado_id),
-          Prioridad: m.prioridad_nombre,
-          'Costo Estimado': formatCurrency(m.costo_estimado),
-          'Horas Trabajo': m.horas_trabajo
+          'ID': m.id,
+          'Nombre': m.nombre || '',
+          'Herramienta': m.herramienta_nombre || '',
+          'Tipo de Mantenimiento': m.tipo_mantenimiento_nombre || '',
+          'Técnico Asignado': m.tecnico_nombre || '',
+          'Fecha Programada': m.fecha_programada || '',
+          'Fecha Inicio': m.fecha_inicio || '',
+          'Fecha Fin': m.fecha_fin || '',
+          'Estado': getEstadoName(m.estado_id),
+          'Prioridad': m.prioridad_nombre || '',
+          'Costo Estimado': m.costo_estimado || 0,
+          'Costo Real': m.costo_real || 0,
+          'Horas de Trabajo': m.horas_trabajo || 0,
+          'Descripción del Problema': m.descripcion_problema || '',
+          'Acciones Realizadas': m.acciones_realizadas || '',
+          'Repuestos Utilizados': Array.isArray(m.repuestos_utilizados) ? m.repuestos_utilizados.join('; ') : ''
         }))
         
-        // Aquí implementarías la lógica de exportación real
-        alert('Datos preparados para exportación CSV')
+        // Convertir a CSV
+        const csvContent = convertToCSV(csvData)
+        
+        // Generar nombre del archivo con fecha actual
+        const now = new Date()
+        const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-')
+        const filename = `mantenimientos_${timestamp}.csv`
+        
+        // Descargar archivo
+        downloadCSV(csvContent, filename)
+        
+        console.log('Archivo CSV exportado exitosamente')
       } catch (error) {
-        error.value = 'Error al exportar datos'
+        console.error('Error al exportar CSV:', error)
+        error.value = 'Error al exportar datos a CSV'
       }
     }
 
