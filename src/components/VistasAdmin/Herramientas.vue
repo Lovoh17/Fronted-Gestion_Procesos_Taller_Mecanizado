@@ -13,6 +13,9 @@
           </div>
         </div>
         <div class="header-actions">
+          <va-button @click="refreshData" icon="sync-alt" color="secondary" class="refresh-btn">
+            Actualizar
+          </va-button>
           <va-button @click="showForm = !showForm" color="primary" icon="plus">
             <span>{{ showForm ? 'Ocultar formulario' : 'Nueva herramienta' }}</span>
           </va-button>
@@ -52,6 +55,37 @@
             </div>
 
             <div class="form-group">
+              <label for="tipo_herramienta_id">Tipo de herramienta</label>
+              <select id="tipo_herramienta_id" v-model="herramienta.tipo_herramienta_id">
+                <option value="">Seleccionar tipo</option>
+                <option v-for="tipo in tiposHerramienta" :key="tipo.id" :value="tipo.id">
+                  {{ tipo.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="estado_herramienta_id">Estado</label>
+              <select id="estado_herramienta_id" v-model="herramienta.estado_herramienta_id">
+                <option value="1">Disponible</option>
+                <option value="2">En uso</option>
+                <option value="3">Mantenimiento</option>
+                <option value="4">Dañado</option>
+                <option value="5">Fuera de servicio</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="zonas_trabajo_id">Zona de trabajo</label>
+              <select id="zonas_trabajo_id" v-model="herramienta.zonas_trabajo_id">
+                <option value="">Seleccionar zona</option>
+                <option v-for="zona in zonasTrabajos" :key="zona.id" :value="zona.id">
+                  {{ zona.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="fecha_adquisicion">Fecha adquisición</label>
               <input type="date" id="fecha_adquisicion" v-model="herramienta.fecha_adquisicion">
             </div>
@@ -59,6 +93,11 @@
             <div class="form-group">
               <label for="costo_adquisicion">Costo adquisición ($)</label>
               <input type="number" step="0.01" id="costo_adquisicion" v-model="herramienta.costo_adquisicion">
+            </div>
+
+            <div class="form-group">
+              <label for="valor_actual">Valor actual ($)</label>
+              <input type="number" step="0.01" id="valor_actual" v-model="herramienta.valor_actual">
             </div>
 
             <div class="form-group">
@@ -72,28 +111,33 @@
             </div>
 
             <div class="form-group">
-              <label for="estado_herramienta_id">Estado</label>
-              <select id="estado_herramienta_id" v-model="herramienta.estado_herramienta_id">
-                <option value="1">Disponible</option>
-                <option value="2">En uso</option>
-                <option value="3">Mantenimiento</option>
-                <option value="4">Dañado</option>
-              </select>
+              <label for="fecha_ultimo_mantenimiento">Último mantenimiento</label>
+              <input type="date" id="fecha_ultimo_mantenimiento" v-model="herramienta.fecha_ultimo_mantenimiento">
+            </div>
+
+            <div class="form-group">
+              <label for="fecha_proximo_mantenimiento">Próximo mantenimiento</label>
+              <input type="date" id="fecha_proximo_mantenimiento" v-model="herramienta.fecha_proximo_mantenimiento">
+            </div>
+
+            <div class="form-group">
+              <label for="imagen_ruta">URL de imagen</label>
+              <input type="url" id="imagen_ruta" v-model="herramienta.imagen_ruta" placeholder="https://ejemplo.com/imagen.jpg">
             </div>
 
             <div class="form-group full-width">
               <label for="especificaciones_tecnicas">Especificaciones técnicas</label>
-              <textarea id="especificaciones_tecnicas" v-model="herramienta.especificaciones_tecnicas"></textarea>
+              <textarea id="especificaciones_tecnicas" v-model="herramienta.especificaciones_tecnicas" rows="3"></textarea>
             </div>
 
             <div class="form-group full-width">
               <label for="notas">Notas</label>
-              <textarea id="notas" v-model="herramienta.notas"></textarea>
+              <textarea id="notas" v-model="herramienta.notas" rows="3"></textarea>
             </div>
           </div>
 
           <div class="form-actions">
-            <va-button type="submit" color="primary" icon="save">
+            <va-button type="submit" color="primary" icon="save" :loading="loading">
               {{ editing ? 'Actualizar' : 'Guardar' }}
             </va-button>
             <va-button type="button" @click="resetForm" color="secondary" icon="times">
@@ -104,16 +148,72 @@
       </div>
     </transition>
 
+    <!-- Filtros y Búsqueda -->
+    <div class="filters-section">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label for="searchQuery">
+            <i class="fas fa-search"></i> Buscar:
+          </label>
+          <input 
+            type="text" 
+            id="searchQuery"
+            v-model="searchQuery" 
+            placeholder="Nombre, modelo, fabricante..."
+            class="filter-input">
+        </div>
+        
+        <div class="filter-group">
+          <label for="filterEstado">
+            <i class="fas fa-filter"></i> Filtrar por estado:
+          </label>
+          <select 
+            id="filterEstado"
+            v-model="filterEstado"
+            class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="1">Disponible</option>
+            <option value="2">En uso</option>
+            <option value="3">Mantenimiento</option>
+            <option value="4">Dañado</option>
+            <option value="5">Fuera de servicio</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <div class="results-count">
+            <i class="fas fa-list-ol"></i>
+            <span>Total: {{ filteredHerramientas.length }} herramientas</span>
+          </div>
+        </div>
+        
+        <div class="filter-actions">
+          <va-button 
+            @click="searchQuery = ''; filterEstado = ''" 
+            icon="times" 
+            size="small"
+            color="secondary">
+            Limpiar
+          </va-button>
+        </div>
+      </div>
+    </div>
+
     <!-- Grid de herramientas mejorado -->
     <div class="tools-list">
       <div v-if="loading" class="loading">
-        <i class="fas fa-spinner fa-spin"></i> 
-        Cargando herramientas...
+        <div class="loading-spinner">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <p>Cargando herramientas...</p>
       </div>
 
       <div v-if="!loading && filteredHerramientas.length === 0" class="no-results">
         <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
         <p>No se encontraron herramientas</p>
+        <va-button v-if="searchQuery || filterEstado" @click="searchQuery = ''; filterEstado = ''" color="primary">
+          Ver todas las herramientas
+        </va-button>
       </div>
 
       <div v-for="(herramienta, index) in filteredHerramientas" 
@@ -130,7 +230,8 @@
           </div>
           
           <!-- Badge de estado -->
-          <div class="tool-status" :class="'status-' + herramienta.estado_herramienta_id">
+          <div class="tool-status" :class="getStatusClass(herramienta.estado_herramienta_id)">
+            <i :class="getStatusIcon(herramienta.estado_herramienta_id)"></i>
             {{ getEstadoName(herramienta.estado_herramienta_id) }}
           </div>
 
@@ -164,24 +265,51 @@
           </div>
         </div>
 
-        <div class="progress-container">
+        <!-- Barra de progreso de vida útil -->
+        <div class="progress-container" v-if="herramienta.vida_util_horas">
           <div class="progress-label">
             <span>Vida útil</span>
             <span>{{ calcularPorcentajeUso(herramienta) }}%</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: calcularPorcentajeUso(herramienta) + '%' }"></div>
+            <div class="progress-fill" 
+                 :style="{ 
+                   width: calcularPorcentajeUso(herramienta) + '%',
+                   backgroundColor: calcularPorcentajeUso(herramienta) > 80 ? '#ef4444' : 
+                                  calcularPorcentajeUso(herramienta) > 60 ? '#f59e0b' : '#10b981'
+                 }"></div>
           </div>
         </div>
 
+        <!-- Botones de acción -->
         <div class="tool-actions">
-          <va-button @click="editHerramienta(herramienta.id)" icon="edit" size="small">
+          <va-button @click="editHerramienta(herramienta.id)" icon="edit" size="small" color="info">
             Editar
           </va-button>
-          <va-button @click="showDetails(herramienta)" color="info" icon="info-circle" size="small">
+          <va-button @click="showDetails(herramienta)" color="secondary" icon="info-circle" size="small">
             Detalles
           </va-button>
-          <va-button @click="confirmDelete(herramienta.id)" icon="trash-alt" size="small">
+          
+          <!-- Botones de checkout/checkin según el estado -->
+          <va-button 
+            v-if="herramienta.estado_herramienta_id === 1" 
+            @click="showCheckoutDialog(herramienta.id)" 
+            color="success" 
+            icon="hand-paper" 
+            size="small">
+            Ocupar
+          </va-button>
+          
+          <va-button 
+            v-if="herramienta.estado_herramienta_id === 2" 
+            @click="desOcuparHerramienta(herramienta.id)" 
+            color="warning" 
+            icon="undo" 
+            size="small">
+            Liberar
+          </va-button>
+          
+          <va-button @click="confirmDelete(herramienta.id)" color="danger" icon="trash-alt" size="small">
             Eliminar
           </va-button>
         </div>
@@ -193,70 +321,93 @@
       <div v-if="selectedHerramienta" class="modal-overlay" @click.self="selectedHerramienta = null">
         <div class="modal-container">
           <div class="modal-header">
-            <h3>Detalles completos</h3>
-            <va-button @click="selectedHerramienta = null" class="modal-close" icon="times">
+            <h3><i class="fas fa-info-circle"></i> Detalles completos</h3>
+            <va-button @click="selectedHerramienta = null" class="modal-close" icon="times" size="small">
             </va-button>
           </div>
+          
           <div class="modal-content">
             <div class="modal-image"
                  :style="selectedHerramienta.imagen_ruta ? 
                          { 'background-image': `url(${selectedHerramienta.imagen_ruta})` } : {}">
               <i v-if="!selectedHerramienta.imagen_ruta" :class="getToolIcon(selectedHerramienta.nombre)" style="font-size: 4rem;"></i>
             </div>
+            
             <div class="modal-details">
-              <h4>{{ selectedHerramienta.nombre }} - {{ selectedHerramienta.modelo }}</h4>
-              <div class="detail-row">
-                <span class="detail-label">Fabricante:</span>
-                <span>{{ selectedHerramienta.fabricante || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Número de serie:</span>
-                <span>{{ selectedHerramienta.numero_serie || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Código inventario:</span>
-                <span>{{ selectedHerramienta.codigo_inventario || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Fecha adquisición:</span>
-                <span>{{ formatDate(selectedHerramienta.fecha_adquisicion) || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Costo:</span>
-                <span>${{ formatCurrency(selectedHerramienta.costo_adquisicion) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Valor actual:</span>
-                <span>${{ formatCurrency(selectedHerramienta.valor_actual) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Estado:</span>
-                <span :class="'status-' + selectedHerramienta.estado_herramienta_id">
+              <div class="modal-title">
+                <h4>{{ selectedHerramienta.nombre }} - {{ selectedHerramienta.modelo }}</h4>
+                <div class="tool-status" :class="getStatusClass(selectedHerramienta.estado_herramienta_id)">
+                  <i :class="getStatusIcon(selectedHerramienta.estado_herramienta_id)"></i>
                   {{ getEstadoName(selectedHerramienta.estado_herramienta_id) }}
-                </span>
+                </div>
               </div>
-              <div class="detail-row">
-                <span class="detail-label">Uso:</span>
-                <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas || 'N/A' }} horas</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Último mantenimiento:</span>
-                <span>{{ formatDate(selectedHerramienta.fecha_ultimo_mantenimiento) || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Próximo mantenimiento:</span>
-                <span>{{ formatDate(selectedHerramienta.fecha_proximo_mantenimiento) || 'N/A' }}</span>
-              </div>
-              <div class="detail-row full-width">
-                <span class="detail-label">Especificaciones técnicas:</span>
-                <pre>{{ formatSpecs(selectedHerramienta.especificaciones_tecnicas) }}</pre>
-              </div>
-              <div class="detail-row full-width">
-                <span class="detail-label">Notas:</span>
-                <p>{{ selectedHerramienta.notas || 'Ninguna' }}</p>
+
+              <div class="detail-sections">
+                <div class="detail-section">
+                  <h5><i class="fas fa-info"></i> Información General</h5>
+                  <div class="detail-row">
+                    <span class="detail-label">Fabricante:</span>
+                    <span>{{ selectedHerramienta.fabricante || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Número de serie:</span>
+                    <span>{{ selectedHerramienta.numero_serie || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Código inventario:</span>
+                    <span>{{ selectedHerramienta.codigo_inventario || 'N/A' }}</span>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h5><i class="fas fa-dollar-sign"></i> Información Financiera</h5>
+                  <div class="detail-row">
+                    <span class="detail-label">Fecha adquisición:</span>
+                    <span>{{ formatDate(selectedHerramienta.fecha_adquisicion) || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Costo:</span>
+                    <span>${{ formatCurrency(selectedHerramienta.costo_adquisicion) }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Valor actual:</span>
+                    <span>${{ formatCurrency(selectedHerramienta.valor_actual) }}</span>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <h5><i class="fas fa-clock"></i> Uso y Mantenimiento</h5>
+                  <div class="detail-row">
+                    <span class="detail-label">Uso:</span>
+                    <span>{{ selectedHerramienta.horas_uso_actual || '0' }} / {{ selectedHerramienta.vida_util_horas || 'N/A' }} horas</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Último mantenimiento:</span>
+                    <span>{{ formatDate(selectedHerramienta.fecha_ultimo_mantenimiento) || 'N/A' }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Próximo mantenimiento:</span>
+                    <span>{{ formatDate(selectedHerramienta.fecha_proximo_mantenimiento) || 'N/A' }}</span>
+                  </div>
+                </div>
+
+                <div class="detail-section full-width" v-if="selectedHerramienta.especificaciones_tecnicas">
+                  <h5><i class="fas fa-cogs"></i> Especificaciones Técnicas</h5>
+                  <div class="detail-content">
+                    <pre>{{ formatSpecs(selectedHerramienta.especificaciones_tecnicas) }}</pre>
+                  </div>
+                </div>
+
+                <div class="detail-section full-width" v-if="selectedHerramienta.notas">
+                  <h5><i class="fas fa-sticky-note"></i> Notas</h5>
+                  <div class="detail-content">
+                    <p>{{ selectedHerramienta.notas }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+          
           <div class="modal-footer">
             <va-button @click="editHerramienta(selectedHerramienta.id)" color="primary" icon="edit">
               Editar
@@ -269,15 +420,17 @@
       </div>
     </transition>
 
-    <!-- Modal de confirmación -->
+    <!-- Modal de confirmación de eliminación -->
     <va-modal v-model="showDeleteModal" title="Confirmar eliminación" size="small" hide-default-actions>
-      <div>
+      <div class="delete-confirmation">
+        <div class="delete-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
         <p>¿Estás seguro de que deseas eliminar la herramienta <strong>{{ herramientaToDeleteName }}</strong>?</p>
-        <p>Esta acción no se puede deshacer.</p>
+        <p class="warning-text">Esta acción no se puede deshacer.</p>
       </div>
-      <br>
       <template #footer>
-        <va-button color="danger" icon="trash-alt" @click="deleteHerramienta">
+        <va-button color="danger" icon="trash-alt" @click="deleteHerramienta" :loading="loading">
           Eliminar
         </va-button>
         <va-button color="secondary" icon="times" @click="showDeleteModal = false">
@@ -285,8 +438,41 @@
         </va-button>
       </template>
     </va-modal>
+
+    <!-- Modal para checkout con usuario -->
+    <va-modal v-model="showCheckoutModal" title="Asignar herramienta" size="small" hide-default-actions>
+      <div class="checkout-form">
+        <div class="checkout-icon">
+          <i class="fas fa-hand-paper"></i>
+        </div>
+        <p>¿A qué usuario deseas asignar esta herramienta?</p>
+        <div class="form-group">
+          <label for="usuarioCheckout">ID del Usuario:</label>
+          <input 
+            type="number" 
+            id="usuarioCheckout" 
+            v-model="usuarioId" 
+            placeholder="Ingrese ID del usuario"
+            class="checkout-input">
+        </div>
+      </div>
+      <template #footer>
+        <va-button 
+          color="success" 
+          icon="check" 
+          @click="confirmCheckout"
+          :disabled="!usuarioId"
+          :loading="loading">
+          Asignar
+        </va-button>
+        <va-button color="secondary" icon="times" @click="showCheckoutModal = false">
+          Cancelar
+        </va-button>
+      </template>
+    </va-modal>
   </div>
 </template>
+
 <style src="@/assets/EstiloBase.css" scoped></style>
 <script src="./scripts/Herramientas.js"></script>
 <style src="@/assets/Herramientas.css" scoped></style>
