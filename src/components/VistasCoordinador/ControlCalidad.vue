@@ -20,538 +20,741 @@
       </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div v-if="loading" class="loading-container">
-      <div class="spinner-border" role="status">
-        <span class="sr-only">Cargando planos...</span>
-      </div>
-    </div>
-
-    <!-- Resumen estadístico en cards -->
-    <va-row v-if="!loading" class="qc-stats">
-      <va-col cols="12" sm="6" md="4" lg="2">
-        <va-card class="stat-card pending h-100" @click="setFilter('status', 'pending')" hover stripe
-          stripe-color="warning">
-
-          <va-card-content class="d-flex align-items-center">
-            <va-icon name="hourglass_empty" size="2rem" color="warning" class="mr-3" />
-            <div class="stat-content">
-              <div class="stat-value text-h4 font-weight-bold">{{ stats.pending }}</div>
-              <div class="stat-label text-secondary">Pendientes</div>
-            </div>
-          </va-card-content>
-        </va-card>
-      </va-col>
-
-      <va-col cols="12" sm="6" md="4" lg="2">
-        <va-card class="stat-card in-progress h-100" @click="setFilter('status', 'in-progress')" hover stripe
-          stripe-color="info">
-          <va-card-content class="d-flex align-items-center">
-            <va-icon name="settings" size="2rem" color="info" class="mr-3" />
-            <div class="stat-content">
-              <div class="stat-value text-h4 font-weight-bold">{{ stats.inProgress }}</div>
-              <div class="stat-label text-secondary">En Inspección</div>
-            </div>
-          </va-card-content>
-        </va-card>
-      </va-col>
-
-      <va-col cols="12" sm="6" md="4" lg="2">
-        <va-card class="stat-card approved h-100" @click="setFilter('status', 'approved')" hover stripe
-          stripe-color="success">
-          <va-card-content class="d-flex align-items-center">
-            <va-icon name="check_circle" size="2rem" color="success" class="mr-3" />
-            <div class="stat-content">
-              <div class="stat-value text-h4 font-weight-bold">{{ stats.approved }}</div>
-              <div class="stat-label text-secondary">Aprobados</div>
-            </div>
-          </va-card-content>
-        </va-card>
-      </va-col>
-
-      <va-col cols="12" sm="6" md="4" lg="2">
-        <va-card class="stat-card rejected h-100" @click="setFilter('status', 'rejected')" hover stripe
-          stripe-color="danger">
-          <va-card-content class="d-flex align-items-center">
-            <va-icon name="cancel" size="2rem" color="danger" class="mr-3" />
-            <div class="stat-content">
-              <div class="stat-value text-h4 font-weight-bold">{{ stats.rejected }}</div>
-              <div class="stat-label text-secondary">Rechazados</div>
-            </div>
-          </va-card-content>
-        </va-card>
-      </va-col>
-
-      <va-col cols="12" sm="6" md="4" lg="2">
-        <va-card class="stat-card highlight h-100" hover stripe stripe-color="primary">
-          <va-card-content class="d-flex align-items-center">
-            <va-icon name="trending_up" size="2rem" color="primary" class="mr-3" />
-            <div class="stat-content">
-              <div class="stat-value text-h4 font-weight-bold">{{ stats.qualityRate }}%</div>
-              <div class="stat-label text-secondary">Tasa Calidad</div>
-            </div>
-          </va-card-content>
-        </va-card>
-      </va-col>
-    </va-row>
-
-    <!-- Tabs Container -->
-    <div class="tabs-container mb-4" v-if="!loading">
-      <ul class="flex border-b border-gray-200">
-        <li class="mr-1">
-          <a @click="activeTab = 'inspecciones'" :class="{
-            'bg-white border-l border-t border-r border-gray-200 text-blue-600': activeTab === 'inspecciones',
-            'text-gray-500 hover:text-gray-700': activeTab !== 'inspecciones'
-          }" class="inline-block py-2 px-4 font-semibold text-sm flex items-center">
-            <i class="fas fa-search mr-2"></i>
-            Inspecciones
-          </a>
-        </li>
-        <li class="mr-1">
-          <a @click="activeTab = 'reportes'" :class="{
-            'bg-white border-l border-t border-r border-gray-200 text-blue-600': activeTab === 'reportes',
-            'text-gray-500 hover:text-gray-700': activeTab !== 'reportes'
-          }" class="inline-block py-2 px-4 font-semibold text-sm flex items-center">
-            <i class="fas fa-chart-bar mr-2"></i>
-            Reportes
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Filtros compactos -->
-    <div class="bg-white rounded-lg shadow-sm mb-4" v-if="!loading">
-      <!-- Encabezado del panel -->
-      <div class="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-        @click="toggleFilters">
-        <div class="flex items-center text-gray-700 font-medium">
-          <i class="fas fa-filter mr-2 text-gray-500"></i>
-          <span>Filtros de Búsqueda</span>
-          <div v-if="hasActiveFilters"
-            class="bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-2">
-            {{ activeFiltersCount }}
+    <!-- Loading State con animación mejorada -->
+    <transition name="fade" mode="out-in">
+      <div v-if="loading" class="loading-state">
+        <div class="loading-container">
+          <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
           </div>
-        </div>
-        <button class="text-gray-500 hover:text-gray-700">
-          <i :class="showFilters ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-        </button>
-      </div>
-      <!-- Contenido de filtros -->
-      <div v-if="showFilters" class="p-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-3">
-          <!-- Filtro Estado -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-tasks mr-1 text-gray-500"></i>
-              Estado
-            </label>
-            <select v-model="filters.status"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="all">Todos</option>
-              <option value="pending">Pendientes</option>
-              <option value="in-progress">En Inspección</option>
-              <option value="approved">Aprobados</option>
-              <option value="rejected">Rechazados</option>
-            </select>
-          </div>
-          <!-- Filtro Inspector -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-user-cog mr-1 text-gray-500"></i>
-              Inspector
-            </label>
-            <select v-model="filters.inspector"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option value="all">Todos</option>
-              <option v-for="inspector in inspectors" :key="inspector.id" :value="inspector.id">
-                {{ inspector.nombre }}
-              </option>
-            </select>
-          </div>
-          <!-- Filtro Fecha -->
-          <div class="xl:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-calendar-alt mr-1 text-gray-500"></i>
-              Período
-            </label>
-            <div class="flex items-center space-x-2">
-              <select v-model="filters.dateRange"
-                class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="all">Todas</option>
-                <option value="today">Hoy</option>
-                <option value="week">Esta semana</option>
-                <option value="month">Este mes</option>
-              </select>
-            </div>
-          </div>
-          <!-- Filtro Búsqueda -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-search mr-1 text-gray-500"></i>
-              Buscar
-            </label>
-            <div class="relative">
-              <input v-model="searchQuery" placeholder="Número de plano, nombre..."
-                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                @keyup.enter="applyFilters">
-              <button class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-blue-500"
-                @click="applyFilters">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- Acciones -->
-        <div class="flex justify-end items-center space-x-2 pt-2 border-t border-gray-100">
-          <va-button color="primary" size="small" @click="applyFilters" icon="check" class="text-xs px-3 py-1">
-            Aplicar Filtros
-          </va-button>
-          <va-button preset="outline" color="secondary" size="small" @click="resetFilters" icon="refresh"
-            class="text-xs px-3 py-1">
-            Limpiar
-          </va-button>
+          <p class="loading-text">Cargando planos de producción...</p>
         </div>
       </div>
-    </div>
+    </transition>
 
-    <!-- Error message -->
-    <div v-if="error" class="error-container">
-      <i class="material-icons">error</i>
-      <p>{{ error }}</p>
-      <button class="btn primary" @click="fetchPlanos">Reintentar</button>
-    </div>
+    <!-- Error State -->
+    <transition name="slide-up">
+      <div v-if="error && !loading" class="error-state">
+        <div class="error-icon">
+          <i class="material-icons">error_outline</i>
+        </div>
+        <p class="error-text">{{ error }}</p>
+        <va-button @click="refreshData" class="retry-button">
+          <i class="material-icons">refresh</i>
+          Reintentar
+        </va-button>
+      </div>
+    </transition>
 
-    <!-- Contenido de pestañas -->
-    <div class="tab-content" v-if="!loading && !error">
-      <!-- Pestaña Inspecciones -->
-      <div v-if="activeTab === 'inspecciones'" class="tab-pane active">
-        <div class="card">
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th @click="sortBy('numeroPlano')">
-                      Plano # <i class="material-icons sort-icon">{{ sortIcon('numeroPlano') }}</i>
-                    </th>
-                    <th @click="sortBy('nombrePlano')">Nombre</th>
-                    <th @click="sortBy('descripcion')">Descripción</th>
-                    <th @click="sortBy('fechaCreacion')">Fecha Creación</th>
-                    <th @click="sortBy('version')">Versión</th>
-                    <th>Archivo</th>
-                    <th @click="sortBy('status')">Estado QC</th>
-                    <th @click="sortBy('inspector')">Inspector</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="plano in filteredWorkOrders" :key="plano.idPlano" :class="getPlanoStatus(plano)">
-                    <td>{{ plano.numeroPlano }}</td>
-                    <td>{{ plano.nombrePlano }}</td>
-                    <td class="description-cell">{{ plano.descripcion || '--' }}</td>
-                    <td>{{ formatDate(plano.fechaCreacion) }}</td>
-                    <td>{{ plano.version }}</td>
-                    <td>
-                      <button class="btn btn-sm btn-icon" @click="downloadPlano(plano)" v-if="plano.rutaArchivo">
-                        <i class="material-icons">picture_as_pdf</i>
-                        {{ getFileExtension(plano.rutaArchivo) }}
-                      </button>
-                      <span v-else>--</span>
-                    </td>
-                    <td>
-                      <span :class="['badge', getPlanoStatusClass(plano)]">
-                        {{ getStatusLabel(getPlanoStatus(plano)) }}
-                      </span>
-                    </td>
-                    <td>{{ getInspector(plano) || '--' }}</td>
-                    <td>
-                      <div class="action-buttons">
-                        <button class="btn btn-sm btn-icon btn-success" @click="startInspection(plano)"
-                          v-if="getPlanoStatus(plano) === 'pending'" title="Iniciar Inspección">
-                          <i class="fas fa-play"></i>
-                        </button>
-                        <button class="btn btn-sm btn-icon btn-primary" @click="openInspection(plano)"
-                          v-if="getPlanoStatus(plano) === 'in-progress'" title="Continuar Inspección">
-                          <i class="fas fa-cogs"></i>
-                        </button>
-                        <button class="btn btn-sm btn-icon btn-info" @click="viewReport(plano)"
-                          v-if="['approved', 'rejected'].includes(getPlanoStatus(plano))" title="Ver Reporte">
-                          <i class="fas fa-file-alt"></i>
-                        </button>
-                        <button class="btn btn-sm btn-icon" @click="viewBlueprint(plano)" v-if="plano.rutaArchivo"
-                          title="Ver Plano">
-                          <i class="fas fa-eye"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+    <!-- Results Summary -->
+    <transition name="slide-up">
+      <div v-if="!loading && !error" class="results-summary">
+        <p>Mostrando {{ filteredItems.length }} de {{ items.length }} planos</p>
+      </div>
+    </transition>
+
+    <!-- Blueprints Grid con animaciones escalonadas -->
+    <transition name="fade" mode="out-in">
+      <div v-if="!loading && !error && filteredItems.length > 0" class="blueprints-grid">
+        <div v-for="(item, index) in filteredItems" :key="item.id" class="blueprint-card"
+          :style="{ animationDelay: (index * 0.1) + 's' }" @click="openDetails(item)">
+          <div class="blueprint-image">
+            <img v-if="item.plano.imagen_url" :src="item.plano.imagen_url" :alt="`Plano ${item.plano.codigo}`"
+              class="blueprint-img">
+            <div v-else class="no-image">
+              <i class="material-icons">image_not_supported</i>
+              <span>Sin imagen</span>
             </div>
+          </div>
+
+          <div class="blueprint-content">
+            <div class="blueprint-header">
+              <h3 class="tool-name">{{ item.herramienta.nombre }}</h3>
+              <span class="blueprint-code">{{ item.plano.codigo }}</span>
+            </div>
+
+            <div class="blueprint-meta">
+              <div class="meta-item">
+                <i class="material-icons">build</i>
+                <span>{{ item.cantidad_necesaria }} unidades</span>
+              </div>
+              <div class="meta-item">
+                <i class="material-icons">schedule</i>
+                <span>{{ item.tiempo_estimado_uso }}h</span>
+              </div>
+            </div>
+
+            <div class="blueprint-tags">
+              <span class="tag version" v-if="item.plano.version">
+                v{{ item.plano.version }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-hover-overlay">
+            <i class="material-icons">visibility</i>
+            <span>Ver detalles</span>
           </div>
         </div>
       </div>
+    </transition>
 
-      <!-- Pestaña Reportes -->
-      <div v-if="activeTab === 'reportes'" class="tab-pane active">
-        <div class="card">
-          <div class="card-body">
-            <div class="reports-section">
-              <div class="reports-grid">
-                <div class="report-card">
-                  <div class="report-icon">
-                    <i class="fas fa-chart-pie"></i>
-                  </div>
-                  <div class="report-content">
-                    <h3>Distribución por Estado</h3>
-                    <p>Visualiza la distribución de planos por estado de calidad</p>
-                    <button class="btn btn-primary btn-sm">Ver Reporte</button>
-                  </div>
-                </div>
-                <div class="report-card">
-                  <div class="report-icon">
-                    <i class="fas fa-chart-line"></i>
-                  </div>
-                  <div class="report-content">
-                    <h3>Tendencias de Calidad</h3>
-                    <p>Análisis de tendencias de calidad en el tiempo</p>
-                    <button class="btn btn-primary btn-sm">Ver Reporte</button>
-                  </div>
-                </div>
-                <div class="report-card">
-                  <div class="report-icon">
-                    <i class="fas fa-user-check"></i>
-                  </div>
-                  <div class="report-content">
-                    <h3>Rendimiento por Inspector</h3>
-                    <p>Estadísticas de rendimiento de cada inspector</p>
-                    <button class="btn btn-primary btn-sm">Ver Reporte</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- Empty State -->
+    <transition name="scale-fade">
+      <div v-if="!loading && !error && filteredItems.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="material-icons">search_off</i>
         </div>
+        <h3>No se encontraron resultados</h3>
+        <p>No hay planos disponibles para revisar</p>
       </div>
-    </div>
+    </transition>
 
-    <!-- Modal de Inspección -->
-    <div class="modal-overlay" v-if="showInspectionModal" @click.self="closeInspectionModal">
-      <div class="modal-content large">
-        <div class="modal-header">
-          <h2>Inspección de Calidad - {{ currentPlano.numeroPlano }}</h2>
-          <button class="close-btn" @click="closeInspectionModal">
-            <i class="material-icons">close</i>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="inspection-sections">
-            <!-- Sección de detalles del plano -->
-            <div class="inspection-section">
-              <h3><i class="material-icons">info</i> Detalles del Plano</h3>
-              <div class="detail-row">
-                <span class="detail-label">Nombre:</span>
-                <span>{{ currentPlano.nombrePlano }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Descripción:</span>
-                <span>{{ currentPlano.descripcion || 'Sin descripción' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Versión:</span>
-                <span>{{ currentPlano.version }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Fecha Creación:</span>
-                <span>{{ formatDate(currentPlano.fechaCreacion) }}</span>
-              </div>
-              <div class="detail-row" v-if="currentPlano.rutaArchivo">
-                <span class="detail-label">Archivo:</span>
-                <button class="btn secondary small" @click="downloadPlano(currentPlano)">
-                  <i class="material-icons">download</i> Descargar Plano
-                </button>
-              </div>
+    <!-- Modal de detalles -->
+    <transition name="modal">
+      <div v-if="selectedItem" class="blueprint-modal" @click.self="selectedItem = null">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-title">
+              <h3>{{ selectedItem.herramienta.nombre }}</h3>
+              <span class="modal-subtitle">{{ selectedItem.plano.codigo }}</span>
             </div>
-
-            <!-- Sección de checklist -->
-            <div class="inspection-section">
-              <h3><i class="material-icons">checklist</i> Checklist de Calidad</h3>
-              <div class="checklist-items">
-                <div class="checklist-item" v-for="(item, index) in qualityChecklist" :key="index">
-                  <label class="checkbox-container">
-                    {{ item.name }}
-                    <input type="checkbox" v-model="item.checked">
-                    <span class="checkmark"></span>
-                  </label>
-                  <textarea v-model="item.notes" placeholder="Notas/observaciones" class="checklist-notes"></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sección de mediciones -->
-            <div class="inspection-section">
-              <h3><i class="material-icons">straighten</i> Mediciones</h3>
-              <table class="measurements-table">
-                <thead>
-                  <tr>
-                    <th>Parámetro</th>
-                    <th>Valor Esperado</th>
-                    <th>Valor Medido</th>
-                    <th>Tolerancia</th>
-                    <th>Resultado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(measure, index) in measurements" :key="index">
-                    <td>{{ measure.parameter }}</td>
-                    <td>{{ measure.expected }} {{ measure.unit }}</td>
-                    <td>
-                      <input type="number" v-model="measure.actual" :step="measure.step || 0.01">
-                    </td>
-                    <td>±{{ measure.tolerance }} {{ measure.unit }}</td>
-                    <td>
-                      <span class="measure-result" :class="getMeasureClass(measure)">
-                        {{ getMeasureResult(measure) }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Sección de decisión final -->
-            <div class="inspection-section decision-section">
-              <h3><i class="material-icons">gavel</i> Decisión Final</h3>
-              <div class="decision-options">
-                <div class="decision-option">
-                  <label class="radio-container">
-                    Aprobar plano
-                    <input type="radio" name="decision" value="approved" v-model="inspectionDecision">
-                    <span class="radiomark"></span>
-                  </label>
-                </div>
-                <div class="decision-option">
-                  <label class="radio-container">
-                    Rechazar plano
-                    <input type="radio" name="decision" value="rejected" v-model="inspectionDecision">
-                    <span class="radiomark"></span>
-                  </label>
-                  <textarea v-model="rejectionReason" placeholder="Motivo del rechazo" class="rejection-reason"
-                    v-if="inspectionDecision === 'rejected'"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <va-button preset="outline" color="secondary" @click="closeInspectionModal">Cancelar</va-button>
-          <va-button color="primary" @click="submitInspection" :disabled="!inspectionDecision" icon="save">
-            Guardar Inspección
-          </va-button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Reportes -->
-    <div class="modal-overlay" v-if="showReportModal" @click.self="closeReportModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Reporte de Calidad - {{ currentPlano.numeroPlano }}</h2>
-          <button class="close-btn" @click="closeReportModal">
-            <i class="material-icons">close</i>
-          </button>
-        </div>
-
-        <div class="modal-body report-body">
-          <div class="report-section">
-            <h3>Detalles de la Inspección</h3>
-            <div class="report-details">
-              <div class="report-row">
-                <span class="report-label">Estado:</span>
-                <span class="report-value" :class="getPlanoStatus(currentPlano)">{{
-                  getStatusLabel(getPlanoStatus(currentPlano)) }}</span>
-              </div>
-              <div class="report-row">
-                <span class="report-label">Inspector:</span>
-                <span class="report-value">{{ getInspector(currentPlano) }}</span>
-              </div>
-              <div class="report-row">
-                <span class="report-label">Fecha Inspección:</span>
-                <span class="report-value">{{ formatDate(currentPlano.inspectionDate) }}</span>
-              </div>
-              <div class="report-row" v-if="getPlanoStatus(currentPlano) === 'rejected'">
-                <span class="report-label">Motivo Rechazo:</span>
-                <span class="report-value">{{ currentPlano.rejectionReason }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="report-section">
-            <h3>Resultados de Mediciones</h3>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Parámetro</th>
-                  <th>Esperado</th>
-                  <th>Medido</th>
-                  <th>Tolerancia</th>
-                  <th>Resultado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(measure, index) in currentPlano.measurements || []" :key="index">
-                  <td>{{ measure.parameter }}</td>
-                  <td>{{ measure.expected }} {{ measure.unit }}</td>
-                  <td>{{ measure.actual }} {{ measure.unit }}</td>
-                  <td>±{{ measure.tolerance }} {{ measure.unit }}</td>
-                  <td :class="getMeasureClass(measure)">
-                    {{ getMeasureResult(measure) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="report-actions">
-            <va-button preset="outline" color="secondary" @click="printReport" icon="print">
-              Imprimir Reporte
-            </va-button>
-            <va-button color="primary" @click="downloadReport" icon="download">
-              Descargar PDF
+            <va-button @click="selectedItem = null" class="close-button">
+              <i class="material-icons">close</i>
             </va-button>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Modal de vista de plano -->
-    <div class="modal-overlay" v-if="showBlueprintModal" @click.self="closeBlueprintModal">
-      <div class="modal-content large">
-        <div class="modal-header">
-          <h2>Plano - {{ selectedPlano.numeroPlano }}</h2>
-          <button class="close-btn" @click="closeBlueprintModal">
-            <i class="material-icons">close</i>
-          </button>
-        </div>
+          <div class="modal-body">
+            <div class="details-layout">
+              <div class="details-left">
+                <div class="detail-card" data-aos="fade-right" data-aos-delay="100">
+                  <h4 class="detail-title">
+                    <i class="material-icons">description</i>
+                    Información del Plano
+                  </h4>
+                  <div class="detail-content">
+                    <div class="detail-item">
+                      <label>Código</label>
+                      <span class="detail-value">{{ selectedItem.plano.codigo }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>Versión</label>
+                      <span class="detail-value">{{ selectedItem.plano.version || 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>Descripción</label>
+                      <p class="detail-description">{{ selectedItem.plano.descripcion || 'Sin descripción disponible' }}</p>
+                    </div>
+                  </div>
+                </div>
 
-        <div class="modal-body">
-          <div class="blueprint-viewer">
-            <p>Archivo: {{ selectedPlano.rutaArchivo }}</p>
-            <p>Versión: {{ selectedPlano.version }}</p>
-            <div class="blueprint-actions">
-              <va-button color="primary" @click="downloadPlano(selectedPlano)" icon="download">
-                Descargar
-              </va-button>
+                <div class="detail-card" data-aos="fade-right" data-aos-delay="200">
+                  <h4 class="detail-title">
+                    <i class="material-icons">build</i>
+                    Información de Herramienta
+                  </h4>
+                  <div class="detail-content">
+                    <div class="detail-item">
+                      <label>Nombre</label>
+                      <span class="detail-value">{{ selectedItem.herramienta.nombre }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>Código</label>
+                      <span class="detail-value">{{ selectedItem.herramienta.codigo }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>Estado</label>
+                      <span class="detail-value">
+                        <span :class="['status-badge', selectedItem.herramienta.estado.toLowerCase()]">
+                          {{ selectedItem.herramienta.estado }}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-card" data-aos="fade-right" data-aos-delay="300">
+                  <h4 class="detail-title">
+                    <i class="material-icons">settings</i>
+                    Especificaciones de Uso
+                  </h4>
+                  <div class="detail-content">
+                    <div class="detail-item">
+                      <label>Cantidad necesaria</label>
+                      <span class="detail-value highlight">{{ selectedItem.cantidad_necesaria }} unidades</span>
+                    </div>
+                    <div class="detail-item">
+                      <label>Tiempo estimado</label>
+                      <span class="detail-value highlight">{{ selectedItem.tiempo_estimado_uso }} horas</span>
+                    </div>
+                    <div class="detail-item" v-if="selectedItem.notas">
+                      <label>Notas</label>
+                      <p class="detail-description">{{ selectedItem.notas }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="details-right" v-if="selectedItem.plano.imagen_url" data-aos="fade-left" data-aos-delay="400">
+                <div class="blueprint-preview">
+                  <h4 class="detail-title">
+                    <i class="material-icons">image</i>
+                    Vista Previa del Plano
+                  </h4>
+                  <div class="preview-container">
+                    <img :src="selectedItem.plano.imagen_url" :alt="`Plano ${selectedItem.plano.codigo}`"
+                      class="preview-image">
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
+
   </div>
 </template>
 
 <script src="./scripts/ControlCalidad.js"></script>
+
+<style>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.4s ease;
+}
+.slide-up-enter-from, .slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.scale-fade-enter-active, .scale-fade-leave-active {
+  transition: all 0.4s ease;
+}
+.scale-fade-enter-from, .scale-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.modal-enter-active, .modal-leave-active {
+  transition: all 0.3s ease;
+}
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .modal-content,
+.modal-leave-to .modal-content {
+  transform: scale(0.9) translateY(-20px);
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 80px 20px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 3px solid transparent;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+}
+
+.spinner-ring:nth-child(2) {
+  width: 45px;
+  height: 45px;
+  top: 7.5px;
+  left: 7.5px;
+  border-top-color: #06b6d4;
+  animation-duration: 1.8s;
+  animation-direction: reverse;
+}
+
+.spinner-ring:nth-child(3) {
+  width: 30px;
+  height: 30px;
+  top: 15px;
+  left: 15px;
+  border-top-color: #8b5cf6;
+  animation-duration: 0.8s;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 20px;
+  color: #64748b;
+  font-size: 16px;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.error-icon i {
+  font-size: 64px;
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.error-text {
+  margin: 0 0 24px 0;
+  color: #374151;
+  font-size: 16px;
+}
+
+.retry-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Results Summary */
+.results-summary {
+  margin-bottom: 24px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Blueprints Grid */
+.blueprints-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.blueprint-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  animation: slideInUp 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.blueprint-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.blueprint-image {
+  height: 180px;
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.blueprint-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.blueprint-card:hover .blueprint-img {
+  transform: scale(1.05);
+}
+
+.no-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+}
+
+.no-image i {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.blueprint-content {
+  padding: 20px;
+}
+
+.blueprint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.tool-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.blueprint-code {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.blueprint-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.meta-item i {
+  font-size: 18px;
+  color: #9ca3af;
+}
+
+.blueprint-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.tag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag.version {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.card-hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.blueprint-card:hover .card-hover-overlay {
+  opacity: 1;
+}
+
+.card-hover-overlay i {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.card-hover-overlay span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.empty-icon i {
+  font-size: 64px;
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #64748b;
+  font-size: 16px;
+}
+
+/* Modal Styles */
+.blueprint-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-title h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-subtitle {
+  display: block;
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f1f5f9;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 32px;
+}
+
+.details-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 32px;
+}
+
+.details-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.detail-title i {
+  color: #3b82f6;
+  font-size: 20px;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #374151;
+}
+
+.detail-value.highlight {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.detail-description {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.activo {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.mantenimiento {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.inactivo {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.blueprint-preview {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  height: fit-content;
+}
+
+.preview-container {
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .blueprints-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+  }
+}
+</style>
+
 <style src="src/assets/ControlCalidad.css"></style>
 <style src="src/assets/EstiloBase.css"></style>
