@@ -222,19 +222,6 @@
            :style="{ 'animation-delay': `${index * 0.1}s` }">
         
         <div class="tool-header">
-          <!-- Imagen o ícono por defecto -->
-          <div class="tool-image"
-               :style="herramienta.imagen_ruta ? 
-                       { 'background-image': `url(${herramienta.imagen_ruta})` } : {}">
-            <i v-if="!herramienta.imagen_ruta" :class="getToolIcon(herramienta.nombre)"></i>
-          </div>
-          
-          <!-- Badge de estado -->
-          <div class="tool-status" :class="getStatusClass(herramienta.estado_herramienta_id)">
-            <i :class="getStatusIcon(herramienta.estado_herramienta_id)"></i>
-            {{ getEstadoName(herramienta.estado_herramienta_id) }}
-          </div>
-
           <!-- Título superpuesto -->
           <div class="tool-title">
             <h3>{{ herramienta.nombre }}</h3>
@@ -283,10 +270,10 @@
 
         <!-- Botones de acción -->
         <div class="tool-actions">
-          <va-button @click="editHerramienta(herramienta.id)" icon="edit" size="small" color="info">
+          <va-button @click="editHerramienta(herramienta.id)" size="small" color="info">
             Editar
           </va-button>
-          <va-button @click="showDetails(herramienta)" color="secondary" icon="info-circle" size="small">
+          <va-button @click="showDetails(herramienta)" color="secondary" size="small">
             Detalles
           </va-button>
           
@@ -295,7 +282,6 @@
             v-if="herramienta.estado_herramienta_id === 1" 
             @click="showCheckoutDialog(herramienta.id)" 
             color="success" 
-            icon="hand-paper" 
             size="small">
             Ocupar
           </va-button>
@@ -304,12 +290,11 @@
             v-if="herramienta.estado_herramienta_id === 2" 
             @click="desOcuparHerramienta(herramienta.id)" 
             color="warning" 
-            icon="undo" 
             size="small">
             Liberar
           </va-button>
           
-          <va-button @click="confirmDelete(herramienta.id)" color="danger" icon="trash-alt" size="small">
+          <va-button @click="confirmDelete(herramienta.id)" color="danger" size="small">
             Eliminar
           </va-button>
         </div>
@@ -322,7 +307,7 @@
         <div class="modal-container">
           <div class="modal-header">
             <h3><i class="fas fa-info-circle"></i> Detalles completos</h3>
-            <va-button @click="selectedHerramienta = null" class="modal-close" icon="times" size="small">
+            <va-button @click="selectedHerramienta = null" class="modal-close" size="small">
             </va-button>
           </div>
           

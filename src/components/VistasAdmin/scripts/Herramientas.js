@@ -44,7 +44,7 @@ export default {
       // Catálogos para selects
       tiposHerramienta: [],
       zonasTrabajos: [],
-      defaultImage: 'https://via.placeholder.com/300x200?text=Sin+imagen'
+      defaultImage: 'https://images.pexels.com/photos/210881/pexels-photo-210881.jpeg?cs=srgb&dl=pexels-pixabay-210881.jpg&fm=jpg'
     };
   },
   computed: {
@@ -91,8 +91,8 @@ export default {
         // Cargar tipos de herramientas y zonas de trabajo
         // Estas URLs deberías ajustarlas según tu backend
         const [tiposResponse, zonasResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/TipoHerramienta`).catch(() => ({ data: [] })),
-          axios.get(`${API_BASE_URL}/ZonaTrabajo`).catch(() => ({ data: [] }))
+          axios.get(`${API_BASE_URL}/Tipo_Herramienta`).catch(() => ({ data: [] })),
+          axios.get(`${API_BASE_URL}/Zona_Trabajo`).catch(() => ({ data: [] }))
         ]);
         
         this.tiposHerramienta = tiposResponse.data;
@@ -105,7 +105,7 @@ export default {
     async fetchHerramientas() {
       this.loading = true;
       try {
-        const response = await axios.get(`${API_BASE_URL}/Herramienta`);
+        const response = await axios.get('/api/Herramienta');
         this.herramientas = response.data || [];
         
         if (this.herramientas.length === 0) {
