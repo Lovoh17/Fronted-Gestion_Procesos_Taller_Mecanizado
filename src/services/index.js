@@ -7,6 +7,7 @@ export { workOrderService } from './workOrderService.js';
 export { inventoryService } from './inventoryService.js';
 export { maintenanceService } from './maintenanceService.js';
 export { resourceService } from './resourceService.js';
+export { pedidoService } from './pedidoService.js';
 
 // Exportaciones por defecto para compatibilidad
 export { default as userServiceDefault } from './userService.js';
