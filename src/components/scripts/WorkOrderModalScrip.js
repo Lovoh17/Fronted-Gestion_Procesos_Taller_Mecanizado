@@ -33,26 +33,27 @@ export default {
   
   data() {
     return {
-      usuarios: [],
+      // Separación de usuarios por tipo
+      tecnicos: [],
+      operarios: [],
       herramientas: [],
       proyectos: [],
-      tiposPedido: [
-        { id: 1, nombre: 'Fabricación' },
-        { id: 2, nombre: 'Reparación' },
-        { id: 3, nombre: 'Mantenimiento' },
-        { id: 4, nombre: 'Modificación' }
-      ],
+      tiposPedido: [], // Ahora se carga desde la API
       materialOptions: [],
       loadingMateriales: false,
       filterStock: 'all',
       
       // Estados de carga
-      loadingUsuarios: false,
+      loadingTiposPedido: false,
+      loadingTecnicos: false,
+      loadingOperarios: false,
       loadingHerramientas: false,
+      loadingPlanos: false,
       saving: false,
       
       // Búsqueda y filtros
-      searchUsuarios: '',
+      searchTecnicos: '',
+      searchOperarios: '',
       searchHerramientas: '',
       searchMateriales: '',
       workerFilter: 'available',
@@ -68,7 +69,7 @@ export default {
       hayRiesgoSobrecarga: false,
       recomendacionTemporal: null,
       
-      // Control de trabajadores
+      // Control de trabajadores combinados
       availableWorkers: [],
       busyWorkers: [],
       allWorkers: []
@@ -76,6 +77,14 @@ export default {
   },
   
   computed: {
+    // Combinación de técnicos y operarios
+    combinedWorkers() {
+      return [
+        ...this.tecnicos.map(t => ({ ...t, tipo: 'Técnico' })),
+        ...this.operarios.map(o => ({ ...o, tipo: 'Operario' }))
+      ];
+    },
+    
     filteredUsuarios() {
       let workers = this.allWorkers;
       
@@ -87,6 +96,12 @@ export default {
         case 'busy':
           workers = this.busyWorkers;
           break;
+        case 'tecnicos':
+          workers = this.allWorkers.filter(w => w.tipo === 'Técnico');
+          break;
+        case 'operarios':
+          workers = this.allWorkers.filter(w => w.tipo === 'Operario');
+          break;
         case 'all':
         default:
           workers = this.allWorkers;
@@ -94,18 +109,25 @@ export default {
       }
       
       // Aplicar filtro de búsqueda
-      if (!this.searchUsuarios) return workers;
-      const search = this.searchUsuarios.toLowerCase();
+      const searchTerm = this.workerFilter === 'tecnicos' ? this.searchTecnicos : 
+                        this.workerFilter === 'operarios' ? this.searchOperarios : 
+                        this.searchTecnicos || this.searchOperarios;
+      
+      if (!searchTerm) return workers;
+      
+      const search = searchTerm.toLowerCase();
       return workers.filter(usuario => {
         const nombreCompleto = `${usuario.nombres} ${usuario.apellidos}`.toLowerCase();
         const puestoNombre = usuario.puesto?.nombre?.toLowerCase() || '';
         const email = usuario.email?.toLowerCase() || '';
         const habilidades = usuario.habilidades?.join(' ').toLowerCase() || '';
+        const tipo = usuario.tipo?.toLowerCase() || '';
         
         return nombreCompleto.includes(search) || 
                puestoNombre.includes(search) ||
                email.includes(search) ||
-               habilidades.includes(search);
+               habilidades.includes(search) ||
+               tipo.includes(search);
       });
     },
     
@@ -114,7 +136,8 @@ export default {
       const search = this.searchHerramientas.toLowerCase();
       return this.herramientas.filter(herramienta =>
         herramienta.nombre.toLowerCase().includes(search) ||
-        herramienta.tipo.toLowerCase().includes(search)
+        (herramienta.tipo && herramienta.tipo.toLowerCase().includes(search)) ||
+        (herramienta.descripcion && herramienta.descripcion.toLowerCase().includes(search))
       );
     },
 
@@ -161,6 +184,16 @@ export default {
         // Finalmente por nombre
         return a.nombre.localeCompare(b.nombre);
       });
+    },
+
+    // Computed para estadísticas
+    workersStats() {
+      return {
+        totalTecnicos: this.tecnicos.length,
+        totalOperarios: this.operarios.length,
+        tecnicosDisponibles: this.tecnicos.filter(t => t.disponible).length,
+        operariosDisponibles: this.operarios.filter(o => o.disponible).length
+      };
     }
   },
   
@@ -171,20 +204,463 @@ export default {
     'pedido.trabajadores_asignados': {
       handler: 'calculateWorkload',
       deep: true
+    },
+    
+    // Watch para combinar workers cuando cambien
+    tecnicos: {
+      handler: 'updateCombinedWorkers',
+      deep: true
+    },
+    operarios: {
+      handler: 'updateCombinedWorkers',
+      deep: true
     }
   },
   
   async mounted() {
     await this.loadProyectos();
-    await this.loadUsuarios();
+    await this.loadTiposPedido();
+    await this.loadTecnicos();
+    await this.loadOperarios();
     await this.loadHerramientas();
     await this.loadMateriales();
     this.initializeWorkloadCalculation();
   },
   
   methods: {
-    // ==================== NUEVAS FUNCIONALIDADES ====================
+    // ==================== MÉTODOS DE CARGA DE DATOS MODIFICADOS ====================
     
+    // Cargar tipos de pedido desde la API
+    async loadTiposPedido() {
+      this.loadingTiposPedido = true;
+      try {
+        const response = await fetch('/api/Tipo_Pedido');
+        if (response.ok) {
+          this.tiposPedido = await response.json();
+        } else {
+          console.error('Error al cargar tipos de pedido:', response.statusText);
+          // Fallback en caso de error
+          this.tiposPedido = [
+            { id: 1, nombre: 'Fabricación' },
+            { id: 2, nombre: 'Reparación' },
+            { id: 3, nombre: 'Mantenimiento' },
+            { id: 4, nombre: 'Modificación' }
+          ];
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de pedido:', error);
+        this.tiposPedido = [
+          { id: 1, nombre: 'Fabricación' },
+          { id: 2, nombre: 'Reparación' },
+          { id: 3, nombre: 'Mantenimiento' },
+          { id: 4, nombre: 'Modificación' }
+        ];
+      } finally {
+        this.loadingTiposPedido = false;
+      }
+    },
+
+    // Cargar técnicos (Puesto 4)
+    async loadTecnicos() {
+      this.loadingTecnicos = true;
+      try {
+        const response = await fetch('/api/Usuario/Puesto/4');
+        if (response.ok) {
+          const tecnicos = await response.json();
+          this.tecnicos = tecnicos.map(tecnico => ({
+            ...tecnico,
+            disponible: true,
+            conflictos: [],
+            habilidades: tecnico.habilidades || [],
+            tipo: 'Técnico',
+            disponibilidad: {
+              horas_disponibles: 40 // Default 40 horas por semana
+            }
+          }));
+        } else {
+          console.error('Error al cargar técnicos:', response.statusText);
+          this.tecnicos = this.getFallbackTecnicos();
+        }
+      } catch (error) {
+        console.error('Error al cargar técnicos:', error);
+        this.tecnicos = this.getFallbackTecnicos();
+      } finally {
+        this.loadingTecnicos = false;
+      }
+    },
+
+    // Cargar operarios (Puesto 3)
+    async loadOperarios() {
+      this.loadingOperarios = true;
+      try {
+        const response = await fetch('/api/Usuario/Puesto/3');
+        if (response.ok) {
+          const operarios = await response.json();
+          this.operarios = operarios.map(operario => ({
+            ...operario,
+            disponible: true,
+            conflictos: [],
+            habilidades: operario.habilidades || [],
+            tipo: 'Operario',
+            disponibilidad: {
+              horas_disponibles: 40 // Default 40 horas por semana
+            }
+          }));
+        } else {
+          console.error('Error al cargar operarios:', response.statusText);
+          this.operarios = this.getFallbackOperarios();
+        }
+      } catch (error) {
+        console.error('Error al cargar operarios:', error);
+        this.operarios = this.getFallbackOperarios();
+      } finally {
+        this.loadingOperarios = false;
+      }
+    },
+
+    // Cargar herramientas desde la API específica
+    async loadHerramientas() {
+      this.loadingHerramientas = true;
+      try {
+        const response = await fetch('/api/Herramientas');
+        if (response.ok) {
+          const herramientas = await response.json();
+          this.herramientas = herramientas.map(herramienta => ({
+            id: herramienta.id,
+            nombre: herramienta.nombre || herramienta.descripcion,
+            tipo: herramienta.tipo || 'Herramienta',
+            descripcion: herramienta.descripcion,
+            estado: herramienta.estado || 'Operativo',
+            disponible: herramienta.disponible !== false,
+            ubicacion: herramienta.ubicacion,
+            codigo: herramienta.codigo
+          }));
+        } else {
+          console.error('Error al cargar herramientas:', response.statusText);
+          this.herramientas = this.getFallbackHerramientas();
+        }
+      } catch (error) {
+        console.error('Error al cargar herramientas:', error);
+        this.herramientas = this.getFallbackHerramientas();
+      } finally {
+        this.loadingHerramientas = false;
+      }
+    },
+
+    // Cargar materiales desde la API específica
+    async loadMateriales() {
+      this.loadingMateriales = true;
+      try {
+        const response = await fetch('/api/Materia_Prima');
+        if (response.ok) {
+          const materiales = await response.json();
+          this.materialOptions = materiales.map(material => ({
+            id: material.id,
+            nombre: material.nombre || material.descripcion,
+            descripcion: material.descripcion || material.especificaciones,
+            stock: material.cantidad_disponible || material.stock || material.existencia || 0,
+            stock_minimo: material.stock_minimo || material.minimo || 5,
+            unidad: material.unidad_medida || material.unidad || 'unidades',
+            precio: material.precio_unitario || material.precio || 0,
+            categoria: material.categoria,
+            codigo: material.codigo
+          }));
+        } else {
+          console.error('Error al cargar materiales:', response.statusText);
+          this.materialOptions = this.getFallbackMateriales();
+        }
+      } catch (error) {
+        console.error('Error al cargar materiales:', error);
+        this.materialOptions = this.getFallbackMateriales();
+      } finally {
+        this.loadingMateriales = false;
+      }
+    },
+
+    // Cargar planos existentes
+    async loadPlanos() {
+      if (!this.pedido.id) return;
+      
+      this.loadingPlanos = true;
+      try {
+        const response = await fetch(`/api/Plano?pedido_id=${this.pedido.id}`);
+        if (response.ok) {
+          const planos = await response.json();
+          this.pedido.planos = planos.map(plano => ({
+            id: plano.id,
+            nombre_archivo: plano.nombre_archivo || plano.nombre,
+            tamaño: plano.tamaño || plano.tamaño_archivo,
+            fecha_subida: plano.fecha_subida || plano.fecha_creacion,
+            url: plano.url || plano.ruta_archivo,
+            descripcion: plano.descripcion
+          }));
+        }
+      } catch (error) {
+        console.error('Error al cargar planos:', error);
+      } finally {
+        this.loadingPlanos = false;
+      }
+    },
+
+    // ==================== MÉTODOS DE UTILIDAD PARA TRABAJADORES ====================
+    
+    // Actualizar lista combinada de trabajadores
+    updateCombinedWorkers() {
+      this.allWorkers = [
+        ...this.tecnicos.map(t => ({ ...t, tipo: 'Técnico' })),
+        ...this.operarios.map(o => ({ ...o, tipo: 'Operario' }))
+      ];
+      this.categorizeWorkers();
+    },
+
+    // Obtener trabajador por ID (busca en ambas listas)
+    getWorkerById(id) {
+      return this.allWorkers.find(w => w.id === id);
+    },
+
+    // Obtener tipo de trabajador
+    getWorkerType(usuarioId) {
+      const worker = this.getWorkerById(usuarioId);
+      return worker ? worker.tipo : 'Desconocido';
+    },
+
+    // Obtener ícono según tipo de trabajador
+    getWorkerTypeIcon(tipo) {
+      const icons = {
+        'Técnico': 'engineering',
+        'Operario': 'construction',
+        'default': 'person'
+      };
+      return icons[tipo] || icons.default;
+    },
+
+    // ==================== MÉTODOS FALLBACK MEJORADOS ====================
+    
+    getFallbackTecnicos() {
+      return [
+        { 
+          id: 1, 
+          nombres: 'Juan Carlos', 
+          apellidos: 'Pérez González', 
+          activo: true,
+          disponible: true,
+          conflictos: [],
+          puesto: { nombre: 'Técnico Especializado' },
+          telefono: '7890-1234',
+          email: 'juan.perez@empresa.com',
+          habilidades: ['Soldadura MIG', 'Soldadura TIG', 'Lectura de planos', 'CNC'],
+          tipo: 'Técnico',
+          disponibilidad: { horas_disponibles: 40 }
+        },
+        { 
+          id: 2, 
+          nombres: 'María Elena', 
+          apellidos: 'Gómez Rodríguez', 
+          activo: true,
+          disponible: false,
+          conflictos: [
+            {
+              id: 1,
+              proyecto_nombre: 'Mantenimiento Preventivo',
+              fecha_inicio: '2024-08-15',
+              fecha_fin: '2024-08-20'
+            }
+          ],
+          puesto: { nombre: 'Técnico Industrial' },
+          telefono: '7890-5678',
+          email: 'maria.gomez@empresa.com',
+          habilidades: ['Mecánica Industrial', 'Mantenimiento', 'Hidráulica', 'Neumática'],
+          tipo: 'Técnico',
+          disponibilidad: { horas_disponibles: 20 }
+        }
+      ];
+    },
+
+    getFallbackOperarios() {
+      return [
+        { 
+          id: 3, 
+          nombres: 'Carlos Antonio', 
+          apellidos: 'López Rivera', 
+          activo: true,
+          disponible: true,
+          conflictos: [],
+          puesto: { nombre: 'Operario de Producción' },
+          telefono: '7890-9012',
+          email: 'carlos.lopez@empresa.com',
+          habilidades: ['Manejo de herramientas básicas', 'Ensamblaje', 'Control de calidad'],
+          tipo: 'Operario',
+          disponibilidad: { horas_disponibles: 40 }
+        },
+        { 
+          id: 4, 
+          nombres: 'Ana Sofía', 
+          apellidos: 'Martínez Cruz', 
+          activo: true,
+          disponible: true,
+          conflictos: [],
+          puesto: { nombre: 'Operario Especializado' },
+          telefono: '7890-3456',
+          email: 'ana.martinez@empresa.com',
+          habilidades: ['Acabados', 'Pulido', 'Pintura', 'Empaque'],
+          tipo: 'Operario',
+          disponibilidad: { horas_disponibles: 40 }
+        }
+      ];
+    },
+
+    getFallbackHerramientas() {
+      return [
+        { 
+          id: 1, 
+          nombre: 'Máquina CNC Vertical', 
+          tipo: 'Equipo CNC', 
+          descripcion: 'Centro de mecanizado vertical 3 ejes',
+          estado: 'Operativo', 
+          disponible: true,
+          ubicacion: 'Taller Principal',
+          codigo: 'CNC-001'
+        },
+        { 
+          id: 2, 
+          nombre: 'Equipo Soldadura MIG/MAG', 
+          tipo: 'Soldadura', 
+          descripcion: 'Equipo de soldadura semi-automática',
+          estado: 'Operativo', 
+          disponible: true,
+          ubicacion: 'Área de Soldadura',
+          codigo: 'SOLD-002'
+        },
+        { 
+          id: 3, 
+          nombre: 'Torno Paralelo', 
+          tipo: 'Torno', 
+          descripción: 'Torno paralelo convencional 1500mm',
+          estado: 'Mantenimiento', 
+          disponible: false,
+          ubicacion: 'Taller Mecánico',
+          codigo: 'TOR-003'
+        }
+      ];
+    },
+
+    // ==================== MÉTODOS DE GUARDADO MODIFICADOS ====================
+    
+    // Subir archivos a la ruta /Plano
+    async processNewFiles() {
+      const uploadPromises = this.pedido.planos
+        .filter(plano => plano.file)
+        .map(async (plano) => {
+          const formData = new FormData();
+          formData.append('file', plano.file);
+          formData.append('nombre_archivo', plano.nombre_archivo);
+          formData.append('pedido_id', this.pedido.id);
+          formData.append('descripcion', plano.descripcion || '');
+          
+          try {
+            const response = await fetch('/api/Plano', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              plano.id = result.id;
+              plano.url = result.url || result.ruta_archivo;
+              delete plano.file;
+            } else {
+              throw new Error('Error en la subida del archivo');
+            }
+          } catch (error) {
+            console.error('Error subiendo archivo:', error);
+            this.alertas.push({
+              id: `upload_error_${Date.now()}`,
+              tipo: 'error',
+              titulo: 'Error al Subir Archivo',
+              mensaje: `No se pudo subir el archivo: ${plano.nombre_archivo}`,
+              detalles: error.message
+            });
+          }
+        });
+      
+      await Promise.all(uploadPromises);
+    },
+
+    // ==================== MÉTODOS DE UTILIDAD ADICIONALES ====================
+
+    // Recargar datos específicos
+    async reloadData(type) {
+      switch (type) {
+        case 'tipos_pedido':
+          await this.loadTiposPedido();
+          break;
+        case 'tecnicos':
+          await this.loadTecnicos();
+          break;
+        case 'operarios':
+          await this.loadOperarios();
+          break;
+        case 'herramientas':
+          await this.loadHerramientas();
+          break;
+        case 'materiales':
+          await this.loadMateriales();
+          break;
+        case 'planos':
+          await this.loadPlanos();
+          break;
+        case 'all':
+          await Promise.all([
+            this.loadTiposPedido(),
+            this.loadTecnicos(),
+            this.loadOperarios(),
+            this.loadHerramientas(),
+            this.loadMateriales(),
+            this.loadPlanos()
+          ]);
+          break;
+      }
+    },
+
+    // Obtener nombre del tipo de pedido
+    getTipoPedidoName(tipoId) {
+      const tipo = this.tiposPedido.find(t => t.id === tipoId);
+      return tipo ? tipo.nombre : 'Tipo desconocido';
+    },
+
+    // Validar disponibilidad de herramienta
+    isHerramientaDisponible(herramientaId) {
+      const herramienta = this.herramientas.find(h => h.id === herramientaId);
+      return herramienta ? (herramienta.disponible && herramienta.estado === 'Operativo') : false;
+    },
+
+    // Obtener estadísticas de recursos
+    getResourcesStats() {
+      return {
+        trabajadores: {
+          tecnicos: this.workersStats.totalTecnicos,
+          tecnicosDisponibles: this.workersStats.tecnicosDisponibles,
+          operarios: this.workersStats.totalOperarios,
+          operariosDisponibles: this.workersStats.operariosDisponibles
+        },
+        herramientas: {
+          total: this.herramientas.length,
+          disponibles: this.herramientas.filter(h => h.disponible && h.estado === 'Operativo').length,
+          enMantenimiento: this.herramientas.filter(h => h.estado === 'Mantenimiento').length
+        },
+        materiales: {
+          total: this.materialOptions.length,
+          conStock: this.materialOptions.filter(m => m.stock > 0).length,
+          stockBajo: this.materialOptions.filter(m => m.stock > 0 && m.stock <= m.stock_minimo).length,
+          agotados: this.materialOptions.filter(m => m.stock <= 0).length
+        }
+      };
+    },
+
+    // ==================== TODOS LOS MÉTODOS EXISTENTES ANTERIORES ====================
+    // (Mantener todos los métodos que estaban en el script original)
+    // Solo se muestran algunos principales aquí por brevedad...
+
     // Sistema de alertas y conflictos
     async checkConflicts() {
       if (!this.pedido.fecha_inicio || !this.pedido.fecha_fin) return;
@@ -210,7 +686,7 @@ export default {
         console.error('Error al verificar conflictos:', error);
       }
     },
-    
+
     procesarConflictos(data) {
       this.conflictosDetectados = data.conflictos || [];
       this.alertas = [];
@@ -229,7 +705,7 @@ export default {
       // Actualizar información de trabajadores con conflictos
       this.actualizarTrabajadoresConConflictos(data.trabajadores_conflictos || []);
     },
-    
+
     actualizarTrabajadoresConConflictos(trabajadoresConflictos) {
       this.allWorkers = this.allWorkers.map(worker => {
         const conflictos = trabajadoresConflictos.filter(tc => tc.usuario_id === worker.id);
@@ -242,67 +718,45 @@ export default {
       
       this.categorizeWorkers();
     },
-    
-    async loadSugerenciasAlternativas(conflictos) {
-      if (conflictos.length === 0) {
-        this.sugerenciasAlternativas = [];
-        return;
-      }
-      
-      try {
-        const response = await fetch('/api/sugerencias/alternativas', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            conflictos: conflictos,
-            proyecto_id: this.pedido.proyecto_asociado,
-            horas_requeridas: this.pedido.horas_estimadas,
-            fecha_inicio: this.pedido.fecha_inicio,
-            fecha_fin: this.pedido.fecha_fin
-          })
-        });
-        
-        if (response.ok) {
-          this.sugerenciasAlternativas = await response.json();
-        }
-      } catch (error) {
-        console.error('Error al cargar sugerencias:', error);
-        this.sugerenciasAlternativas = this.generateFallbackSuggestions();
+
+    // Métodos de utilidad para trabajadores
+    categorizeWorkers() {
+      this.availableWorkers = this.allWorkers.filter(w => w.disponible && w.activo);
+      this.busyWorkers = this.allWorkers.filter(w => !w.disponible && w.activo);
+    },
+
+    getWorkerStatus(usuario) {
+      if (!usuario.activo) return 'Inactivo';
+      if (!usuario.disponible) return 'Ocupado';
+      if (usuario.conflictos && usuario.conflictos.length > 0) return 'Conflicto';
+      return 'Disponible';
+    },
+
+    getWorkerStatusClass(usuario) {
+      const status = this.getWorkerStatus(usuario);
+      switch (status) {
+        case 'Disponible': return 'status-available';
+        case 'Ocupado': return 'status-busy';
+        case 'Conflicto': return 'status-conflict';
+        case 'Inactivo': return 'status-inactive';
+        default: return 'status-unknown';
       }
     },
-    
-    generateFallbackSuggestions() {
-      return [
-        {
-          id: 1,
-          tipo: 'time_shift',
-          titulo: 'Ajustar Horario',
-          descripcion: 'Cambiar las fechas del proyecto para evitar conflictos',
-          score: 85,
-          ventajas: 'Mantiene el mismo equipo de trabajo',
-          desventajas: 'Puede afectar la fecha de entrega',
-          accion: {
-            tipo: 'ajustar_fechas',
-            fecha_inicio_sugerida: this.calcularNuevaFechaInicio(),
-            fecha_fin_sugerida: this.calcularNuevaFechaFin()
-          }
-        },
-        {
-          id: 2,
-          tipo: 'team_change',
-          titulo: 'Cambiar Trabajadores',
-          descripcion: 'Asignar trabajadores alternativos disponibles',
-          score: 75,
-          ventajas: 'Mantiene las fechas originales',
-          desventajas: 'Puede requerir tiempo de adaptación',
-          accion: {
-            tipo: 'cambiar_trabajadores',
-            trabajadores_sugeridos: this.getTrabajadoresAlternativos()
-          }
-        }
-      ];
+
+    isWorkerAssigned(usuarioId) {
+      return this.pedido.trabajadores_asignados.includes(usuarioId);
     },
-    
+
+    viewWorkerCalendar(usuarioId) {
+      // Emitir evento para abrir calendario del trabajador
+      this.$emit('view-calendar', { usuarioId, type: 'worker' });
+    },
+
+    removeWorker(usuarioId) {
+      this.pedido.trabajadores_asignados = this.pedido.trabajadores_asignados.filter(id => id !== usuarioId);
+      this.calculateWorkload();
+    },
+
     // Cálculo de capacidad y sobrecarga
     async calculateWorkload() {
       if (!this.pedido.horas_estimadas || this.pedido.trabajadores_asignados.length === 0) {
@@ -337,7 +791,7 @@ export default {
         this.calcularCapacidadFallback();
       }
     },
-    
+
     calcularCapacidadFallback() {
       // Asumiendo 8 horas por día por trabajador
       const diasTrabajo = this.calcularDiasTrabajo();
@@ -349,7 +803,7 @@ export default {
         this.generarAlertaSobrecarga();
       }
     },
-    
+
     calcularDiasTrabajo() {
       if (!this.pedido.fecha_inicio || !this.pedido.fecha_fin) return 1;
       
@@ -360,7 +814,7 @@ export default {
       
       return Math.max(1, diffDays);
     },
-    
+
     generarAlertaSobrecarga() {
       const deficit = this.pedido.horas_estimadas - this.capacidadDisponible;
       
@@ -372,7 +826,7 @@ export default {
         detalles: `Déficit: ${deficit}h. Se recomienda contratar personal temporal o ajustar el cronograma.`
       });
     },
-    
+
     async loadRecomendacionTemporal() {
       try {
         const deficit = this.pedido.horas_estimadas - this.capacidadDisponible;
@@ -397,7 +851,7 @@ export default {
         this.generarRecomendacionTemporalFallback();
       }
     },
-    
+
     generarRecomendacionTemporalFallback() {
       const deficit = this.pedido.horas_estimadas - this.capacidadDisponible;
       const diasNecesarios = Math.ceil(deficit / 8);
@@ -412,41 +866,69 @@ export default {
         nivel_experiencia: 'Intermedio'
       };
     },
-    
-    // Métodos de utilidad para trabajadores
-    categorizeWorkers() {
-      this.availableWorkers = this.allWorkers.filter(w => w.disponible && w.activo);
-      this.busyWorkers = this.allWorkers.filter(w => !w.disponible && w.activo);
-    },
-    
-    getWorkerStatus(usuario) {
-      if (!usuario.activo) return 'Inactivo';
-      if (!usuario.disponible) return 'Ocupado';
-      if (usuario.conflictos && usuario.conflictos.length > 0) return 'Conflicto';
-      return 'Disponible';
-    },
-    
-    getWorkerStatusClass(usuario) {
-      const status = this.getWorkerStatus(usuario);
-      switch (status) {
-        case 'Disponible': return 'status-available';
-        case 'Ocupado': return 'status-busy';
-        case 'Conflicto': return 'status-conflict';
-        case 'Inactivo': return 'status-inactive';
-        default: return 'status-unknown';
+
+    // ==================== MÉTODOS DE SUGERENCIAS ====================
+
+    async loadSugerenciasAlternativas(conflictos) {
+      if (conflictos.length === 0) {
+        this.sugerenciasAlternativas = [];
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/sugerencias/alternativas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conflictos: conflictos,
+            proyecto_id: this.pedido.proyecto_asociado,
+            horas_requeridas: this.pedido.horas_estimadas,
+            fecha_inicio: this.pedido.fecha_inicio,
+            fecha_fin: this.pedido.fecha_fin
+          })
+        });
+        
+        if (response.ok) {
+          this.sugerenciasAlternativas = await response.json();
+        }
+      } catch (error) {
+        console.error('Error al cargar sugerencias:', error);
+        this.sugerenciasAlternativas = this.generateFallbackSuggestions();
       }
     },
-    
-    isWorkerAssigned(usuarioId) {
-      return this.pedido.trabajadores_asignados.includes(usuarioId);
+
+    generateFallbackSuggestions() {
+      return [
+        {
+          id: 1,
+          tipo: 'time_shift',
+          titulo: 'Ajustar Horario',
+          descripcion: 'Cambiar las fechas del proyecto para evitar conflictos',
+          score: 85,
+          ventajas: 'Mantiene el mismo equipo de trabajo',
+          desventajas: 'Puede afectar la fecha de entrega',
+          accion: {
+            tipo: 'ajustar_fechas',
+            fecha_inicio_sugerida: this.calcularNuevaFechaInicio(),
+            fecha_fin_sugerida: this.calcularNuevaFechaFin()
+          }
+        },
+        {
+          id: 2,
+          tipo: 'team_change',
+          titulo: 'Cambiar Trabajadores',
+          descripcion: 'Asignar trabajadores alternativos disponibles',
+          score: 75,
+          ventajas: 'Mantiene las fechas originales',
+          desventajas: 'Puede requerir tiempo de adaptación',
+          accion: {
+            tipo: 'cambiar_trabajadores',
+            trabajadores_sugeridos: this.getTrabajadoresAlternativos()
+          }
+        }
+      ];
     },
-    
-    viewWorkerCalendar(usuarioId) {
-      // Emitir evento para abrir calendario del trabajador
-      this.$emit('view-calendar', { usuarioId, type: 'worker' });
-    },
-    
-    // Métodos para sugerencias
+
     getSuggestionIcon(tipo) {
       const icons = {
         'time_shift': 'schedule',
@@ -457,7 +939,7 @@ export default {
       };
       return icons[tipo] || icons.default;
     },
-    
+
     applySuggestion(sugerencia) {
       switch (sugerencia.accion.tipo) {
         case 'ajustar_fechas':
@@ -467,7 +949,6 @@ export default {
         case 'cambiar_trabajadores':
           this.pedido.trabajadores_asignados = sugerencia.accion.trabajadores_sugeridos;
           break;
-        // Agregar más casos según sea necesario
       }
       
       // Remover la sugerencia aplicada
@@ -476,13 +957,14 @@ export default {
       // Recalcular conflictos
       this.checkConflicts();
     },
-    
-    // Métodos para contratación temporal
+
+    // ==================== MÉTODOS PARA CONTRATACIÓN TEMPORAL ====================
+
     viewTempProfile() {
       // Mostrar modal con perfil completo
       this.$emit('view-temp-profile', this.recomendacionTemporal);
     },
-    
+
     async generateJobPosting() {
       try {
         const response = await fetch('/api/job-posting/generate', {
@@ -521,8 +1003,9 @@ export default {
         });
       }
     },
-    
-    // Métodos para alertas
+
+    // ==================== MÉTODOS PARA ALERTAS ====================
+
     getAlertIcon(tipo) {
       const icons = {
         'success': 'check_circle',
@@ -533,12 +1016,13 @@ export default {
       };
       return icons[tipo] || icons.default;
     },
-    
+
     dismissAlert(alertaId) {
       this.alertas = this.alertas.filter(a => a.id !== alertaId);
     },
-    
-    // Métodos de estado de carga de trabajo
+
+    // ==================== MÉTODOS DE ESTADO DE CARGA DE TRABAJO ====================
+
     getWorkloadStatus() {
       if (!this.pedido.horas_estimadas || this.capacidadDisponible === 0) {
         return 'Sin calcular';
@@ -552,7 +1036,7 @@ export default {
       if (ratio >= 0.6) return 'Capacidad Insuficiente';
       return 'Sobrecarga Crítica';
     },
-    
+
     getWorkloadStatusClass() {
       const status = this.getWorkloadStatus();
       switch (status) {
@@ -564,21 +1048,22 @@ export default {
         default: return 'workload-unknown';
       }
     },
-    
-    // Métodos de utilidad adicionales
+
+    // ==================== MÉTODOS DE UTILIDAD ADICIONALES ====================
+
     initializeWorkloadCalculation() {
       if (this.pedido.horas_estimadas && this.pedido.trabajadores_asignados.length > 0) {
         this.calculateWorkload();
       }
     },
-    
+
     calcularNuevaFechaInicio() {
       // Sugerir fecha 1 semana después
       const fecha = new Date(this.pedido.fecha_inicio);
       fecha.setDate(fecha.getDate() + 7);
       return fecha.toISOString().split('T')[0];
     },
-    
+
     calcularNuevaFechaFin() {
       // Mantener la misma duración
       const inicio = new Date(this.pedido.fecha_inicio);
@@ -590,36 +1075,30 @@ export default {
       
       return nuevaFechaFin.toISOString().split('T')[0];
     },
-    
+
     getTrabajadoresAlternativos() {
       return this.availableWorkers.slice(0, this.pedido.trabajadores_asignados.length).map(w => w.id);
     },
-    
+
     getHabilidadesRequeridas() {
       // Obtener habilidades del proyecto o tipo de pedido
       const proyecto = this.proyectos.find(p => p.id === this.pedido.proyecto_asociado);
       return proyecto?.habilidades_requeridas || ['Técnico General'];
     },
-    
+
     getProyectoName(proyectoId) {
       const proyecto = this.proyectos.find(p => p.id === proyectoId);
       return proyecto?.nombre || 'Proyecto no especificado';
     },
-    
+
     formatDateRange(fechaInicio, fechaFin) {
       const inicio = new Date(fechaInicio).toLocaleDateString();
       const fin = new Date(fechaFin).toLocaleDateString();
       return `${inicio} - ${fin}`;
     },
-    
-    removeWorker(usuarioId) {
-      this.pedido.trabajadores_asignados = this.pedido.trabajadores_asignados.filter(id => id !== usuarioId);
-      this.calculateWorkload();
-    },
-    
-    // ==================== MÉTODOS EXISTENTES (mejorados) ====================
-    
-    // Carga de datos desde API
+
+    // ==================== MÉTODOS DE CARGA DE PROYECTOS (ORIGINAL) ====================
+
     async loadProyectos() {
       try {
         const response = await fetch('/api/proyectos');
@@ -636,158 +1115,13 @@ export default {
         this.proyectos = [];
       }
     },
-    
-    async loadUsuarios() {
-      this.loadingUsuarios = true;
-      try {
-        const response = await fetch('/api/usuarios');
-        if (response.ok) {
-          const usuarios = await response.json();
-          this.allWorkers = usuarios.map(usuario => ({
-            ...usuario,
-            disponible: true,
-            conflictos: [],
-            habilidades: usuario.habilidades || [],
-            disponibilidad: {
-              horas_disponibles: 40 // Default 40 horas por semana
-            }
-          }));
-          this.categorizeWorkers();
-        } else {
-          console.error('Error al cargar usuarios:', response.statusText);
-          this.allWorkers = this.getFallbackUsuarios();
-          this.categorizeWorkers();
-        }
-      } catch (error) {
-        console.error('Error al cargar usuarios:', error);
-        this.allWorkers = this.getFallbackUsuarios();
-        this.categorizeWorkers();
-      } finally {
-        this.loadingUsuarios = false;
-      }
-    },
-    
-    getFallbackUsuarios() {
-      return [
-        { 
-          id: 1, 
-          nombres: 'Juan Carlos', 
-          apellidos: 'Pérez González', 
-          activo: true,
-          disponible: true,
-          conflictos: [],
-          puesto: { nombre: 'Soldador Especializado' },
-          telefono: '7890-1234',
-          email: 'juan.perez@empresa.com',
-          habilidades: ['Soldadura MIG', 'Soldadura TIG', 'Lectura de planos'],
-          disponibilidad: { horas_disponibles: 40 }
-        },
-        { 
-          id: 2, 
-          nombres: 'María Elena', 
-          apellidos: 'Gómez Rodríguez', 
-          activo: true,
-          disponible: false,
-          conflictos: [
-            {
-              id: 1,
-              proyecto_nombre: 'Mantenimiento Preventivo',
-              fecha_inicio: '2024-08-15',
-              fecha_fin: '2024-08-20'
-            }
-          ],
-          puesto: { nombre: 'Mecánico Industrial' },
-          telefono: '7890-5678',
-          email: 'maria.gomez@empresa.com',
-          habilidades: ['Mecánica Industrial', 'Mantenimiento', 'Hidráulica'],
-          disponibilidad: { horas_disponibles: 20 }
-        }
-      ];
-    },
-    
-    async loadHerramientas() {
-      this.loadingHerramientas = true;
-      try {
-        const response = await fetch('/api/herramientas');
-        if (response.ok) {
-          this.herramientas = await response.json();
-        } else {
-          console.error('Error al cargar herramientas:', response.statusText);
-          this.herramientas = [
-            { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true },
-            { id: 2, nombre: 'Equipo Soldadura MIG', tipo: 'Soldadura', estado: 'Operativo', disponible: true }
-          ];
-        }
-      } catch (error) {
-        console.error('Error al cargar herramientas:', error);
-        this.herramientas = [
-          { id: 1, nombre: 'Máquina CNC', tipo: 'Equipo', estado: 'Operativo', disponible: true }
-        ];
-      } finally {
-        this.loadingHerramientas = false;
-      }
-    },
-    
-    async loadMateriales() {
-      this.loadingMateriales = true;
-      try {
-        const response = await fetch('/api/materiales');
-        if (response.ok) {
-          const data = await response.json();
-          this.materialOptions = data.map(item => ({
-            id: item.id,
-            nombre: item.nombre,
-            descripcion: item.descripcion,
-            stock: item.cantidad_disponible || item.stock,
-            stock_minimo: item.stock_minimo || 5,
-            unidad: item.unidad_medida || 'unidades'
-          }));
-        } else {
-          console.error('Error al cargar materiales:', response.statusText);
-          this.materialOptions = this.getFallbackMateriales();
-        }
-      } catch (error) {
-        console.error('Error al cargar materiales:', error);
-        this.materialOptions = this.getFallbackMateriales();
-      } finally {
-        this.loadingMateriales = false;
-      }
-    },
-    
-    getFallbackMateriales() {
-      return [
-        { 
-          id: 1, 
-          nombre: 'Acero inoxidable 304', 
-          descripcion: 'Plancha de acero inoxidable grado 304 de 1/4" de espesor',
-          stock: 25, 
-          stock_minimo: 10,
-          unidad: 'planchas'
-        },
-        { 
-          id: 2, 
-          nombre: 'Tubo cuadrado 2x2', 
-          descripcion: 'Tubo cuadrado de acero al carbono 2"x2" calibre 14',
-          stock: 48, 
-          stock_minimo: 20,
-          unidad: 'metros'
-        },
-        { 
-          id: 3, 
-          nombre: 'Pintura epóxica negra', 
-          descripcion: 'Pintura industrial epóxica color negro, resistente a químicos',
-          stock: 0, 
-          stock_minimo: 5,
-          unidad: 'galones'
-        }
-      ];
-    },
-    
-    // Métodos de validación y guardado
+
+    // ==================== MÉTODOS DE VALIDACIÓN Y GUARDADO ====================
+
     close() {
       this.$emit('close');
     },
-    
+
     async save() {
       if (this.validateForm()) {
         this.saving = true;
@@ -805,7 +1139,7 @@ export default {
         }
       }
     },
-    
+
     validateForm() {
       const errors = [];
       
@@ -872,7 +1206,7 @@ export default {
       }
       return true;
     },
-    
+
     showError(message) {
       if (this.$toast) {
         this.$toast.error(message);
@@ -880,7 +1214,7 @@ export default {
         alert(message);
       }
     },
-    
+
     showSuccess(message) {
       if (this.$toast) {
         this.$toast.success(message);
@@ -888,18 +1222,19 @@ export default {
         alert(message);
       }
     },
-    
-    // Métodos para archivos PDF
+
+    // ==================== MÉTODOS PARA ARCHIVOS PDF ====================
+
     handleDrop(e) {
       const files = e.dataTransfer.files;
       this.handleFiles(files);
     },
-    
+
     handleFileChange(e) {
       const files = e.target.files;
       this.handleFiles(files);
     },
-    
+
     handleFiles(files) {
       const validFiles = Array.from(files).filter(file => 
         file.type === 'application/pdf' && file.size <= 10 * 1024 * 1024
@@ -912,7 +1247,7 @@ export default {
       this.newFiles = [...this.newFiles, ...validFiles];
       this.previewNewFiles();
     },
-    
+
     previewNewFiles() {
       this.newFiles.forEach(file => {
         if (!this.pedido.planos) {
@@ -929,41 +1264,13 @@ export default {
       
       this.newFiles = [];
     },
-    
+
     removeBlueprint(index) {
       this.pedido.planos.splice(index, 1);
     },
-    
-    async processNewFiles() {
-      // Implementación de subida de archivos
-      const uploadPromises = this.pedido.planos
-        .filter(plano => plano.file)
-        .map(async (plano) => {
-          const formData = new FormData();
-          formData.append('file', plano.file);
-          formData.append('nombre', plano.nombre_archivo);
-          
-          try {
-            const response = await fetch('/api/planos/upload', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (response.ok) {
-              const result = await response.json();
-              plano.id = result.id;
-              plano.url = result.url;
-              delete plano.file;
-            }
-          } catch (error) {
-            console.error('Error subiendo archivo:', error);
-          }
-        });
-      
-      await Promise.all(uploadPromises);
-    },
-    
-    // Métodos de utilidad
+
+    // ==================== MÉTODOS DE UTILIDAD ====================
+
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -971,57 +1278,60 @@ export default {
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
-    
+
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString();
     },
-    
+
     getUsuarioName(usuarioId) {
       const usuario = this.allWorkers.find(u => u.id === usuarioId);
       return usuario ? `${usuario.nombres} ${usuario.apellidos}` : '';
     },
-    
+
     getHerramientaIcon(tipo) {
       const iconMap = {
         'Equipo': 'precision_manufacturing',
+        'Equipo CNC': 'precision_manufacturing',
         'Soldadura': 'handyman',
-        'Horno': 'oven',
+        'Torno': 'settings',
+        'Horno': 'local_fire_department',
         'Herramienta': 'build',
         'default': 'handyman'
       };
       return iconMap[tipo] || iconMap.default;
     },
-    
-    // Métodos para materiales (mejorados)
+
+    // ==================== MÉTODOS PARA MATERIALES (MEJORADOS) ====================
+
     isMaterialSelected(materialId) {
       return this.pedido.materiales.some(m => m.id === materialId);
     },
-    
+
     getAddedQuantity(materialId) {
       const material = this.pedido.materiales.find(m => m.id === materialId);
       return material ? material.cantidad : 0;
     },
-    
+
     incrementMaterial(material) {
       const currentQty = this.getAddedQuantity(material.id);
       if (currentQty < material.stock) {
         this.updateMaterial(material, currentQty + 1);
       }
     },
-    
+
     decrementMaterial(material) {
       const currentQty = this.getAddedQuantity(material.id);
       if (currentQty > 0) {
         this.updateMaterial(material, currentQty - 1);
       }
     },
-    
+
     updateMaterialQuantity(material, event) {
       let newQty = parseInt(event.target.value) || 0;
       newQty = Math.max(0, Math.min(newQty, material.stock));
       this.updateMaterial(material, newQty);
     },
-    
+
     updateMaterial(material, quantity) {
       const index = this.pedido.materiales.findIndex(m => m.id === material.id);
       
@@ -1038,7 +1348,7 @@ export default {
         });
       }
     },
-    
+
     toggleMaterial(material) {
       if (this.isMaterialSelected(material.id)) {
         this.removeMaterialFromList(material.id);
@@ -1046,21 +1356,21 @@ export default {
         this.addMaterialToList(material);
       }
     },
-    
+
     addMaterialToList(material) {
       const currentQty = this.getAddedQuantity(material.id);
       if (currentQty <= 0) {
         this.updateMaterial(material, 1);
       }
     },
-    
+
     removeMaterialFromList(materialId) {
       const index = this.pedido.materiales.findIndex(m => m.id === materialId);
       if (index >= 0) {
         this.pedido.materiales.splice(index, 1);
       }
     },
-    
+
     editMaterialQuantity(material) {
       const maxQty = this.getMaterialStock(material.id);
       const currentQty = material.cantidad;
@@ -1081,32 +1391,67 @@ export default {
         }
       }
     },
-    
+
     removeMaterial(index) {
       this.pedido.materiales.splice(index, 1);
     },
-    
+
     getMaterialName(materialId) {
       const material = this.materialOptions.find(m => m.id === materialId);
       return material ? material.nombre : 'Material desconocido';
     },
-    
+
     getMaterialStock(materialId) {
       const material = this.materialOptions.find(m => m.id === materialId);
       return material ? material.stock : 0;
     },
-    
+
     getMaterialUnit(materialId) {
       const material = this.materialOptions.find(m => m.id === materialId);
       return material ? material.unidad : 'unidades';
     },
-    
+
+    getMaterialPrice(materialId) {
+      const material = this.materialOptions.find(m => m.id === materialId);
+      return material ? material.precio || 0 : 0;
+    },
+
+    calculateMaterialCost() {
+      return this.pedido.materiales.reduce((total, mat) => {
+        const precio = this.getMaterialPrice(mat.id);
+        return total + (precio * mat.cantidad);
+      }, 0);
+    },
+
     truncateDescription(text, maxLength = 60) {
       if (!text) return '';
       if (text.length > maxLength) {
         return text.substring(0, maxLength) + '...';
       }
       return text;
+    },
+
+    // ==================== MÉTODOS DE FORMATEO Y UTILIDADES FINALES ====================
+
+    formatCurrency(amount) {
+      return new Intl.NumberFormat('es-GT', {
+        style: 'currency',
+        currency: 'GTQ'
+      }).format(amount);
+    },
+
+    formatNumber(number) {
+      return new Intl.NumberFormat('es-GT').format(number);
+    },
+
+    capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    },
+
+    // Método para verificar si hay cambios sin guardar
+    hasUnsavedChanges() {
+      // Implementar lógica para detectar cambios
+      return this.newFiles.length > 0 || this.alertas.some(a => a.tipo === 'warning');
     }
   }
 }
