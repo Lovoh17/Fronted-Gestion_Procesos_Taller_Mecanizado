@@ -1,6 +1,6 @@
 <template>
   <div class="admin-container">
-    <!-- Header con gradiente -->
+    <!-- Header  -->
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">

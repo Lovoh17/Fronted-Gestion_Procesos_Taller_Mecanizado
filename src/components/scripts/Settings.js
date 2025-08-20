@@ -175,14 +175,12 @@ export default {
           data: [],
           columns: [
             { field: 'id', label: 'ID', readonly: true },
-            { field: 'nombre', label: 'Nombre', required: true },
             { field: 'descripcion', label: 'Descripción' },
             { field: 'activo', label: 'Activo', type: 'boolean' },
             { field: 'umbral', label: 'Umbral', type: 'number' }
           ],
           requiredFields: ['nombre'],
           prepareData: (data) => ({
-            nombre: data.nombre,
             descripcion: data.descripcion || '',
             activo: Boolean(data.activo),
             umbral: parseInt(data.umbral) || 0
