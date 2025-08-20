@@ -109,7 +109,7 @@
               initialSortBy: { field: 'start_date', type: 'desc' }
             }" :select-options="{
               enabled: false
-            }" styleClass="vgt-table striped bordered" theme="nocturnal">
+            }" styleClass="vgt-table striped bordered" theme="rinoh">
             <!-- Slot personalizado para cada celda -->
             <template #table-row="props">
               <!-- Columna de Estado -->

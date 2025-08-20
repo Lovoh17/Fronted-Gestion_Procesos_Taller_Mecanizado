@@ -342,4 +342,4 @@
 
 <style src="./styles/ToolBlueprintsView.css" scoped></style>
 <script src="./scripts/ToolBlueprintsView.js"></script>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

@@ -831,5 +831,5 @@ export default {
 };
 </script>
 
-<style src="src/assets/EstiloBase.css" ></style>
-<style src="src/assets/RRHH.css" ></style>
+<style src="src/assets/EstiloBase.css" scoped ></style>
+<style src="src/assets/RRHH.css" scoped ></style>
