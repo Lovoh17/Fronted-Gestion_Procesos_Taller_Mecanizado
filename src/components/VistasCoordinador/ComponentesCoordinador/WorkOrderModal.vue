@@ -9,8 +9,21 @@
       </div>
       
       <div class="modal-body">
-        <!-- Información básica del pedido -->
-        <div class="form-section">
+        <!-- Loading indicator -->
+        <div v-if="loadingCatalogs" class="loading-section">
+          <div class="loading-spinner"></div>
+          <p>Cargando información...</p>
+        </div>
+
+        <!-- ERROR SECTION -->
+        <div v-if="loadingError" class="error-section">
+          <h3>❌ Error de Carga</h3>
+          <p>{{ loadingError }}</p>
+          <button @click="retryLoad" class="btn primary">Reintentar</button>
+        </div>
+
+        <!-- FORM SECTION -->
+        <div class="form-section" v-show="!loadingCatalogs && !loadingError">
           <h3 class="section-title">
             <span class="material-icons">assignment</span> Información General
           </h3>
@@ -32,7 +45,7 @@
               <select v-model="formData.tipo_pedido_id" required>
                 <option value="">Seleccionar tipo</option>
                 <option v-for="tipo in tiposPedido" :key="tipo.id" :value="tipo.id">
-                  {{ tipo.nombre }}
+                  {{ tipo.nombre || tipo.name || 'Sin nombre' }}
                 </option>
               </select>
               <div v-if="errors.tipo_pedido_id" class="error-message">{{ errors.tipo_pedido_id }}</div>
@@ -45,7 +58,7 @@
               <select v-model="formData.plano_id" required>
                 <option value="">Seleccionar plano</option>
                 <option v-for="plano in planos" :key="plano.id" :value="plano.id">
-                  {{ plano.nombre }} - {{ plano.codigo }}
+                  {{ (plano.nombre || plano.name || 'Sin nombre') }} - {{ (plano.codigo || plano.code || 'Sin código') }}
                 </option>
               </select>
               <div v-if="errors.plano_id" class="error-message">{{ errors.plano_id }}</div>
@@ -56,7 +69,7 @@
               <select v-model="formData.solicitante_id" required>
                 <option value="">Seleccionar solicitante</option>
                 <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id">
-                  {{ usuario.nombres }} {{ usuario.apellidos }} - {{ usuario.email }}
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
                 </option>
               </select>
               <div v-if="errors.solicitante_id" class="error-message">{{ errors.solicitante_id }}</div>
@@ -69,7 +82,10 @@
               <select v-model="formData.aprobador_id">
                 <option value="">Sin asignar</option>
                 <option v-for="usuario in usuariosAprobadores" :key="usuario.id" :value="usuario.id">
-                  {{ usuario.nombres }} {{ usuario.apellidos }} - {{ usuario.puesto?.nombre }}
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
+                  <span v-if="usuario.puesto?.nombre || usuario.position?.name">
+                    - {{ usuario.puesto?.nombre || usuario.position?.name }}
+                  </span>
                 </option>
               </select>
             </div>
@@ -79,26 +95,38 @@
               <select v-model="formData.supervisor_id">
                 <option value="">Sin asignar</option>
                 <option v-for="usuario in usuariosSupervisores" :key="usuario.id" :value="usuario.id">
-                  {{ usuario.nombres }} {{ usuario.apellidos }} - {{ usuario.puesto?.nombre }}
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
+                  <span v-if="usuario.puesto?.nombre || usuario.position?.name">
+                    - {{ usuario.puesto?.nombre || usuario.position?.name }}
+                  </span>
                 </option>
               </select>
               <small class="field-help">Quien será el encargado del proyecto</small>
             </div>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>Fecha Requerida *</label>
-              <input type="date" v-model="formData.fecha_requerida" required :min="minDate">
+              <input 
+                type="date" 
+                v-model="formData.fecha_requerida"
+                :min="minDate"
+                required
+              >
               <div v-if="errors.fecha_requerida" class="error-message">{{ errors.fecha_requerida }}</div>
             </div>
             
             <div class="form-group">
               <label>Fecha Estimada de Entrega</label>
-              <input type="date" v-model="formData.fecha_estimada_entrega" :min="formData.fecha_requerida">
+              <input 
+                type="date" 
+                v-model="formData.fecha_estimada_entrega"
+                :min="formData.fecha_requerida || minDate"
+              >
             </div>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>Prioridad *</label>
@@ -115,165 +143,50 @@
               <label>Proyecto Asociado</label>
               <input 
                 type="text" 
-                v-model="formData.proyecto_asociado" 
-                placeholder="Nombre del proyecto relacionado"
+                v-model="formData.proyecto_asociado"
+                placeholder="Nombre del proyecto (opcional)"
               >
             </div>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label>Costo Estimado</label>
-              <div class="input-with-currency">
-                <span class="currency-symbol">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  v-model="formData.costo_estimado"
-                  placeholder="0.00"
-                  min="0"
-                  @input="validatePrices"
-                >
-              </div>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0"
+                v-model="formData.costo_estimado"
+                placeholder="0.00"
+              >
+              <small class="field-help">Costo interno estimado del proyecto</small>
             </div>
             
             <div class="form-group">
               <label>Precio Final *</label>
-              <div class="input-with-currency">
-                <span class="currency-symbol">$</span>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  v-model="formData.precio_final"
-                  placeholder="0.00"
-                  required
-                  min="0.01"
-                  @input="validatePrices"
-                >
-              </div>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0.01"
+                v-model="formData.precio_final"
+                placeholder="0.00"
+                required
+              >
               <div v-if="errors.precio_final" class="error-message">{{ errors.precio_final }}</div>
-              <div v-if="priceValidationMessage" class="validation-message" :class="priceValidationClass">
+              <div v-if="priceValidationMessage" :class="'price-validation ' + priceValidationClass">
                 {{ priceValidationMessage }}
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Alertas de Validación -->
-        <div class="alerts-section" v-if="validationAlerts.length > 0">
-          <div 
-            v-for="alert in validationAlerts" 
-            :key="alert.id" 
-            class="alert-card"
-            :class="alert.type"
-          >
-            <div class="alert-icon">
-              <span class="material-icons">{{ getAlertIcon(alert.type) }}</span>
-            </div>
-            <div class="alert-content">
-              <h4>{{ alert.title }}</h4>
-              <p>{{ alert.message }}</p>
-            </div>
-            <button class="alert-dismiss" @click="dismissAlert(alert.id)">
-              <span class="material-icons">close</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Sección de archivos/planos -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <span class="material-icons">architecture</span> Archivos Adjuntos
-          </h3>
-          
-          <div class="file-upload-section">
-            <div class="file-upload-area" @dragover.prevent @drop.prevent="handleFileDrop">
-              <input type="file" id="file-upload" ref="fileInput" 
-                     accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png" multiple @change="handleFileChange" hidden>
-              <label for="file-upload" class="upload-label">
-                <span class="material-icons large-icon">cloud_upload</span>
-                <p>Arrastra archivos aquí o haz clic para seleccionarlos</p>
-                <p class="small-text">Formatos soportados: PDF, DWG, DXF, JPG, PNG (máx. 10MB c/u)</p>
-              </label>
-            </div>
-            
-            <div class="uploaded-files" v-if="uploadedFiles.length > 0">
-              <div class="file-list-header">
-                <span>Archivos adjuntos ({{ uploadedFiles.length }})</span>
-              </div>
-              
-              <div class="file-list">
-                <div v-for="(file, index) in uploadedFiles" :key="index" class="file-item">
-                  <div class="file-info">
-                    <span class="material-icons">{{ getFileIcon(file.type) }}</span>
-                    <div>
-                      <div class="file-name">{{ file.name }}</div>
-                      <div class="file-meta">{{ formatFileSize(file.size) }}</div>
-                    </div>
-                  </div>
-                  <button class="icon-btn small" @click="removeFile(index)">
-                    <span class="material-icons">delete</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Notas adicionales -->
-        <div class="form-section">
-          <div class="form-group">
-            <label>Notas Adicionales</label>
-            <textarea 
-              v-model="formData.notas" 
-              rows="4" 
-              placeholder="Agregue cualquier información adicional relevante para la orden de trabajo..."
-              maxlength="1000"
-            ></textarea>
-            <div class="character-count">{{ (formData.notas || '').length }}/1000 caracteres</div>
-          </div>
-        </div>
-
-        <!-- Resumen de la orden -->
-        <div class="form-section" v-if="isFormValid">
-          <h3 class="section-title">
-            <span class="material-icons">summarize</span> Resumen de la Orden
-          </h3>
-          
-          <div class="order-summary">
-            <div class="summary-row">
-              <span class="summary-label">Código:</span>
-              <span class="summary-value">{{ formData.codigo_pedido || 'Se generará automáticamente' }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Tipo:</span>
-              <span class="summary-value">{{ getTipoPedidoName(formData.tipo_pedido_id) }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Plano:</span>
-              <span class="summary-value">{{ getPlanoName(formData.plano_id) }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Solicitante:</span>
-              <span class="summary-value">{{ getUsuarioName(formData.solicitante_id) }}</span>
-            </div>
-            <div class="summary-row" v-if="formData.supervisor_id">
-              <span class="summary-label">Supervisor:</span>
-              <span class="summary-value">{{ getUsuarioName(formData.supervisor_id) }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Fecha requerida:</span>
-              <span class="summary-value">{{ formatDate(formData.fecha_requerida) }}</span>
-            </div>
-            <div class="summary-row">
-              <span class="summary-label">Prioridad:</span>
-              <span class="summary-value priority" :class="`priority-${formData.prioridad}`">
-                {{ getPriorityName(formData.prioridad) }}
-              </span>
-            </div>
-            <div class="summary-row" v-if="formData.precio_final">
-              <span class="summary-label">Precio final:</span>
-              <span class="summary-value price">${{ parseFloat(formData.precio_final).toLocaleString('es-GT', {minimumFractionDigits: 2}) }}</span>
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label>Notas</label>
+              <textarea 
+                v-model="formData.notas"
+                rows="3"
+                placeholder="Notas adicionales del trabajo a realizar..."
+              ></textarea>
             </div>
           </div>
         </div>
@@ -281,24 +194,12 @@
       
       <div class="modal-footer">
         <button class="btn secondary" @click="close">Cancelar</button>
-        <button class="btn secondary" @click="saveDraft" :disabled="saving">
-          <span class="material-icons">save</span>
-          Guardar Borrador
-        </button>
         <button 
           class="btn primary" 
-          @click="sendForApproval" 
-          :disabled="saving || !isFormValid"
+          @click="save" 
+          :disabled="loadingCatalogs || saving"
         >
-          {{ saving ? 'Enviando...' : 'Enviar para Aprobación' }}
-        </button>
-        <button 
-          v-if="canCreateImmediately" 
-          class="btn success" 
-          @click="createImmediately" 
-          :disabled="saving || !isFormValid"
-        >
-          {{ saving ? 'Creando...' : 'Crear Inmediatamente' }}
+          {{ saving ? 'Guardando...' : (mode === 'create' ? 'Crear Orden' : 'Actualizar') }}
         </button>
       </div>
     </div>
@@ -313,48 +214,6 @@ export default {
       type: Boolean,
       default: false
     },
-    mode: {
-      type: String,
-      default: 'create' // 'create' or 'edit'
-    },
-    pedido: {
-      type: Object,
-      default: () => ({})
-    }
-  },
-  data() {
-    return {
-      saving: false,
-      formData: {
-        codigo_pedido: '',
-        tipo_pedido_id: '',
-        plano_id: '',
-        solicitante_id: '',
-        aprobador_id: '',
-        supervisor_id: '',
-        fecha_requerida: '',
-        fecha_estimada_entrega: '',
-        prioridad: 3,
-        proyecto_asociado: '',
-        costo_estimado: '',
-        precio_final: '',
-        notas: ''
-      },
-      errors: {},
-      validationAlerts: [],
-      uploadedFiles: [],
-      
-      // Datos de catálogos
-      tiposPedido: [],
-      planos: [],
-      usuarios: [],
-      usuariosAprobadores: [],
-      usuariosSupervisores: [],
-      
-      // Estados de carga
-      loadingCatalogs: false
-    }
-  },
   computed: {
     minDate() {
       return new Date().toISOString().split('T')[0]
@@ -366,10 +225,6 @@ export default {
              this.formData.fecha_requerida && 
              this.formData.precio_final &&
              parseFloat(this.formData.precio_final) > 0
-    },
-    canCreateImmediately() {
-      // Simular permisos del usuario para crear inmediatamente
-      return true // En producción esto vendría del store/auth
     },
     priceValidationMessage() {
       if (!this.formData.precio_final || !this.formData.costo_estimado) {
@@ -391,18 +246,74 @@ export default {
       return this.priceValidationMessage.includes('debe ser mayor') ? 'error' : 'success'
     }
   },
+    mode: {
+      type: String,
+      default: 'create'
+    },
+    pedido: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  data() {
+    return {
+      // Form data
+      formData: {
+        codigo_pedido: '',
+        tipo_pedido_id: '',
+        plano_id: '',
+        solicitante_id: '',
+        aprobador_id: '',
+        supervisor_id: '',
+        descripcion: '',
+        fecha_entrega: '',
+        prioridad: 'media'
+      },
+      errors: {},
+      
+      // Data arrays
+      tiposPedido: [],
+      planos: [],
+      usuarios: [], // Solicitantes (Puesto 5)
+      usuariosAprobadores: [], // Puesto 1
+      usuariosSupervisores: [], // Supervisores/Coordinadores (Puesto 2)
+      estadosPedido: [],
+      
+      // Loading states
+      loadingCatalogs: false,
+      loadingError: null,
+      saving: false
+    }
+  },
   watch: {
-    show(newVal) {
-      if (newVal) {
-        this.initializeForm()
-        this.loadCatalogs()
-      }
+    show: {
+      handler(newVal) {
+        if (newVal) {
+          this.initializeForm()
+          this.loadCatalogs()
+        }
+      },
+      immediate: true
     }
   },
   methods: {
     initializeForm() {
       if (this.mode === 'edit' && this.pedido) {
-        this.formData = { ...this.pedido }
+        this.formData = {
+          codigo_pedido: this.pedido.codigo_pedido || '',
+          tipo_pedido_id: this.pedido.tipo_pedido_id || '',
+          plano_id: this.pedido.plano_id || '',
+          solicitante_id: this.pedido.solicitante_id || '',
+          aprobador_id: this.pedido.aprobador_id || '',
+          supervisor_id: this.pedido.supervisor_id || '',
+          fecha_requerida: this.pedido.fecha_requerida || '',
+          fecha_estimada_entrega: this.pedido.fecha_estimada_entrega || '',
+          prioridad: this.pedido.prioridad || 3,
+          proyecto_asociado: this.pedido.proyecto_asociado || '',
+          costo_estimado: this.pedido.costo_estimado || '',
+          precio_final: this.pedido.precio_final || '',
+          notas: this.pedido.notas || ''
+        }
       } else {
         this.formData = {
           codigo_pedido: '',
@@ -421,56 +332,121 @@ export default {
         }
       }
       this.errors = {}
-      this.validationAlerts = []
+      this.loadingError = null
     },
     
     async loadCatalogs() {
       this.loadingCatalogs = true
+      this.loadingError = null
+      
       try {
-        // Cargar todos los catálogos necesarios
-        const [tiposResponse, planosResponse, usuariosResponse] = await Promise.all([
-          fetch('/api/TipoPedido'),
-          fetch('/api/Plano'),
-          fetch('/api/Usuario')
+        // Reset arrays
+        this.tiposPedido = []
+        this.planos = []
+        this.usuarios = []
+        this.usuariosAprobadores = []
+        this.usuariosSupervisores = []
+        this.estadosPedido = []
+        
+        console.log('🔄 Cargando catálogos...')
+        
+        // Load all catalogs in parallel
+        await Promise.all([
+          this.loadSingleAPI('/api/Tipo_Pedido', 'tiposPedido', 'Tipos de Pedido'),
+          this.loadSingleAPI('/api/Plano', 'planos', 'Planos'),
+          this.loadSingleAPI('/api/Usuario/Puesto/5', 'usuarios', 'Solicitantes'),
+          this.loadSingleAPI('/api/Usuario/Puesto/1', 'usuariosAprobadores', 'Aprobadores'),
+          this.loadSingleAPI('/api/Usuario/Puesto/2', 'usuariosSupervisores', 'Supervisores/Coordinadores'),
+          this.loadSingleAPI('/api/EstadoPedido', 'estadosPedido', 'Estados de Pedido')
         ])
         
-        this.tiposPedido = await tiposResponse.json()
-        this.planos = await planosResponse.json()
-        this.usuarios = await usuariosResponse.json()
-        
-        // Filtrar usuarios por rol para aprobadores y supervisores
-        this.usuariosAprobadores = this.usuarios.filter(u => 
-          u.roles?.includes('aprobador') || u.puesto?.permisos?.includes('aprobar_pedidos')
-        )
-        this.usuariosSupervisores = this.usuarios.filter(u => 
-          u.roles?.includes('supervisor') || u.puesto?.permisos?.includes('supervisar_proyectos')
-        )
+        console.log('✅ Catálogos cargados:', {
+          tiposPedido: this.tiposPedido.length,
+          planos: this.planos.length,
+          usuarios: this.usuarios.length,
+          usuariosAprobadores: this.usuariosAprobadores.length,
+          usuariosSupervisores: this.usuariosSupervisores.length,
+          estadosPedido: this.estadosPedido.length
+        })
         
       } catch (error) {
-        console.error('Error cargando catálogos:', error)
-        this.showError('Error al cargar los datos necesarios')
+        console.error('Error en loadCatalogs:', error)
+        this.loadingError = `Error de carga: ${error.message}`
       } finally {
         this.loadingCatalogs = false
       }
     },
     
+    async loadSingleAPI(url, dataProperty, displayName) {
+      try {
+        console.log(`📡 Cargando ${displayName} desde ${url}`)
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.getAuthToken() && { 'Authorization': `Bearer ${this.getAuthToken()}` })
+          }
+        })
+        
+        console.log(`📊 Response ${displayName}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        console.log(`📦 Data ${displayName}:`, data)
+        
+        // Verificar que sea un array
+        if (Array.isArray(data)) {
+          this[dataProperty] = data
+          console.log(`✅ ${displayName} cargado: ${data.length} items`)
+        } else if (data && typeof data === 'object') {
+          // Si no es array pero tiene datos, intentar extraerlos
+          const possibleArrays = Object.values(data).filter(v => Array.isArray(v))
+          if (possibleArrays.length > 0) {
+            this[dataProperty] = possibleArrays[0]
+            console.log(`🔧 Usando array encontrado en objeto para ${displayName}:`, possibleArrays[0].length)
+          } else {
+            this[dataProperty] = []
+            console.warn(`⚠️ ${displayName}: No se encontró array en la respuesta`)
+          }
+        } else {
+          this[dataProperty] = []
+          console.warn(`⚠️ ${displayName}: Respuesta no es un array ni objeto válido`)
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error cargando ${displayName}:`, error)
+        this[dataProperty] = []
+        // No lanzar el error para que continúe con las otras APIs
+      }
+    },
+    
+    async retryLoad() {
+      await this.loadCatalogs()
+    },
+    
     validateForm() {
       this.errors = {}
-      this.validationAlerts = []
       
-      // Validar campos obligatorios
       if (!this.formData.tipo_pedido_id) {
-        this.errors.tipo_pedido_id = 'El tipo de pedido es obligatorio'
+        this.errors.tipo_pedido_id = 'El tipo de pedido es requerido'
       }
       
       if (!this.formData.plano_id) {
-        this.errors.plano_id = 'Debe seleccionar un plano'
+        this.errors.plano_id = 'El plano es requerido'
       }
       
       if (!this.formData.solicitante_id) {
-        this.errors.solicitante_id = 'Debe seleccionar un solicitante'
+        this.errors.solicitante_id = 'El solicitante es requerido'
       }
-      
+
       if (!this.formData.fecha_requerida) {
         this.errors.fecha_requerida = 'La fecha requerida es obligatoria'
       } else {
@@ -482,7 +458,7 @@ export default {
           this.errors.fecha_requerida = 'La fecha requerida no puede ser anterior a hoy'
         }
       }
-      
+
       if (!this.formData.precio_final) {
         this.errors.precio_final = 'El precio final es obligatorio'
       } else {
@@ -502,140 +478,77 @@ export default {
       return Object.keys(this.errors).length === 0
     },
     
-    validatePrices() {
-      // Validación en tiempo real de precios
-      this.$nextTick(() => {
-        if (this.formData.precio_final && this.formData.costo_estimado) {
-          const precioFinal = parseFloat(this.formData.precio_final)
-          const costoEstimado = parseFloat(this.formData.costo_estimado)
-          
-          if (precioFinal <= costoEstimado) {
-            this.addValidationAlert({
-              type: 'warning',
-              title: 'Advertencia de Precios',
-              message: 'El precio final debe ser mayor que el costo estimado para asegurar rentabilidad.'
-            })
-          }
-        }
-      })
+    prepareOrderData() {
+      // Generar código si no existe
+      const codigoPedido = this.formData.codigo_pedido || this.generateOrderCode()
+      
+      const orderData = {
+        codigo_pedido: codigoPedido,
+        tipo_pedido_id: parseInt(this.formData.tipo_pedido_id),
+        plano_id: parseInt(this.formData.plano_id),
+        solicitante_id: parseInt(this.formData.solicitante_id),
+        fecha_solicitud: new Date().toISOString(),
+        fecha_requerida: this.formData.fecha_requerida,
+        estado_id: 1, // 1 = Estado inicial (borrador o pendiente)
+        prioridad: parseInt(this.formData.prioridad),
+        precio_final: parseFloat(this.formData.precio_final)
+      }
+      
+      // Campos opcionales - solo agregar si tienen valor
+      if (this.formData.aprobador_id) {
+        orderData.aprobador_id = parseInt(this.formData.aprobador_id)
+      }
+      
+      if (this.formData.supervisor_id) {
+        orderData.supervisor_id = parseInt(this.formData.supervisor_id)
+      }
+      
+      if (this.formData.fecha_estimada_entrega) {
+        orderData.fecha_estimada_entrega = this.formData.fecha_estimada_entrega
+      }
+      
+      if (this.formData.proyecto_asociado) {
+        orderData.proyecto_asociado = this.formData.proyecto_asociado
+      }
+      
+      if (this.formData.costo_estimado) {
+        orderData.costo_estimado = parseFloat(this.formData.costo_estimado)
+      }
+      
+      if (this.formData.notas) {
+        orderData.notas = this.formData.notas
+      }
+      
+      return orderData
+    },
+
+    generateOrderCode() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const timestamp = now.getTime().toString().slice(-4)
+      
+      return `PED-${year}${month}${day}-${timestamp}`
     },
     
-    async sendForApproval() {
+    async save() {
       if (!this.validateForm()) {
-        this.showError('Por favor, complete todos los campos obligatorios')
         return
       }
       
       this.saving = true
-      try {
-        const orderData = this.prepareOrderData('Pendiente Aprobación')
-        
-        const response = await fetch('/api/Pedido', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          },
-          body: JSON.stringify({
-            ...orderData,
-            action: 'send_for_approval'
-          })
-        })
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
-        }
-        
-        const result = await response.json()
-        
-        this.$emit('save', {
-          ...orderData,
-          id: result.id,
-          action: 'send_for_approval'
-        })
-        
-        this.clearDraftFromStorage()
-        this.close()
-        this.showSuccess('Pedido enviado para aprobación exitosamente')
-        
-      } catch (error) {
-        console.error('Error al enviar para aprobación:', error)
-        this.showError(`Error al enviar el pedido: ${error.message}`)
-      } finally {
-        this.saving = false
-      }
-    },
-    
-    async createImmediately() {
-      if (!this.validateForm()) {
-        this.showError('Por favor, complete todos los campos obligatorios')
-        return
-      }
       
-      this.saving = true
       try {
-        const orderData = this.prepareOrderData('Aprobado')
+        const orderData = this.prepareOrderData()
         
-        const response = await fetch('/api/Pedido', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          },
-          body: JSON.stringify({
-            ...orderData,
-            action: 'create_immediately'
-          })
-        })
+        console.log('Enviando datos:', orderData) // Debug
         
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
-        }
+        const url = this.mode === 'create' ? '/api/Pedido' : `/api/Pedido/${this.pedido.id}`
+        const method = this.mode === 'create' ? 'POST' : 'PUT'
         
-        const result = await response.json()
-        
-        this.$emit('save', {
-          ...orderData,
-          id: result.id,
-          action: 'create_immediately'
-        })
-        
-        this.clearDraftFromStorage()
-        this.close()
-        this.showSuccess('Pedido creado exitosamente')
-        
-      } catch (error) {
-        console.error('Error al crear pedido:', error)
-        this.showError(`Error al crear el pedido: ${error.message}`)
-      } finally {
-        this.saving = false
-      }
-    },
-    
-    async saveDraft() {
-      this.saving = true
-      try {
-        const orderData = {
-          codigo_pedido: this.formData.codigo_pedido || this.generateOrderCode(),
-          tipo_pedido_id: this.formData.tipo_pedido_id ? parseInt(this.formData.tipo_pedido_id) : null,
-          plano_id: this.formData.plano_id ? parseInt(this.formData.plano_id) : null,
-          solicitante_id: this.formData.solicitante_id ? parseInt(this.formData.solicitante_id) : null,
-          aprobador_id: this.formData.aprobador_id ? parseInt(this.formData.aprobador_id) : null,
-          supervisor_id: this.formData.supervisor_id ? parseInt(this.formData.supervisor_id) : null,
-          fecha_requerida: this.formData.fecha_requerida || null,
-          fecha_estimada_entrega: this.formData.fecha_estimada_entrega || null,
-          estado_id: this.getEstadoId('Borrador'),
-          prioridad: parseInt(this.formData.prioridad) || 3,
-          proyecto_asociado: this.formData.proyecto_asociado || null,
-          costo_estimado: this.formData.costo_estimado ? parseFloat(this.formData.costo_estimado) : null,
-          precio_final: this.formData.precio_final ? parseFloat(this.formData.precio_final) : null,
-          notas: this.formData.notas || null
-        }
-        
-        const response = await fetch('/api/Pedido/draft', {
-          method: 'POST',
+        const response = await fetch(url, {
+          method: method,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.getAuthToken()}`
@@ -643,324 +556,31 @@ export default {
           body: JSON.stringify(orderData)
         })
         
-        if (response.ok) {
-          const result = await response.json()
-          this.showSuccess('Borrador guardado exitosamente')
-          return result.id
-        } else {
+        if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+          console.error('Error del servidor:', errorData) // Debug
+          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
         }
+        
+        const result = await response.json()
+        
+        this.$emit('saved', result)
+        this.close()
+        
       } catch (error) {
-        console.error('Error al guardar borrador:', error)
-        this.showError(`Error al guardar borrador: ${error.message}`)
+        console.error('Error guardando:', error)
+        alert('Error al guardar la orden de trabajo: ' + error.message)
       } finally {
         this.saving = false
       }
     },
     
-    prepareOrderData(estado) {
-      // Usar el método corregido del script anterior
-      const formatDateForAPI = (date) => {
-        if (!date) return null
-        const d = new Date(date)
-        return d.toISOString().split('T')[0]
-      }
-      
-      const formatDateTimeForAPI = (date) => {
-        if (!date) return null
-        return new Date(date).toISOString().slice(0, 19).replace('T', ' ')
-      }
-      
-      const requiredFields = {
-        tipo_pedido_id: this.formData.tipo_pedido_id,
-        plano_id: this.formData.plano_id,
-        solicitante_id: this.formData.solicitante_id,
-        fecha_requerida: this.formData.fecha_requerida,
-        precio_final: this.formData.precio_final
-      }
-      
-      for (const [field, value] of Object.entries(requiredFields)) {
-        if (!value || value === '' || value === null || value === undefined) {
-          throw new Error(`El campo ${field} es obligatorio`)
-        }
-      }
-      
-      const orderData = {
-        codigo_pedido: this.formData.codigo_pedido || this.generateOrderCode(),
-        tipo_pedido_id: parseInt(this.formData.tipo_pedido_id),
-        plano_id: parseInt(this.formData.plano_id),
-        solicitante_id: parseInt(this.formData.solicitante_id),
-        estado_id: this.getEstadoId(estado),
-        
-        ...(this.formData.aprobador_id && { 
-          aprobador_id: parseInt(this.formData.aprobador_id) 
-        }),
-        ...(this.formData.supervisor_id && { 
-          supervisor_id: parseInt(this.formData.supervisor_id) 
-        }),
-        
-        fecha_solicitud: formatDateTimeForAPI(new Date()),
-        fecha_requerida: formatDateForAPI(this.formData.fecha_requerida),
-        
-        ...(estado === 'Aprobado' && { 
-          fecha_aprobacion: formatDateTimeForAPI(new Date()) 
-        }),
-        ...(this.formData.fecha_estimada_entrega && { 
-          fecha_estimada_entrega: formatDateForAPI(this.formData.fecha_estimada_entrega) 
-        }),
-        
-        contador_pausas: 0,
-        tiempo_total_pausado: 0,
-        prioridad: parseInt(this.formData.prioridad) || 3,
-        
-        ...(this.formData.proyecto_asociado && { 
-          proyecto_asociado: this.formData.proyecto_asociado 
-        }),
-        ...(this.formData.costo_estimado && { 
-          costo_estimado: parseFloat(this.formData.costo_estimado) 
-        }),
-        
-        precio_final: parseFloat(this.formData.precio_final),
-        
-        ...(this.formData.notas && { 
-          notas: this.formData.notas 
-        }),
-        
-        createdAt: formatDateTimeForAPI(new Date()),
-        updatedAt: formatDateTimeForAPI(new Date())
-      }
-      
-      if (orderData.costo_estimado && orderData.precio_final <= orderData.costo_estimado) {
-        throw new Error('El precio final debe ser mayor que el costo estimado')
-      }
-      
-      return orderData
-    },
-    
-    // Métodos auxiliares
-    generateOrderCode() {
-      const timestamp = new Date().getTime()
-      return `PED-${timestamp}`
-    },
-    
-    getEstadoId(estadoNombre) {
-      const estadosMap = {
-        'Borrador': 1,
-        'Pendiente Aprobación': 2,
-        'Aprobado': 3,
-        'En Proceso': 4,
-        'Completado': 5,
-        'Cancelado': 6
-      }
-      return estadosMap[estadoNombre] || 1
-    },
-    
     getAuthToken() {
-      return localStorage.getItem('authToken') || ''
-    },
-    
-    // Métodos de utilidad para mostrar nombres
-    getTipoPedidoName(id) {
-      const tipo = this.tiposPedido.find(t => t.id == id)
-      return tipo ? tipo.nombre : 'N/A'
-    },
-    
-    getPlanoName(id) {
-      const plano = this.planos.find(p => p.id == id)
-      return plano ? `${plano.nombre} - ${plano.codigo}` : 'N/A'
-    },
-    
-    getUsuarioName(id) {
-      const usuario = this.usuarios.find(u => u.id == id)
-      return usuario ? `${usuario.nombres} ${usuario.apellidos}` : 'N/A'
-    },
-    
-    getPriorityName(priority) {
-      const priorities = {
-        1: 'Alta',
-        2: 'Media-Alta', 
-        3: 'Media',
-        4: 'Media-Baja',
-        5: 'Baja'
-      }
-      return priorities[priority] || 'Media'
-    },
-    
-    // Manejo de archivos
-    handleFileChange(event) {
-      this.processFiles(event.target.files)
-    },
-    
-    handleFileDrop(event) {
-      this.processFiles(event.dataTransfer.files)
-    },
-    
-    processFiles(files) {
-      for (let file of files) {
-        if (this.validateFile(file)) {
-          this.uploadedFiles.push(file)
-        }
-      }
-    },
-    
-    validateFile(file) {
-      const maxSize = 10 * 1024 * 1024 // 10MB
-      const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/jpg', 
-        'image/png',
-        'application/dwg',
-        'application/dxf'
-      ]
-      
-      if (file.size > maxSize) {
-        this.showError(`El archivo ${file.name} es demasiado grande. Máximo 10MB.`)
-        return false
-      }
-      
-      if (!allowedTypes.some(type => file.type.includes(type.split('/')[1]))) {
-        this.showError(`El archivo ${file.name} no tiene un formato válido.`)
-        return false
-      }
-      
-      return true
-    },
-    
-    removeFile(index) {
-      this.uploadedFiles.splice(index, 1)
-    },
-    
-    getFileIcon(fileType) {
-      if (fileType.includes('pdf')) return 'picture_as_pdf'
-      if (fileType.includes('image')) return 'image'
-      if (fileType.includes('dwg') || fileType.includes('dxf')) return 'architecture'
-      return 'description'
-    },
-    
-    formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes'
-      const k = 1024
-      const sizes = ['Bytes', 'KB', 'MB', 'GB']
-      const i = Math.floor(Math.log(bytes) / Math.log(k))
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return 'N/A'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('es-GT', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric'
-      })
-    },
-    
-    // Manejo de alertas
-    addValidationAlert(alert) {
-      const id = Date.now()
-      this.validationAlerts.push({
-        id,
-        ...alert
-      })
-      
-      // Auto-dismiss después de 5 segundos
-      setTimeout(() => {
-        this.dismissAlert(id)
-      }, 5000)
-    },
-    
-    dismissAlert(alertId) {
-      const index = this.validationAlerts.findIndex(a => a.id === alertId)
-      if (index > -1) {
-        this.validationAlerts.splice(index, 1)
-      }
-    },
-    
-    getAlertIcon(type) {
-      const icons = {
-        success: 'check_circle',
-        error: 'error',
-        warning: 'warning',
-        info: 'info'
-      }
-      return icons[type] || 'info'
-    },
-    
-    // Notificaciones
-    showSuccess(message) {
-      if (this.$vaToast) {
-        this.$vaToast.init({
-          message: message,
-          color: 'success',
-          duration: 3000
-        })
-      } else {
-        alert(message)
-      }
-    },
-    
-    showError(message) {
-      if (this.$vaToast) {
-        this.$vaToast.init({
-          message: message,
-          color: 'danger',
-          duration: 5000
-        })
-      } else {
-        alert(message)
-      }
-    },
-    
-    clearDraftFromStorage() {
-      localStorage.removeItem('pedido_draft')
+      return localStorage.getItem('authToken') || localStorage.getItem('token') || ''
     },
     
     close() {
       this.$emit('close')
-    }
-  },
-  
-  // Guardar borrador automáticamente cada 30 segundos si hay cambios
-  mounted() {
-    this.autoSaveInterval = setInterval(() => {
-      if (this.hasUnsavedChanges()) {
-        this.saveDraftToStorage()
-      }
-    }, 30000)
-  },
-  
-  beforeDestroy() {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval)
-    }
-  },
-  
-  methods: {
-  
-    
-    hasUnsavedChanges() {
-      // Verificar si hay cambios sin guardar
-      const currentData = JSON.stringify(this.formData)
-      const savedData = localStorage.getItem('pedido_draft')
-      return currentData !== savedData
-    },
-    
-    saveDraftToStorage() {
-      localStorage.setItem('pedido_draft', JSON.stringify(this.formData))
-    },
-    
-    loadDraftFromStorage() {
-      const savedData = localStorage.getItem('pedido_draft')
-      if (savedData && this.mode === 'create') {
-        this.formData = JSON.parse(savedData)
-        this.addValidationAlert({
-          type: 'info',
-          title: 'Borrador Recuperado',
-          message: 'Se ha recuperado un borrador guardado anteriormente.'
-        })
-      }
     }
   }
 }
@@ -982,21 +602,23 @@ export default {
 
 .modal-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   width: 90%;
-  max-width: 1000px;
+  max-width: 800px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e5e5;
-  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
 }
 
 .modal-header h2 {
@@ -1008,50 +630,89 @@ export default {
 .close-btn {
   background: none;
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+  padding: 8px;
+  border-radius: 4px;
+  color: #666;
 }
 
 .close-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: #f0f0f0;
 }
 
 .modal-body {
-  padding: 24px;
-  max-height: 60vh;
+  flex: 1;
   overflow-y: auto;
+  padding: 20px;
 }
 
-.form-section {
-  margin-bottom: 32px;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
+.modal-footer {
   padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Loading */
+.loading-section {
+  text-align: center;
+  padding: 40px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Section */
+.error-section {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.error-section h3 {
+  margin-top: 0;
+}
+
+/* Form Styles */
+.form-section {
+  margin-bottom: 20px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 20px 0;
-  font-size: 1.2rem;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: #333;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 2px solid #007bff;
   padding-bottom: 10px;
-}
-
-.section-title .material-icons {
-  color: #007bff;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-group {
@@ -1059,20 +720,24 @@ export default {
   flex-direction: column;
 }
 
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
 .form-group label {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: #555;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px 12px;
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s ease;
 }
 
 .form-group input:focus,
@@ -1083,316 +748,38 @@ export default {
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.form-group input:invalid,
-.form-group select:invalid {
-  border-color: #dc3545;
+.form-group input[readonly] {
+  background-color: #f8f9fa;
+  color: #6c757d;
 }
 
-.input-with-currency {
-  position: relative;
-}
-
-.currency-symbol {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #666;
-  font-weight: 500;
-}
-
-.input-with-currency input {
-  padding-left: 32px;
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .field-help {
-  margin-top: 4px;
-  font-size: 12px;
+  font-size: 0.8em;
   color: #666;
-  font-style: italic;
+  margin-top: 5px;
 }
 
 .error-message {
-  margin-top: 4px;
-  font-size: 12px;
   color: #dc3545;
-}
-
-.validation-message {
-  margin-top: 4px;
-  font-size: 12px;
+  font-size: 0.8em;
+  margin-top: 5px;
   font-weight: 500;
 }
 
-.validation-message.success {
-  color: #28a745;
-}
-
-.validation-message.error {
-  color: #dc3545;
-}
-
-.character-count {
-  text-align: right;
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-}
-
-/* Alertas */
-.alerts-section {
-  margin-bottom: 24px;
-}
-
-.alert-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  border-left: 4px solid;
-}
-
-.alert-card.success {
-  background-color: #d4edda;
-  border-left-color: #28a745;
-  color: #155724;
-}
-
-.alert-card.error {
-  background-color: #f8d7da;
-  border-left-color: #dc3545;
-  color: #721c24;
-}
-
-.alert-card.warning {
-  background-color: #fff3cd;
-  border-left-color: #ffc107;
-  color: #856404;
-}
-
-.alert-card.info {
-  background-color: #d1ecf1;
-  border-left-color: #17a2b8;
-  color: #0c5460;
-}
-
-.alert-icon .material-icons {
-  font-size: 20px;
-}
-
-.alert-content h4 {
-  margin: 0 0 4px 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.alert-content p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.alert-dismiss {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
-  margin-left: auto;
-}
-
-/* Archivos */
-.file-upload-section {
-  margin-top: 16px;
-}
-
-.file-upload-area {
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 40px 20px;
-  text-align: center;
-  transition: border-color 0.2s;
-  cursor: pointer;
-}
-
-.file-upload-area:hover {
-  border-color: #007bff;
-}
-
-.upload-label {
-  cursor: pointer;
-  display: block;
-}
-
-.large-icon {
-  font-size: 48px !important;
-  color: #007bff;
-  margin-bottom: 16px;
-}
-
-.file-upload-area p {
-  margin: 8px 0;
-  color: #333;
-}
-
-.small-text {
-  font-size: 12px !important;
-  color: #666 !important;
-}
-
-.uploaded-files {
-  margin-top: 20px;
-}
-
-.file-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  font-weight: 500;
-  color: #333;
-}
-
-.file-list {
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.file-item:last-child {
-  border-bottom: none;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.file-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.file-meta {
-  font-size: 12px;
-  color: #666;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.icon-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.icon-btn.small .material-icons {
-  font-size: 18px;
-}
-
-/* Resumen */
-.order-summary {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid #e5e5e5;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.summary-row:last-child {
-  border-bottom: none;
-}
-
-.summary-label {
-  font-weight: 500;
-  color: #666;
-}
-
-.summary-value {
-  color: #333;
-  font-weight: 500;
-}
-
-.summary-value.priority {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.priority-1 {
-  background-color: #dc3545;
-  color: white;
-}
-
-.priority-2 {
-  background-color: #fd7e14;
-  color: white;
-}
-
-.priority-3 {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.priority-4 {
-  background-color: #20c997;
-  color: white;
-}
-
-.priority-5 {
-  background-color: #6c757d;
-  color: white;
-}
-
-.summary-value.price {
-  color: #28a745;
-  font-weight: 600;
-}
-
-/* Footer */
-.modal-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding: 20px 24px;
-  border-top: 1px solid #e5e5e5;
-  background: #f8f9fa;
-}
-
+/* Button Styles */
 .btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
   border: none;
-  border-radius: 6px;
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .btn:disabled {
@@ -1401,51 +788,69 @@ export default {
 }
 
 .btn.primary {
-  background-color: #007bff;
+  background: #007bff;
   color: white;
 }
 
 .btn.primary:hover:not(:disabled) {
-  background-color: #0056b3;
+  background: #0056b3;
 }
 
 .btn.secondary {
-  background-color: #6c757d;
+  background: #6c757d;
   color: white;
 }
 
 .btn.secondary:hover:not(:disabled) {
-  background-color: #545b62;
+  background: #545b62;
 }
 
-.btn.success {
-  background-color: #28a745;
-  color: white;
+/* Price validation styles */
+.price-validation {
+  font-size: 0.8em;
+  margin-top: 5px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: 500;
 }
 
-.btn.success:hover:not(:disabled) {
-  background-color: #1e7e34;
+.price-validation.success {
+  color: #28a745;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
 }
 
-/* Responsive */
+.price-validation.error {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
 @media (max-width: 768px) {
   .modal-content {
     width: 95%;
-    max-height: 95vh;
+    margin: 10px;
   }
   
   .form-row {
     grid-template-columns: 1fr;
-    gap: 16px;
+  }
+  
+  .modal-header {
+    padding: 15px;
+  }
+  
+  .modal-body {
+    padding: 15px;
   }
   
   .modal-footer {
-    flex-wrap: wrap;
+    padding: 15px;
+    flex-direction: column;
   }
   
-  .btn {
-    flex: 1;
-    min-width: 120px;
+  .modal-header h2 {
+    font-size: 1.3rem;
   }
 }
 </style>
