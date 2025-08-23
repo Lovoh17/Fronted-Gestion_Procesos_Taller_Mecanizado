@@ -127,7 +127,7 @@ const routes = [
   {
     path: '/pedidos/nuevo',
     name: 'new-order',
-    component: () => import('./components/VistasCoordinador/ComponentesCoordinador/NewWorkOrderWizardModal.vue'),
+    component: () => import('./components/VistasCoordinador/WorkOrderModal.vue'),
     meta: { public: true }
   },
   {
