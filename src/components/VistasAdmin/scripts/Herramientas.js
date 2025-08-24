@@ -1,7 +1,11 @@
 import axios from 'axios';
+import ModalDetallesHerramienta from '../ComponentesAdmin/ModalDetallesHerramienta.vue';
 
 export default {
   name: 'HerramientasComponent',
+  components: {
+    ModalDetallesHerramienta
+  },
   data() {
     return {
       herramientas: [],
@@ -57,6 +61,28 @@ export default {
       }
 
       return filtered;
+    },
+    
+    estadoOptions() {
+      return [
+        { value: 1, label: 'Disponible' },
+        { value: 2, label: 'En uso' },
+        { value: 3, label: 'Mantenimiento' },
+        { value: 4, label: 'Dañado' }
+      ];
+    },
+
+    // Función de formateo para VaDateInput
+    dateFormatFunction() {
+      return (date) => {
+        if (!date) return '';
+        if (date instanceof Date) {
+          return date.toLocaleDateString('es-ES');
+        }
+        // Si es string, intentar convertir a Date primero
+        const dateObj = new Date(date);
+        return isNaN(dateObj.getTime()) ? date : dateObj.toLocaleDateString('es-ES');
+      };
     }
   },
   created() {
@@ -70,11 +96,12 @@ export default {
         this.herramientas = response.data;
       } catch (error) {
         console.error('Error al obtener herramientas:', error);
-        this.$toast.error('No se pudieron cargar las herramientas');
+        this.showToast('No se pudieron cargar las herramientas', 'danger');
       } finally {
         this.loading = false;
       }
     },
+    
     async submitForm() {
       try {
         // Preparar datos para enviar
@@ -89,29 +116,56 @@ export default {
           }
         }
 
-        if (this.editing) {
-          await axios.put(`/api/Herramienta/${this.currentId}`, dataToSend);
-          this.$toast.success('Herramienta actualizada correctamente');
-        } else {
-          await axios.post('/api/Herramienta', dataToSend);
-          this.$toast.success('Herramienta creada correctamente');
+        // Convertir fechas si son objetos Date
+        if (dataToSend.fecha_adquisicion instanceof Date) {
+          dataToSend.fecha_adquisicion = dataToSend.fecha_adquisicion.toISOString().split('T')[0];
+        }
+        if (dataToSend.fecha_ultimo_mantenimiento instanceof Date) {
+          dataToSend.fecha_ultimo_mantenimiento = dataToSend.fecha_ultimo_mantenimiento.toISOString().split('T')[0];
+        }
+        if (dataToSend.fecha_proximo_mantenimiento instanceof Date) {
+          dataToSend.fecha_proximo_mantenimiento = dataToSend.fecha_proximo_mantenimiento.toISOString().split('T')[0];
         }
 
-        this.resetForm();
+        if (this.editing) {
+          await axios.put(`/api/Herramienta/${this.currentId}`, dataToSend);
+          this.showToast('Herramienta actualizada correctamente', 'success');
+        } else {
+          await axios.post('/api/Herramienta', dataToSend);
+          this.showToast('Herramienta creada correctamente', 'success');
+        }
+
+        this.closeFormModal();
         this.fetchHerramientas();
       } catch (error) {
         console.error('Error al guardar herramienta:', error);
-        this.$toast.error('Error al guardar la herramienta');
+        this.showToast('Error al guardar la herramienta', 'danger');
       }
     },
+    
     async editHerramienta(id) {
       try {
         const response = await axios.get(`/api/Herramienta/${id}`);
-        this.herramienta = response.data;
+        this.herramienta = { ...response.data };
 
         // Convertir especificaciones técnicas a string si es objeto
         if (this.herramienta.especificaciones_tecnicas && typeof this.herramienta.especificaciones_tecnicas === 'object') {
           this.herramienta.especificaciones_tecnicas = JSON.stringify(this.herramienta.especificaciones_tecnicas, null, 2);
+        }
+
+        // Convertir fechas string a objetos Date para VaDateInput
+        if (this.herramienta.fecha_adquisicion) {
+          // Asegurarse de que la fecha se parse correctamente
+          const fecha = new Date(this.herramienta.fecha_adquisicion + 'T00:00:00.000Z');
+          this.herramienta.fecha_adquisicion = fecha;
+        }
+        if (this.herramienta.fecha_ultimo_mantenimiento) {
+          const fecha = new Date(this.herramienta.fecha_ultimo_mantenimiento + 'T00:00:00.000Z');
+          this.herramienta.fecha_ultimo_mantenimiento = fecha;
+        }
+        if (this.herramienta.fecha_proximo_mantenimiento) {
+          const fecha = new Date(this.herramienta.fecha_proximo_mantenimiento + 'T00:00:00.000Z');
+          this.herramienta.fecha_proximo_mantenimiento = fecha;
         }
 
         this.editing = true;
@@ -119,29 +173,32 @@ export default {
         this.showForm = true;
       } catch (error) {
         console.error('Error al obtener herramienta:', error);
-        this.$toast.error('No se pudo cargar la herramienta para editar');
+        this.showToast('No se pudo cargar la herramienta para editar', 'danger');
       }
     },
+    
     confirmDelete(id) {
       const herramienta = this.herramientas.find(h => h.id === id);
       this.herramientaToDelete = id;
       this.herramientaToDeleteName = herramienta ? `${herramienta.nombre} - ${herramienta.modelo}` : 'esta herramienta';
       this.showDeleteModal = true;
     },
+    
     async deleteHerramienta() {
       try {
         await axios.delete(`/api/Herramienta/${this.herramientaToDelete}`);
-        this.$toast.success('Herramienta eliminada correctamente');
+        this.showToast('Herramienta eliminada correctamente', 'success');
         this.fetchHerramientas();
       } catch (error) {
         console.error('Error al eliminar herramienta:', error);
-        this.$toast.error('Error al eliminar la herramienta');
+        this.showToast('Error al eliminar la herramienta', 'danger');
       } finally {
         this.showDeleteModal = false;
         this.herramientaToDelete = null;
         this.herramientaToDeleteName = '';
       }
     },
+    
     resetForm() {
       this.herramienta = {
         nombre: '',
@@ -164,9 +221,25 @@ export default {
       this.editing = false;
       this.currentId = null;
     },
+    
+    closeFormModal() {
+      this.showForm = false;
+      this.resetForm();
+    },
+    
     showDetails(herramienta) {
       this.selectedHerramienta = { ...herramienta };
     },
+    
+    closeDetailsModal() {
+      this.selectedHerramienta = null;
+    },
+    
+    handleEditFromModal(id) {
+      this.selectedHerramienta = null;
+      this.editHerramienta(id);
+    },
+    
     getEstadoName(id) {
       const estados = {
         1: 'Disponible',
@@ -176,24 +249,34 @@ export default {
       };
       return estados[id] || 'Desconocido';
     },
+    
     formatDate(date) {
       if (!date) return '';
       return new Date(date).toLocaleDateString('es-ES');
     },
+    
     formatCurrency(value) {
       if (!value) return '0.00';
       return parseFloat(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     },
-    formatSpecs(specs) {
-      if (!specs) return 'N/A';
-      if (typeof specs === 'string') return specs;
-      return JSON.stringify(specs, null, 2);
-    },
+    
     calcularPorcentajeUso(herramienta) {
       if (!herramienta.vida_util_horas || !herramienta.horas_uso_actual) return 0;
       const porcentaje = (herramienta.horas_uso_actual / herramienta.vida_util_horas) * 100;
       return Math.min(100, Math.round(porcentaje));
+    },
+    
+    showToast(message, color = 'info') {
+      // Verificar si $va está disponible
+      if (this.$va && this.$va.toast) {
+        this.$va.toast({
+          message,
+          color
+        });
+      } else {
+        // Fallback a console.log si $va no está disponible
+        console.log(`[${color.toUpperCase()}] ${message}`);
+      }
     }
   }
 };
-
