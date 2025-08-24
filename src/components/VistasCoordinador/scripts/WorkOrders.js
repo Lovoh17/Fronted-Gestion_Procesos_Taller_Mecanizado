@@ -1,5 +1,6 @@
 import { VueGoodTable } from 'vue-good-table-next';
 import 'vue-good-table-next/dist/vue-good-table-next.css';
+import AsignarPedidosModal from '../ComponentesCoordinador/AsignacionTrabajosModal.vue';
 import PedidoDetalleModal from '../ComponentesCoordinador/OrderDetailsModal.vue';
 import PedidoEditarModal from '../ComponentesCoordinador/EditOrdersModal.vue';
 
@@ -8,7 +9,8 @@ export default {
   components: {
     VueGoodTable,
     PedidoDetalleModal,
-    PedidoEditarModal
+    PedidoEditarModal,
+    AsignarPedidosModal
   },
   data() {
     return {
@@ -20,6 +22,14 @@ export default {
       itemsPorPagina: 10,
       pedidoSeleccionado: null,
       modalMode: null,
+      horasAsignadas: 8,
+      
+      // Variables para el modal de asignación
+      showAsignarModal: false,
+      pedidosDisponibles: [],
+      usuarios: [],
+      loadingUsuarios: false,
+      
       estados: [
         { id: 1, nombre: 'Borrador' },
         { id: 2, nombre: 'Pendiente Aprobación' },
@@ -107,6 +117,12 @@ export default {
     }
   },
   computed: {
+    formularioValido() {
+      return this.pedidosSeleccionados.length > 0 && 
+             this.usuariosAsignados.length > 0 &&
+             this.fechaLimite &&
+             this.horasAsignadas > 0;
+    },
     estadisticas() {
       const total = this.pedidos.length
       const pendientes = this.pedidos.filter(p => p.estado_id === 2).length
@@ -139,6 +155,10 @@ export default {
           color: 'green'
         }
       ]
+    },
+    
+    totalPedidos() {
+      return this.pedidos.length;
     }
   },
   mounted() {
@@ -150,9 +170,9 @@ export default {
       this.loading = true
       try {
         const response = await fetch('/api/Pedido', {
-          headers: {
+          /*headers: {
             'Authorization': `Bearer ${this.getAuthToken()}`
-          }
+          }*/
         })
         
         if (!response.ok) {
@@ -179,10 +199,10 @@ export default {
     
     async cargarTiposPedido() {
       try {
-        const response = await fetch('/api/TipoPedido', {
-          headers: {
+        const response = await fetch('/api/Tipo_Pedido', {
+          /*headers: {
             'Authorization': `Bearer ${this.getAuthToken()}`
-          }
+          }*/
         })
         
         if (response.ok) {
@@ -191,6 +211,59 @@ export default {
       } catch (error) {
         console.error('Error al cargar tipos de pedido:', error)
       }
+    },
+    
+    async cargarUsuarios() {
+      this.loadingUsuarios = true
+      try {
+        const response = await fetch('/api/Usuario/Puesto/3', {
+          /*headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          }*/
+        })
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar usuarios')
+        }
+        
+        const data = await response.json()
+        this.usuarios = data
+        
+      } catch (error) {
+        console.error('Error al cargar usuarios:', error)
+        this.showError('No se pudieron cargar los usuarios')
+        this.usuarios = []
+      } finally {
+        this.loadingUsuarios = false
+      }
+    },
+    
+    cargarPedidosDisponibles() {
+      // Filtrar pedidos que pueden ser asignados (estados 2 y 3: Pendiente Aprobación y Aprobado)
+      this.pedidosDisponibles = this.pedidos.filter(pedido => 
+        pedido.estado_id === 2 || pedido.estado_id === 3
+      )
+    },
+    
+    async abrirModalAsignar() {
+      this.cargarPedidosDisponibles()
+      await this.cargarUsuarios()
+      this.showAsignarModal = true
+    },
+    
+    cerrarModalAsignar() {
+      this.showAsignarModal = false
+    },
+    
+    async onAsignacionConfirmada(asignacionData) {
+      // Solo recargar pedidos cuando el modal emita éxito
+      this.cargarPedidos();
+      this.showSuccess('Asignación completada');
+    },
+    
+    actualizarDatos() {
+      this.cargarPedidos()
+      this.showSuccess('Datos actualizados correctamente')
     },
     
     nuevoPedido() {
@@ -226,9 +299,6 @@ export default {
       try {
         const response = await fetch(`/api/Pedido/${pedido.id}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
         })
         
         if (response.ok) {
@@ -281,15 +351,13 @@ export default {
       return new Date(dateString).toLocaleDateString('es-GT')
     },
     
-    getAuthToken() {
-      return localStorage.getItem('authToken') || ''
-    },
-    
     showError(message) {
+      // En una aplicación real, usar un sistema de notificaciones más sofisticado
       alert('Error: ' + message)
     },
     
     showSuccess(message) {
+      // En una aplicación real, usar un sistema de notificaciones más sofisticado
       alert('Éxito: ' + message)
     }
   }

@@ -14,6 +14,10 @@
           <span class="material-icons">refresh</span>
           Actualizar
         </button>
+        <button class="btn primary" @click="abrirModalAsignar">
+          <span class="material-icons">assignment</span>
+          Asignar Pedidos
+        </button>
         <button class="btn primary" @click="nuevoPedido">
           <span class="material-icons">add</span>
           Nuevo Pedido
@@ -124,7 +128,7 @@
             <span v-else-if="props.column.field === 'solicitante'">
               <div class="solicitante-info">
                 <span class="solicitante-nombre">
-                  {{ props.row.solicitante?.nombres }} {{ props.row.solicitante?.apellidos }}
+                  {{ props.row.solicitante?.nombre }} {{ props.row.solicitante?.apellido }}
                 </span>
                 <span class="solicitante-email">{{ props.row.solicitante?.email }}</span>
               </div>
@@ -204,6 +208,16 @@
       :pedido="pedidoSeleccionado"
       @close="cerrarModal"
     />
+
+      <AsignarPedidosModal 
+        :show="showAsignarModal" 
+        :pedidos="pedidosDisponibles"
+        :usuarios="usuarios"
+        :show-error="showError"
+        :show-success="showSuccess"
+        @close="cerrarModalAsignar"
+        @asignacion-completada="onAsignacionConfirmada"
+      />
 
     <!-- Modal de edición -->
     <PedidoEditarModal 

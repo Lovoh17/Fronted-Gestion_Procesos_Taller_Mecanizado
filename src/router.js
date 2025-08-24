@@ -131,6 +131,12 @@ const routes = [
     meta: { public: true }
   },
   {
+    path: '/asignaciones',
+    name: 'new-order',
+    component: () => import('./components/Asiganciones.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/control-calidad',
     name: 'control-calidad',
     component: () => import('@/components/VistasCoordinador/ControlCalidad.vue'),
