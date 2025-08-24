@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click.self="cerrarModal">
     <div class="modal-container large">
       <div class="modal-header">
-        <h2>Editar Pedido</h2>
+        <h2>{{ esNuevoPedido ? 'Crear Nuevo Pedido' : 'Editar Pedido' }}</h2>
         <button class="close-btn" @click="cerrarModal">
           <span class="material-icons">close</span>
         </button>
@@ -20,8 +20,9 @@
                   type="text" 
                   id="codigo_pedido"
                   v-model="formData.codigo_pedido"
-                  :disabled="true"
-                  class="form-control disabled"
+                  :disabled="!esNuevoPedido"
+                  :class="['form-control', { 'disabled': !esNuevoPedido }]"
+                  :placeholder="esNuevoPedido ? 'Se generará automáticamente' : ''"
                 >
               </div>
               <div class="form-group">
@@ -136,7 +137,7 @@
               <div class="form-group">
                 <label for="presupuesto_estimado">Presupuesto Estimado</label>
                 <div class="input-group">
-                  <span class="input-prefix">Q</span>
+                  <span class="input-prefix">$</span>
                   <input 
                     type="number" 
                     id="presupuesto_estimado"
@@ -151,7 +152,7 @@
               <div class="form-group">
                 <label for="precio_final">Precio Final</label>
                 <div class="input-group">
-                  <span class="input-prefix">Q</span>
+                  <span class="input-prefix">$</span>
                   <input 
                     type="number" 
                     id="precio_final"
@@ -230,18 +231,24 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn secondary" @click="cerrarModal" :disabled="guardando">
-          Cancelar
-        </button>
-        <button type="submit" class="btn primary" @click="guardarPedido" :disabled="guardando">
-          <span v-if="guardando" class="material-icons spin">refresh</span>
-          <span v-else class="material-icons">save</span>
-          {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
-        </button>
-      </div>
+  <!-- BOTÓN TEMPORAL PARA DEBUG -->
+  <button type="button" class="btn secondary" @click="debugFormData">
+    Debug
+  </button>
+  
+  <button type="button" class="btn secondary" @click="cerrarModal" :disabled="guardando">
+    Cancelar
+  </button>
+  <button type="submit" class="btn primary" @click="guardarPedido" :disabled="guardando">
+    <span v-if="guardando" class="material-icons spin">refresh</span>
+    <span v-else class="material-icons">save</span>
+    {{ guardando ? 'Guardando...' : (esNuevoPedido ? 'Crear Pedido' : 'Guardar Cambios') }}
+  </button>
+</div>
     </div>
   </div>
 </template>
+
 
 <script>
 export default {
@@ -289,26 +296,57 @@ export default {
       ]
     }
   },
-  mounted() {
-    this.inicializarFormulario()
+
+  // AGREGAR WATCHERS PARA OBSERVAR CAMBIOS EN EL PROP
+  watch: {
+    pedido: {
+      handler(newPedido) {
+        console.log('👀 Prop pedido cambió:', newPedido)
+        this.inicializarFormulario()
+      },
+      immediate: true,
+      deep: true
+    }
   },
+
+  computed: {
+    esNuevoPedido() {
+      return !this.pedido || !this.pedido.id
+    }
+  },
+
+  mounted() {
+    console.log('🔧 Modal de edición montado con pedido:', this.pedido)
+  },
+
   methods: {
     inicializarFormulario() {
-      // Copiar datos del pedido al formulario
+      console.log('📝 Inicializando formulario...')
+      console.log('📝 Pedido actual:', this.pedido)
+      console.log('📝 Es nuevo pedido:', this.esNuevoPedido)
+      
+      // Crear una copia reactiva de los datos
       this.formData = {
-        codigo_pedido: this.pedido.codigo_pedido || '',
-        tipo_pedido_id: this.pedido.tipo_pedido_id || '',
-        proyecto_asociado: this.pedido.proyecto_asociado || '',
-        fecha_requerida: this.formatDateForInput(this.pedido.fecha_requerida),
-        prioridad: this.pedido.prioridad || '',
-        estado_id: this.pedido.estado_id || '',
-        descripcion: this.pedido.descripcion || '',
-        especificaciones_tecnicas: this.pedido.especificaciones_tecnicas || '',
-        presupuesto_estimado: this.pedido.presupuesto_estimado || null,
-        precio_final: this.pedido.precio_final || null,
-        observaciones: this.pedido.observaciones || '',
-        archivos_existentes: this.pedido.archivos || []
+        codigo_pedido: this.pedido?.codigo_pedido || '',
+        tipo_pedido_id: this.pedido?.tipo_pedido_id || '',
+        proyecto_asociado: this.pedido?.proyecto_asociado || '',
+        fecha_requerida: this.formatDateForInput(this.pedido?.fecha_requerida),
+        prioridad: this.pedido?.prioridad || '',
+        estado_id: this.pedido?.estado_id || (this.esNuevoPedido ? '1' : ''),
+        descripcion: this.pedido?.descripcion || '',
+        especificaciones_tecnicas: this.pedido?.especificaciones_tecnicas || '',
+        presupuesto_estimado: this.pedido?.presupuesto_estimado || null,
+        precio_final: this.pedido?.precio_final || null,
+        observaciones: this.pedido?.observaciones || '',
+        archivos_existentes: Array.isArray(this.pedido?.archivos) ? [...this.pedido.archivos] : []
       }
+      
+      // Resetear arrays de archivos
+      this.archivosNuevos = []
+      this.archivosAEliminar = []
+      this.errors = {}
+      
+      console.log('📝 Form data inicializado:', JSON.stringify(this.formData, null, 2))
     },
 
     formatDateForInput(dateString) {
@@ -318,6 +356,8 @@ export default {
     },
 
     validarFormulario() {
+      console.log('✅ Validando formulario...')
+      console.log('✅ Datos a validar:', this.formData)
       this.errors = {}
 
       if (!this.formData.tipo_pedido_id) {
@@ -340,10 +380,18 @@ export default {
         this.errors.descripcion = 'La descripción debe tener al menos 10 caracteres'
       }
 
-      return Object.keys(this.errors).length === 0
+      const esValido = Object.keys(this.errors).length === 0
+      console.log('✅ Resultado validación:', esValido ? 'VÁLIDO' : 'INVÁLIDO', this.errors)
+      
+      return esValido
     },
 
     async guardarPedido() {
+      console.log(`💾 INICIANDO GUARDADO`)
+      console.log(`💾 Es nuevo pedido: ${this.esNuevoPedido}`)
+      console.log(`💾 ID del pedido: ${this.pedido?.id}`)
+      console.log('📝 FormData ACTUAL al momento del guardado:', JSON.stringify(this.formData, null, 2))
+      
       if (!this.validarFormulario()) {
         this.showError('Por favor corrige los errores en el formulario')
         return
@@ -352,60 +400,109 @@ export default {
       this.guardando = true
 
       try {
-        // Preparar los datos para enviar
-        const datosActualizados = {
-          ...this.formData,
-          archivos_a_eliminar: this.archivosAEliminar
-        }
+        const url = this.esNuevoPedido ? '/api/Pedido' : `/api/Pedido/${this.pedido.id}`
+        const method = this.esNuevoPedido ? 'POST' : 'PUT'
+        
+        console.log(`📡 URL: ${url}`)
+        console.log(`📡 Método: ${method}`)
 
-        // Crear FormData para enviar archivos
+        // Crear FormData
         const formData = new FormData()
         
-        // Agregar datos del formulario
-        Object.keys(datosActualizados).forEach(key => {
-          if (datosActualizados[key] !== null && datosActualizados[key] !== undefined && key !== 'archivos_existentes') {
-            if (key === 'archivos_a_eliminar') {
-              formData.append(key, JSON.stringify(datosActualizados[key]))
-            } else {
-              formData.append(key, datosActualizados[key])
-            }
+        // Agregar cada campo con logging detallado
+        Object.keys(this.formData).forEach(key => {
+          if (key !== 'archivos_existentes' && this.formData[key] !== null && this.formData[key] !== undefined && this.formData[key] !== '') {
+            console.log(`📋 Agregando al FormData - ${key}:`, this.formData[key], `(tipo: ${typeof this.formData[key]})`)
+            formData.append(key, this.formData[key])
           }
         })
 
+        // Agregar archivos a eliminar
+        if (this.archivosAEliminar.length > 0) {
+          console.log('🗑️ Archivos a eliminar:', this.archivosAEliminar)
+          formData.append('archivos_a_eliminar', JSON.stringify(this.archivosAEliminar))
+        }
+
         // Agregar archivos nuevos
-        this.archivosNuevos.forEach(archivo => {
+        this.archivosNuevos.forEach((archivo, index) => {
+          console.log(`📎 Archivo nuevo ${index}:`, archivo.name, archivo.size)
           formData.append('archivos_nuevos', archivo)
         })
 
-        const response = await fetch(`/api/Pedido/${this.pedido.id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          },
+        // Verificar contenido final del FormData
+        console.log('📦 Contenido final del FormData:')
+        for (let [key, value] of formData.entries()) {
+          if (value instanceof File) {
+            console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`)
+          } else {
+            console.log(`  ${key}: ${value}`)
+          }
+        }
+
+        const response = await fetch(url, {
+          method: method,
           body: formData
         })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Error al actualizar el pedido')
+        console.log('📡 Respuesta del servidor:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
+
+        // Obtener el contenido de la respuesta
+        let responseData
+        const contentType = response.headers.get('content-type') || ''
+        
+        if (contentType.includes('application/json')) {
+          responseData = await response.json()
+        } else {
+          const textData = await response.text()
+          try {
+            responseData = JSON.parse(textData)
+          } catch (e) {
+            responseData = { message: textData }
+          }
         }
 
-        const pedidoActualizado = await response.json()
+        console.log('📦 Datos de respuesta:', responseData)
+
+        if (!response.ok) {
+          console.error('❌ Error del servidor:', responseData)
+          throw new Error(responseData?.message || `Error ${response.status}: ${response.statusText}`)
+        }
+
+        // Verificar si hay errores en la respuesta exitosa
+        if (responseData && responseData.error) {
+          console.error('❌ Error en respuesta exitosa:', responseData.error)
+          throw new Error(responseData.error)
+        }
+
+        console.log('✅ Pedido guardado exitosamente:', responseData)
         
-        this.showSuccess('Pedido actualizado correctamente')
-        this.$emit('pedidoActualizado', pedidoActualizado)
+        this.showSuccess(`Pedido ${this.esNuevoPedido ? 'creado' : 'actualizado'} correctamente`)
+        
+        this.$emit('saved', responseData)
+        this.$emit('pedidoActualizado', responseData)
+        
         this.cerrarModal()
 
       } catch (error) {
-        console.error('Error al guardar:', error)
-        this.showError(error.message || 'Error al actualizar el pedido')
+        console.error('❌ Error completo al guardar pedido:', {
+          message: error.message,
+          stack: error.stack
+        })
+        this.showError(error.message || `Error al ${this.esNuevoPedido ? 'crear' : 'actualizar'} el pedido`)
       } finally {
         this.guardando = false
+        console.log('🔄 Guardado finalizado')
       }
     },
 
     manejarArchivos(event) {
+      console.log('📎 Manejando archivos seleccionados...')
       const archivos = Array.from(event.target.files)
+      console.log('📎 Archivos seleccionados:', archivos.length)
       
       archivos.forEach(archivo => {
         // Validar tamaño del archivo (10MB máximo)
@@ -424,21 +521,21 @@ export default {
         }
 
         this.archivosNuevos.push(archivo)
+        console.log('📎 Archivo agregado:', archivo.name)
       })
 
-      // Limpiar el input para permitir seleccionar el mismo archivo de nuevo
+      // Limpiar el input
       event.target.value = ''
     },
 
     eliminarArchivoNuevo(index) {
+      console.log('🗑️ Eliminando archivo nuevo en índice:', index)
       this.archivosNuevos.splice(index, 1)
     },
 
     eliminarArchivoExistente(archivoId) {
-      // Agregar a la lista de archivos a eliminar
+      console.log('🗑️ Marcando archivo existente para eliminar:', archivoId)
       this.archivosAEliminar.push(archivoId)
-      
-      // Remover de la lista de archivos existentes
       this.formData.archivos_existentes = this.formData.archivos_existentes.filter(
         archivo => archivo.id !== archivoId
       )
@@ -453,22 +550,33 @@ export default {
     },
 
     cerrarModal() {
+      console.log('🚪 Cerrando modal de edición')
       this.$emit('close')
     },
 
-    getAuthToken() {
-      return localStorage.getItem('authToken') || ''
-    },
-
     showError(message) {
+      console.log('❌ Mostrando error:', message)
       alert('Error: ' + message)
     },
 
     showSuccess(message) {
+      console.log('✅ Mostrando éxito:', message)
       alert('Éxito: ' + message)
+    },
+
+    // MÉTODO ADICIONAL PARA DEBUG
+    debugFormData() {
+      console.log('🔍 DEBUG COMPLETO:')
+      console.log('  Pedido original:', this.pedido)
+      console.log('  FormData actual:', this.formData)
+      console.log('  Es nuevo pedido:', this.esNuevoPedido)
+      console.log('  Archivos nuevos:', this.archivosNuevos)
+      console.log('  Archivos a eliminar:', this.archivosAEliminar)
+      console.log('  Errores:', this.errors)
     }
   }
 }
+
 </script>
 
 <style scoped>
@@ -484,16 +592,29 @@ export default {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(5px);
 }
 
 .modal-container {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: modal-appear 0.3s ease-out;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-container.large {
@@ -504,17 +625,19 @@ export default {
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: between;
+  justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid #e5e5e5;
-  background: #f8f9fa;
+  background: linear-gradient(to right, #f8f9fa, #f0f4ff);
+  position: relative;
 }
 
 .modal-header h2 {
   margin: 0;
   color: #2c3e50;
-  font-weight: 600;
+  font-weight: 700;
   flex: 1;
+  font-size: 1.5rem;
 }
 
 .close-btn {
@@ -522,20 +645,25 @@ export default {
   border: none;
   cursor: pointer;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 50%;
   color: #6c757d;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
   background: #e9ecef;
   color: #495057;
+  transform: rotate(90deg);
 }
 
 .modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background: #fafbfc;
 }
 
 .pedido-form {
@@ -545,9 +673,17 @@ export default {
 }
 
 .form-section {
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: white;
+  border-radius: 10px;
   padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eaeef2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .form-section h3 {
@@ -555,14 +691,26 @@ export default {
   color: #2c3e50;
   font-size: 1.1em;
   font-weight: 600;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid #4a6cf7;
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.form-section h3::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: #4a6cf7;
+  margin-right: 10px;
+  border-radius: 2px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 16px;
 }
 
@@ -572,30 +720,42 @@ export default {
 }
 
 .form-group label {
-  margin-bottom: 6px;
-  font-weight: 500;
-  color: #495057;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #394360;
   font-size: 0.9em;
+  display: flex;
+  align-items: center;
+}
+
+.form-group label::after {
+  content: "";
+  height: 2px;
+  width: 8px;
+  background: #4a6cf7;
+  margin-left: 4px;
+  border-radius: 1px;
 }
 
 .form-control {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 2px solid #e9ecef;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.95em;
   transition: all 0.2s ease;
   background: white;
+  font-family: inherit;
 }
 
 .form-control:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.15);
 }
 
 .form-control.error {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  border-color: #ff5e5e;
+  box-shadow: 0 0 0 4px rgba(255, 94, 94, 0.15);
 }
 
 .form-control.disabled {
@@ -604,48 +764,69 @@ export default {
   cursor: not-allowed;
 }
 
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
 .input-group {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .input-prefix {
-  background: #e9ecef;
+  background: #f0f4ff;
   border: 2px solid #e9ecef;
   border-right: none;
-  padding: 10px 12px;
-  border-radius: 6px 0 0 6px;
-  font-weight: 500;
-  color: #495057;
+  padding: 12px 14px;
+  border-radius: 8px 0 0 8px;
+  font-weight: 600;
+  color: #4a6cf7;
+  position: absolute;
+  left: 0;
+  height: calc(100% - 4px);
+  display: flex;
+  align-items: center;
+  z-index: 1;
 }
 
 .input-group .form-control {
   border-left: none;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 8px 8px 0;
+  padding-left: 45px;
 }
 
 .error-message {
-  color: #dc3545;
+  color: #ff5e5e;
   font-size: 0.85em;
-  margin-top: 4px;
+  margin-top: 6px;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
+.error-message::before {
+  content: "⚠";
+  font-size: 0.9em;
+}
+
 .file-upload-area {
   position: relative;
-  border: 2px dashed #007bff;
-  border-radius: 8px;
-  padding: 24px;
+  border: 2px dashed #4a6cf7;
+  border-radius: 10px;
+  padding: 30px 24px;
   text-align: center;
   background: #f8f9ff;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .file-upload-area:hover {
-  border-color: #0056b3;
+  border-color: #3a57d7;
   background: #f0f4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(74, 108, 247, 0.15);
 }
 
 .file-input {
@@ -654,19 +835,26 @@ export default {
   width: 100%;
   height: 100%;
   cursor: pointer;
+  top: 0;
+  left: 0;
 }
 
 .file-upload-label {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   cursor: pointer;
-  color: #007bff;
+  color: #4a6cf7;
 }
 
 .file-upload-label .material-icons {
-  font-size: 2em;
+  font-size: 2.5em;
+  opacity: 0.8;
+}
+
+.file-upload-label span {
+  font-weight: 600;
 }
 
 .file-upload-label small {
@@ -676,7 +864,7 @@ export default {
 
 .archivos-existentes,
 .archivos-nuevos {
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .archivos-existentes h4,
@@ -685,42 +873,66 @@ export default {
   color: #495057;
   font-size: 0.95em;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.archivos-existentes h4::before,
+.archivos-nuevos h4::before {
+  content: "📁";
+  margin-right: 8px;
 }
 
 .archivo-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 14px;
   background: white;
   border: 1px solid #e9ecef;
-  border-radius: 6px;
-  margin-bottom: 8px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.archivo-item:hover {
+  border-color: #4a6cf7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: translateX(4px);
 }
 
 .archivo-nombre {
   flex: 1;
   font-size: 0.9em;
-  color: #495057;
+  color: #394360;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .archivo-size {
   font-size: 0.8em;
   color: #6c757d;
+  font-weight: 500;
 }
 
 .btn-eliminar-archivo {
-  background: #dc3545;
+  background: #ff5e5e;
   border: none;
   color: white;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 6px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-eliminar-archivo:hover {
-  background: #c82333;
+  background: #ff4242;
+  transform: scale(1.1);
 }
 
 .btn-eliminar-archivo .material-icons {
@@ -740,39 +952,45 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.95em;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
+  font-family: inherit;
 }
 
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 .btn.primary {
-  background: #007bff;
+  background: linear-gradient(to right, #4a6cf7, #6a8aff);
   color: white;
+  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  background: linear-gradient(to right, #3a57d7, #5a7aef);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74, 108, 247, 0.4);
 }
 
 .btn.secondary {
   background: #6c757d;
   color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
 }
 
 .btn.secondary:hover:not(:disabled) {
   background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 117, 125, 0.3);
 }
 
 .spin {
@@ -784,6 +1002,25 @@ export default {
   to { transform: rotate(360deg); }
 }
 
+/* Scroll personalizado para el modal */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modal-container.large {
@@ -793,7 +1030,7 @@ export default {
 
   .form-row {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
 
   .modal-body {
@@ -802,6 +1039,18 @@ export default {
 
   .form-section {
     padding: 16px;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+  }
+  
+  .file-upload-area {
+    padding: 20px 16px;
   }
 }
 </style>
