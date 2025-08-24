@@ -112,108 +112,9 @@
       </div>
     </transition>
 
-    <!-- Modal de detalles -->
-    <transition name="modal">
-      <div v-if="selectedItem" class="blueprint-modal" @click.self="selectedItem = null">
-        <div class="modal-content">
-          <div class="modal-header">
-            <div class="modal-title">
-              <h3>{{ selectedItem.herramienta.nombre }}</h3>
-              <span class="modal-subtitle">{{ selectedItem.plano.codigo }}</span>
-            </div>
-            <va-button @click="selectedItem = null" class="close-button">
-              <i class="material-icons">close</i>
-            </va-button>
-          </div>
-
-          <div class="modal-body">
-            <div class="details-layout">
-              <div class="details-left">
-                <div class="detail-card" data-aos="fade-right" data-aos-delay="100">
-                  <h4 class="detail-title">
-                    <i class="material-icons">description</i>
-                    Información del Plano
-                  </h4>
-                  <div class="detail-content">
-                    <div class="detail-item">
-                      <label>Código</label>
-                      <span class="detail-value">{{ selectedItem.plano.codigo }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <label>Versión</label>
-                      <span class="detail-value">{{ selectedItem.plano.version || 'N/A' }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <label>Descripción</label>
-                      <p class="detail-description">{{ selectedItem.plano.descripcion || 'Sin descripción disponible' }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="detail-card" data-aos="fade-right" data-aos-delay="200">
-                  <h4 class="detail-title">
-                    <i class="material-icons">build</i>
-                    Información de Herramienta
-                  </h4>
-                  <div class="detail-content">
-                    <div class="detail-item">
-                      <label>Nombre</label>
-                      <span class="detail-value">{{ selectedItem.herramienta.nombre }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <label>Código</label>
-                      <span class="detail-value">{{ selectedItem.herramienta.codigo }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <label>Estado</label>
-                      <span class="detail-value">
-                        <span :class="['status-badge', selectedItem.herramienta.estado.toLowerCase()]">
-                          {{ selectedItem.herramienta.estado }}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="detail-card" data-aos="fade-right" data-aos-delay="300">
-                  <h4 class="detail-title">
-                    <i class="material-icons">settings</i>
-                    Especificaciones de Uso
-                  </h4>
-                  <div class="detail-content">
-                    <div class="detail-item">
-                      <label>Cantidad necesaria</label>
-                      <span class="detail-value highlight">{{ selectedItem.cantidad_necesaria }} unidades</span>
-                    </div>
-                    <div class="detail-item">
-                      <label>Tiempo estimado</label>
-                      <span class="detail-value highlight">{{ selectedItem.tiempo_estimado_uso }} horas</span>
-                    </div>
-                    <div class="detail-item" v-if="selectedItem.notas">
-                      <label>Notas</label>
-                      <p class="detail-description">{{ selectedItem.notas }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="details-right" v-if="selectedItem.plano.imagen_url" data-aos="fade-left" data-aos-delay="400">
-                <div class="blueprint-preview">
-                  <h4 class="detail-title">
-                    <i class="material-icons">image</i>
-                    Vista Previa del Plano
-                  </h4>
-                  <div class="preview-container">
-                    <img :src="selectedItem.plano.imagen_url" :alt="`Plano ${selectedItem.plano.codigo}`"
-                      class="preview-image">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- Modal de detalles usando componente separado -->
+    <BlueprintDetailsModal :selectedItem="selectedItem" @close="selectedItem = null" @edit="handleEdit"
+      @use="handleUse" />
 
   </div>
 </template>
@@ -221,35 +122,48 @@
 <script src="./scripts/ControlCalidad.js"></script>
 
 <style>
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s ease;
 }
-.fade-enter-from, .fade-leave-to {
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
-.slide-up-enter-active, .slide-up-leave-active {
+.slide-up-enter-active,
+.slide-up-leave-active {
   transition: all 0.4s ease;
 }
-.slide-up-enter-from, .slide-up-leave-to {
+
+.slide-up-enter-from,
+.slide-up-leave-to {
   opacity: 0;
   transform: translateY(20px);
 }
 
-.scale-fade-enter-active, .scale-fade-leave-active {
+.scale-fade-enter-active,
+.scale-fade-leave-active {
   transition: all 0.4s ease;
 }
-.scale-fade-enter-from, .scale-fade-leave-to {
+
+.scale-fade-enter-from,
+.scale-fade-leave-to {
   opacity: 0;
   transform: scale(0.9);
 }
 
-.modal-enter-active, .modal-leave-active {
+.modal-enter-active,
+.modal-leave-active {
   transition: all 0.3s ease;
 }
-.modal-enter-from, .modal-leave-to {
+
+.modal-enter-from,
+.modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
   transform: scale(0.9) translateY(-20px);
@@ -304,7 +218,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -368,7 +284,7 @@
 
 .blueprint-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 2px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -744,11 +660,11 @@
   .blueprints-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .details-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     margin: 10px;
     max-height: calc(100vh - 20px);

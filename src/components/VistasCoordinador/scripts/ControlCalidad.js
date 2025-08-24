@@ -1,8 +1,12 @@
 // src/components/VistasCoordinador/scripts/ControlCalidad.js
 import api from '../../../api.js';
+import BlueprintDetailsModal from '../ComponentesCoordinador/BlueprintDetailsModal.vue';
 
 export default {
   name: 'ControlCalidadView',
+  components: {
+    BlueprintDetailsModal
+  },
   data() {
     return {
       items: [],
@@ -27,13 +31,23 @@ export default {
         estado: '',
         tipo: '',
         creado_por: ''
+      },
+      // Nuevas propiedades para el modal de acciones
+      showActionModal: false,
+      actionModal: {
+        title: '',
+        message: '',
+        type: '', // 'approve' o 'reject'
+        notes: '',
+        loading: false,
+        itemId: null
       }
     };
   },
   computed: {
     filteredItems() {
       let filtered = [...this.items];
-      
+
       // Filtro por búsqueda
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
@@ -46,25 +60,25 @@ export default {
           );
         });
       }
-      
+
       // Filtro por estado
       if (this.filters.estado) {
         filtered = filtered.filter(item => item.plano.estado === this.filters.estado);
       }
-      
+
       // Filtro por tipo
       if (this.filters.tipo) {
         filtered = filtered.filter(item => item.plano.tipo_pedidos_id === this.filters.tipo);
       }
-      
+
       // Filtro por creador
       if (this.filters.creado_por) {
         filtered = filtered.filter(item => item.plano.creado_por === this.filters.creado_por);
       }
-      
+
       return filtered;
     },
-    
+
     estadisticas() {
       return {
         total: this.items.length,
@@ -73,38 +87,38 @@ export default {
         rechazados: this.items.filter(item => item.plano.estado === 'rechazado').length
       };
     },
-    
+
     canSubmit() {
-      return this.uploadForm.nombre.trim() && 
-             this.uploadForm.descripcion.trim() && 
-             this.uploadForm.selectedFile && 
-             !this.uploading;
+      return this.uploadForm.nombre.trim() &&
+        this.uploadForm.descripcion.trim() &&
+        this.uploadForm.selectedFile &&
+        !this.uploading;
     }
   },
-  
+
   watch: {
     searchQuery(newQuery) {
       // El filtrado se maneja automáticamente por el computed filteredItems
     }
   },
-  
+
   created() {
     this.fetchData();
   },
-  
+
   methods: {
     async fetchData() {
       this.loading = true;
       this.error = null;
-      
+
       try {
         const data = await api.get('/plano');
-        
+
         // Transformar los datos para el formato del template
         this.items = data.map(plano => this.transformPlanoData(plano));
-        
+
         console.log('Planos cargados:', this.items);
-        
+
       } catch (err) {
         console.error('Error fetching planos:', err);
         this.error = 'No se pudieron cargar los planos. Verifica tu conexión.';
@@ -112,7 +126,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     transformPlanoData(plano) {
       return {
         id: plano.id,
@@ -138,13 +152,15 @@ export default {
         },
         cantidad_necesaria: Math.floor(Math.random() * 10) + 1,
         tiempo_estimado_uso: Math.floor(Math.random() * 8) + 1,
-        notas: plano.notas
+        notas: plano.notas,
+        created_at: plano.timestamp,
+        updated_at: plano.timestamp
       };
     },
-    
+
     generarImagenUrl(archivoRuta) {
       if (!archivoRuta) return null;
-      
+
       // URLs de placeholder para diferentes tipos de planos
       const imagenesEjemplo = [
         'https://via.placeholder.com/400x300/3b82f6/ffffff?text=Plano+Tecnico',
@@ -153,11 +169,11 @@ export default {
         'https://via.placeholder.com/400x300/7c3aed/ffffff?text=Esquema',
         'https://via.placeholder.com/400x300/ea580c/ffffff?text=Diseno'
       ];
-      
+
       const hash = this.simpleHash(archivoRuta);
       return imagenesEjemplo[hash % imagenesEjemplo.length];
     },
-    
+
     simpleHash(str) {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -167,16 +183,16 @@ export default {
       }
       return Math.abs(hash);
     },
-    
+
     mapearEstadoHerramienta(estadoPlano) {
       const mapeo = {
         'aprobado': 'activo',
-        'borrador': 'mantenimiento', 
+        'borrador': 'mantenimiento',
         'rechazado': 'inactivo'
       };
       return mapeo[estadoPlano] || 'inactivo';
     },
-    
+
     openDetails(item) {
       this.selectedItem = {
         ...item,
@@ -187,45 +203,117 @@ export default {
         }
       };
     },
-    
+
     closeDetails() {
       this.selectedItem = null;
     },
-    
+
+    // Nuevos métodos para manejar acciones desde el modal de detalles
+    handleEdit(item) {
+      // Implementar lógica de edición
+      console.log('Editando plano:', item);
+      this.$vaToast.info('Función de edición en desarrollo');
+    },
+
+    handleUse(item) {
+      // Implementar lógica para usar en producción
+      console.log('Usando plano en producción:', item);
+      this.showApprovalModal(item.id);
+    },
+
+    // Nuevos métodos para el modal de acciones
+    showApprovalModal(planoId) {
+      this.actionModal = {
+        title: 'Aprobar Plano',
+        message: '¿Estás seguro de que deseas aprobar este plano para su uso en producción?',
+        type: 'approve',
+        notes: '',
+        loading: false,
+        itemId: planoId
+      };
+      this.showActionModal = true;
+    },
+
+    showRejectionModal(planoId) {
+      this.actionModal = {
+        title: 'Rechazar Plano',
+        message: 'Este plano será marcado como rechazado. Por favor, especifica el motivo:',
+        type: 'reject',
+        notes: '',
+        loading: false,
+        itemId: planoId
+      };
+      this.showActionModal = true;
+    },
+
+    closeActionModal() {
+      this.showActionModal = false;
+      this.actionModal = {
+        title: '',
+        message: '',
+        type: '',
+        notes: '',
+        loading: false,
+        itemId: null
+      };
+    },
+
+    async confirmAction() {
+      if (this.actionModal.type === 'reject' && !this.actionModal.notes.trim()) {
+        this.$vaToast.error('Debe especificar el motivo del rechazo');
+        return;
+      }
+
+      this.actionModal.loading = true;
+
+      try {
+        if (this.actionModal.type === 'approve') {
+          await this.aprobarPlano(this.actionModal.itemId);
+        } else {
+          await this.rechazarPlano(this.actionModal.itemId, this.actionModal.notes);
+        }
+        this.closeActionModal();
+      } catch (error) {
+        console.error('Error en acción:', error);
+      } finally {
+        this.actionModal.loading = false;
+      }
+    },
+
     async aprobarPlano(planoId) {
       try {
-        const confirmacion = confirm('¿Estás seguro de que deseas aprobar este plano?');
-        if (!confirmacion) return;
+        await api.put(`/plano/${planoId}`, {
+          estado: 'aprobado',
+          notas: this.actionModal.notes || ''
+        });
 
-        await api.put(`/plano/${planoId}`, { estado: 'aprobado' });
-        
         // Actualizar localmente
         const item = this.items.find(i => i.id === planoId);
         if (item) {
           item.plano.estado = 'aprobado';
           item.herramienta.estado = 'activo';
+          if (this.actionModal.notes) {
+            item.plano.notas = this.actionModal.notes;
+            item.notas = this.actionModal.notes;
+          }
         }
 
-        this.$vaToast?.success('Plano aprobado correctamente') || 
-        this.showNotification('Plano aprobado correctamente', 'success');
-        
+        this.$vaToast.success('Plano aprobado correctamente');
+
       } catch (error) {
         console.error('Error al aprobar plano:', error);
-        this.$vaToast?.error('Error al aprobar el plano') ||
-        this.showNotification('Error al aprobar el plano', 'error');
+        this.$vaToast.error('Error al aprobar el plano');
+        throw error;
       }
     },
-    
-    async rechazarPlano(planoId) {
-      try {
-        const motivo = prompt('Ingresa el motivo del rechazo:');
-        if (!motivo) return;
 
-        await api.put(`/plano/${planoId}`, { 
+    async rechazarPlano(planoId, motivo) {
+      try {
+        await api.put(`/plano/${planoId}`, {
           estado: 'rechazado',
           notas: motivo
         });
-        
+
         // Actualizar localmente
         const item = this.items.find(i => i.id === planoId);
         if (item) {
@@ -235,32 +323,30 @@ export default {
           item.notas = motivo;
         }
 
-        this.$vaToast?.warning('Plano rechazado') ||
-        this.showNotification('Plano rechazado', 'warning');
-        
+        this.$vaToast.warning('Plano rechazado');
+
       } catch (error) {
         console.error('Error al rechazar plano:', error);
-        this.$vaToast?.error('Error al rechazar el plano') ||
-        this.showNotification('Error al rechazar el plano', 'error');
+        this.$vaToast.error('Error al rechazar el plano');
+        throw error;
       }
     },
-    
+
     async refreshData() {
       await this.fetchData();
-      this.$vaToast?.info('Datos actualizados') ||
-      this.showNotification('Datos actualizados', 'info');
+      this.$vaToast.info('Datos actualizados');
     },
-    
+
     // Métodos para el modal de subida
     openUploadModal() {
       this.showUploadModal = true;
     },
-    
+
     closeUploadModal() {
       this.showUploadModal = false;
       this.resetUploadForm();
     },
-    
+
     resetUploadForm() {
       this.uploadForm = {
         nombre: '',
@@ -275,24 +361,24 @@ export default {
       this.isDragOver = false;
       this.uploading = false;
     },
-    
+
     handleDrop(e) {
       e.preventDefault();
       this.isDragOver = false;
-      
+
       const files = e.dataTransfer.files;
       if (files.length > 0) {
         this.processFile(files[0]);
       }
     },
-    
+
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
         this.processFile(file);
       }
     },
-    
+
     processFile(file) {
       // Validar tipo de archivo para planos
       const allowedTypes = [
@@ -303,53 +389,53 @@ export default {
         'image/png',
         'application/octet-stream' // Para archivos .dwg
       ];
-      
+
       if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.dwg')) {
         this.uploadForm.errors.file = 'Tipo de archivo no permitido. Se aceptan PDF, DWG, JPG, PNG, PPT.';
         return;
       }
-      
+
       // Validar tamaño (20MB para planos)
       const maxSize = 20 * 1024 * 1024;
       if (file.size > maxSize) {
         this.uploadForm.errors.file = 'El archivo es demasiado grande. Tamaño máximo: 20MB.';
         return;
       }
-      
+
       this.uploadForm.errors.file = '';
       this.uploadForm.selectedFile = file;
     },
-    
+
     removeFile() {
       this.uploadForm.selectedFile = null;
       this.uploadForm.errors.file = '';
     },
-    
+
     validateForm() {
       const errors = {};
-      
+
       if (!this.uploadForm.nombre.trim()) {
         errors.nombre = 'El nombre del plano es requerido.';
       }
-      
+
       if (!this.uploadForm.descripcion.trim()) {
         errors.descripcion = 'La descripción es requerida.';
       }
-      
+
       if (!this.uploadForm.selectedFile) {
         errors.file = 'Debe seleccionar un archivo.';
       }
-      
+
       this.uploadForm.errors = errors;
       return Object.keys(errors).length === 0;
     },
-    
+
     async handleUpload() {
       if (!this.validateForm()) return;
-      
+
       this.uploading = true;
       this.uploadProgress = 0;
-      
+
       try {
         const formData = new FormData();
         formData.append('nombre', this.uploadForm.nombre);
@@ -360,7 +446,7 @@ export default {
         formData.append('archivo', this.uploadForm.selectedFile);
         formData.append('estado', 'borrador');
         formData.append('creado_por', '1'); // En un caso real, obtener del usuario logueado
-        
+
         // Simular progreso de subida
         const simulateProgress = () => {
           return new Promise((resolve) => {
@@ -374,9 +460,9 @@ export default {
             }, 200);
           });
         };
-        
+
         await simulateProgress();
-        
+
         // Intentar subir a la API
         try {
           await api.post('/plano', {
@@ -392,30 +478,28 @@ export default {
         } catch (apiError) {
           console.warn('API upload failed, continuing with simulation:', apiError);
         }
-        
+
         this.uploadProgress = 100;
-        
-        this.$vaToast?.success('Plano subido exitosamente') || 
-        this.showNotification('Plano subido exitosamente', 'success');
-        
+
+        this.$vaToast.success('Plano subido exitosamente');
+
         await this.fetchData();
         this.closeUploadModal();
-        
+
       } catch (error) {
         console.error('Error uploading plano:', error);
-        this.$vaToast?.error('Error al subir el plano') ||
-        this.showNotification('Error al subir el plano', 'error');
+        this.$vaToast.error('Error al subir el plano');
       } finally {
         this.uploading = false;
       }
     },
-    
+
     // Métodos de utilidad
     getFileIcon(file) {
       if (!file) return 'insert_drive_file';
-      
+
       const extension = file.name.split('.').pop().toLowerCase();
-      
+
       switch (extension) {
         case 'pdf':
           return 'picture_as_pdf';
@@ -433,12 +517,12 @@ export default {
           return 'insert_drive_file';
       }
     },
-    
+
     getFileIconClass(file) {
       if (!file) return 'file-icon';
-      
+
       const extension = file.name.split('.').pop().toLowerCase();
-      
+
       switch (extension) {
         case 'pdf':
           return 'pdf-icon';
@@ -453,7 +537,7 @@ export default {
           return 'file-icon';
       }
     },
-    
+
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -461,21 +545,26 @@ export default {
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
-    
+
     formatDate(dateString) {
       if (!dateString) return 'N/A';
-      const options = { 
-        year: 'numeric', 
-        month: 'short', 
+      const options = {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       };
       return new Date(dateString).toLocaleDateString('es-ES', options);
     },
-    
+
     showNotification(message, type) {
       // Fallback para notificaciones si Vuestic no está disponible
+      if (this.$vaToast) {
+        this.$vaToast[type](message);
+        return;
+      }
+
       const colors = {
         'success': 'bg-green-500',
         'error': 'bg-red-500',
@@ -495,7 +584,7 @@ export default {
         }
       }, 3000);
     },
-    
+
     // Métodos para exportar datos
     exportarDatos() {
       const datos = this.filteredItems.map(item => ({
@@ -512,19 +601,19 @@ export default {
       const csv = this.convertirACSV(datos);
       this.descargarCSV(csv, 'control_calidad_planos.csv');
     },
-    
+
     convertirACSV(datos) {
       if (datos.length === 0) return '';
-      
+
       const headers = Object.keys(datos[0]).join(',');
-      const filas = datos.map(item => 
-        Object.values(item).map(value => 
+      const filas = datos.map(item =>
+        Object.values(item).map(value =>
           typeof value === 'string' && value.includes(',') ? `"${value}"` : value
         ).join(',')
       );
       return [headers, ...filas].join('\n');
     },
-    
+
     descargarCSV(contenido, nombreArchivo) {
       const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
