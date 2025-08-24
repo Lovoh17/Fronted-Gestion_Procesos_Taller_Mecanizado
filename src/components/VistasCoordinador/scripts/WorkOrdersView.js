@@ -1,4 +1,4 @@
-import WorkOrderModal from '@/components/VistasCoordinador/ComponentesCoordinador/WorkOrderModal.vue';
+import WorkOrderModal from '@/components/VistasCoordinador/WorkOrderModal.vue';
 import OrderDetailsModal from '@/components//VistasCoordinador/ComponentesCoordinador/OrderDetailsModal.vue';
 
 export default {

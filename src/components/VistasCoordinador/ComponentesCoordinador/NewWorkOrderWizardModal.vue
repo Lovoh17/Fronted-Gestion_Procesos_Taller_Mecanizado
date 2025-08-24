@@ -1,468 +1,799 @@
 <template>
-  <VaModal v-model="showModal" size="large" font-size="1.2rem" @close="close" hide-default-actions>
-    <!-- Progress Bar -->
-    <div class="wizard-header">
-      <VaCardTitle class="va-card-title">
-        Nuevo Pedido - Formulario de Creación
-      </VaCardTitle>
-
-      <!-- Progress Bar-->
-      <VaProgressBar :key="`progress-${currentStep}`" :value="progressPercentage" color="primary"
-        class="wizard-progress" :model-value="progressPercentage" />
-      <div class="step-indicator">
-        <span class="step-text">Paso {{ currentStep }} de {{ totalSteps }}</span>
-        <span class="step-title">{{ currentStepTitle }}</span>
+  <div class="modal-overlay" @click.self="close">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ mode === 'create' ? 'Nueva Orden de Trabajo' : 'Editar Orden #' + formData.codigo_pedido }}</h2>
+        <button class="close-btn" @click="close">
+          <span class="material-icons">close</span>
+        </button>
       </div>
-    </div>
+      
+      <div class="modal-body">
+        <!-- Loading indicator -->
+        <div v-if="loadingCatalogs" class="loading-section">
+          <div class="loading-spinner"></div>
+          <p>Cargando información...</p>
+        </div>
 
-    <!-- Step Content -->
-    <div class="wizard-content">
-      <!-- Paso 1: Información Básica del Pedido -->
-      <div v-if="currentStep === 1" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="assignment" class="step-icon" />
-            Información Básica del Pedido
-          </VaCardTitle>
-          <VaCardContent>
-            <div class="form-grid">
-              <VaSelect v-model="formData.tipo_pedido_id" label="Tipo de Pedido *" placeholder="Seleccione el tipo"
-                :options="tiposPedidoOptions" text-by="nombre" value-by="id" class="form-field" />
+        <!-- ERROR SECTION -->
+        <div v-if="loadingError" class="error-section">
+          <h3>❌ Error de Carga</h3>
+          <p>{{ loadingError }}</p>
+          <button @click="retryLoad" class="btn primary">Reintentar</button>
+        </div>
 
-              <VaInput v-model="formData.codigo_pedido" label="Código del Pedido *" placeholder="AUTO-GENERADO"
-                :disabled="codigoAutoGenerado" class="form-field" />
+        <!-- FORM SECTION -->
+        <div class="form-section" v-show="!loadingCatalogs && !loadingError">
+          <h3 class="section-title">
+            <span class="material-icons">assignment</span> Información General
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Código de Pedido *</label>
+              <input 
+                type="text" 
+                v-model="formData.codigo_pedido" 
+                :readonly="mode === 'edit'"
+                required
+                placeholder="Se generará automáticamente"
+              >
             </div>
-
-            <div class="form-grid">
-              <VaDateInput v-model="formData.fecha_requerida" label="Fecha Requerida *"
-                placeholder="Seleccione la fecha" class="form-field" />
-
-              <VaSelect v-model="formData.prioridad" label="Prioridad *" placeholder="Seleccione prioridad"
-                :options="prioridadOptions" class="form-field" />
+            
+            <div class="form-group">
+              <label>Tipo de Pedido *</label>
+              <select v-model="formData.tipo_pedido_id" required>
+                <option value="">Seleccionar tipo</option>
+                <option v-for="tipo in tiposPedido" :key="tipo.id" :value="tipo.id">
+                  {{ tipo.nombre || tipo.name || 'Sin nombre' }}
+                </option>
+              </select>
+              <div v-if="errors.tipo_pedido_id" class="error-message">{{ errors.tipo_pedido_id }}</div>
             </div>
-
-            <VaInput v-model="formData.proyecto_asociado" label="Proyecto Asociado"
-              placeholder="Nombre del proyecto (opcional)" class="form-field full-width" />
-
-            <VaTextarea v-model="formData.notas" label="Descripción/Notas Iniciales"
-              placeholder="Descripción general del pedido..." :min-rows="3" class="form-field full-width" />
-          </VaCardContent>
-        </VaCard>
-      </div>
-
-      <!-- Paso 2: Selección de Plano y Especificaciones -->
-      <div v-if="currentStep === 2" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="engineering" class="step-icon" />
-            Selección de Plano y Especificaciones
-          </VaCardTitle>
-          <span class="ToDo">
-            TODO: version de plano desde api por implementar
-          </span>
-
-          <VaCardContent>
-            <div class="form-grid">
-              <VaSelect v-model="formData.plano_id" label="Plano a Utilizar *" placeholder="Seleccione el plano"
-                :options="planosOptions" text-by="nombre" value-by="id" class="form-field"
-                @update:model-value="onPlanoSelected" />
-
-              <VaSelect v-model="formData.version_plano" label="Versión del Plano" placeholder="Última versión"
-                :options="versionesPlanoOptions" :disabled="!formData.plano_id" class="form-field" />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Plano/Documento *</label>
+              <select v-model="formData.plano_id" required>
+                <option value="">Seleccionar plano</option>
+                <option v-for="plano in planos" :key="plano.id" :value="plano.id">
+                  {{ (plano.nombre || plano.name || 'Sin nombre') }} - {{ (plano.codigo || plano.code || 'Sin código') }}
+                </option>
+              </select>
+              <div v-if="errors.plano_id" class="error-message">{{ errors.plano_id }}</div>
             </div>
-
-            <VaTextarea v-model="formData.especificaciones_adicionales" label="Especificaciones Adicionales"
-              placeholder="Especificaciones o modificaciones al plano..." :min-rows="3" class="form-field full-width" />
-
-            <!-- Vista previa del plano -->
-            <div v-if="selectedPlano" class="plano-preview">
-              <VaCard class="preview-card">
-                <VaCardTitle>Vista Previa del Plano</VaCardTitle>
-                <VaCardContent>
-                  <div class="plano-info">
-                    <p><strong>Nombre:</strong> {{ selectedPlano.nombre }}</p>
-                    <p><strong>Código:</strong> {{ selectedPlano.codigo }}</p>
-                    <p><strong>Estado:</strong>
-                      <VaBadge :color="selectedPlano.estado === 'aprobado' ? 'success' : 'warning'">
-                        {{ selectedPlano.estado }}
-                      </VaBadge>
-                    </p>
-                    <p><strong>Estimación de Costos:</strong> ${{ selectedPlano.costo_estimado }}</p>
-                  </div>
-                </VaCardContent>
-              </VaCard>
+            
+            <div class="form-group">
+              <label>Solicitante *</label>
+              <select v-model="formData.solicitante_id" required>
+                <option value="">Seleccionar solicitante</option>
+                <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id">
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
+                </option>
+              </select>
+              <div v-if="errors.solicitante_id" class="error-message">{{ errors.solicitante_id }}</div>
             </div>
-          </VaCardContent>
-        </VaCard>
-      </div>
-
-      <!-- Paso 3: Asignación de Personal -->
-      <div v-if="currentStep === 3" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="group" class="step-icon" />
-            Asignación de Personal
-          </VaCardTitle>
-          <VaCardContent>
-            <VaSelect v-model="formData.supervisor_id" label="Supervisor/Encargado *" width="100%"
-              placeholder="Seleccione el supervisor" :options="supervisoresOptions" text-by="nombre" value-by="id" />
-
-            <!-- Técnicos Asignados -->
-            <div class="tecnicos-section">
-              <h4 class="section-subtitle">Técnicos Asignados</h4>
-
-              <div v-for="(asignacion, index) in formData.tecnicos_asignados" :key="index" class="tecnico-row">
-                <div class="form-grid">
-                  <VaSelect v-model="asignacion.tecnico_id" label="Técnico" placeholder="Seleccione técnico"
-                    :options="tecnicosOptions" text-by="nombre" value-by="id" class="form-field" />
-
-                  <VaInput v-model="asignacion.horas_asignadas" label="Horas Asignadas" type="number"
-                    placeholder="Horas" class="form-field" />
-                </div>
-
-                <VaButton v-if="formData.tecnicos_asignados.length > 1" preset="plain" icon="delete" color="danger"
-                  @click="removeTecnico(index)" class="remove-btn" />
-              </div>
-
-              <VaButton preset="secondary" icon="add" @click="addTecnico" class="add-tecnico-btn">
-                Agregar Técnico
-              </VaButton>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Aprobador</label>
+              <select v-model="formData.aprobador_id">
+                <option value="">Sin asignar</option>
+                <option v-for="usuario in usuariosAprobadores" :key="usuario.id" :value="usuario.id">
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
+                  <span v-if="usuario.puesto?.nombre || usuario.position?.name">
+                    - {{ usuario.puesto?.nombre || usuario.position?.name }}
+                  </span>
+                </option>
+              </select>
             </div>
-
-            <!-- Resumen de Competencias -->
-            <VaCard v-if="formData.tecnicos_asignados.length > 0" class="competencias-card">
-              <VaCardTitle>Resumen del Equipo</VaCardTitle>
-              <VaCardContent>
-                <div class="team-summary">
-                  <p><strong>Total de Técnicos:</strong> {{ formData.tecnicos_asignados.length }}</p>
-                  <p><strong>Total de Horas:</strong> {{ totalHorasAsignadas }}</p>
-                </div>
-              </VaCardContent>
-            </VaCard>
-          </VaCardContent>
-        </VaCard>
-      </div>
-
-      <!-- Paso 4: Selección y Reserva de Herramientas -->
-      <div v-if="currentStep === 4" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="build" class="step-icon" />
-            Selección y Reserva de Herramientas
-          </VaCardTitle>
-          <VaCardContent>
-            <!-- Herramientas Sugeridas del Plano -->
-            <div v-if="herramientasSugeridas.length > 0" class="herramientas-sugeridas">
-              <h4 class="section-subtitle">Herramientas Sugeridas del Plano</h4>
-
-              <div v-for="herramienta in herramientasSugeridas" :key="herramienta.id" class="herramienta-row">
-                <VaCard class="herramienta-card">
-                  <VaCardContent>
-                    <div class="herramienta-info">
-                      <div class="herramienta-header">
-                        <h5>{{ herramienta.nombre }}</h5>
-                        <VaBadge :color="getEstadoColor(herramienta.estado)">
-                          {{ herramienta.estado }}
-                        </VaBadge>
-                      </div>
-
-                      <div class="form-grid">
-                        <VaInput v-model="herramienta.cantidad_solicitada" label="Cantidad Solicitada" type="number"
-                          :placeholder="herramienta.cantidad_sugerida.toString()" class="form-field" />
-
-                        <VaDateInput v-model="herramienta.fecha_devolucion" label="Fecha Est. Devolución"
-                          class="form-field" />
-                      </div>
-                    </div>
-                  </VaCardContent>
-                </VaCard>
-              </div>
+            
+            <div class="form-group">
+              <label>Supervisor</label>
+              <select v-model="formData.supervisor_id">
+                <option value="">Sin asignar</option>
+                <option v-for="usuario in usuariosSupervisores" :key="usuario.id" :value="usuario.id">
+                  {{ (usuario.nombres || usuario.name || 'Sin nombre') }} {{ (usuario.apellidos || usuario.lastname || '') }}
+                  <span v-if="usuario.puesto?.nombre || usuario.position?.name">
+                    - {{ usuario.puesto?.nombre || usuario.position?.name }}
+                  </span>
+                </option>
+              </select>
+              <small class="field-help">Quien será el encargado del proyecto</small>
             </div>
+          </div>
 
-            <!-- Agregar Herramientas Adicionales -->
-            <div class="herramientas-adicionales">
-              <h4 class="section-subtitle">Herramientas Adicionales</h4>
-
-              <div v-for="(herramienta, index) in formData.herramientas_adicionales" :key="index"
-                class="herramienta-adicional-row">
-                <div class="form-grid">
-                  <VaSelect v-model="herramienta.herramienta_id" label="Herramienta"
-                    placeholder="Seleccione herramienta" :options="todasHerramientasOptions" text-by="nombre"
-                    value-by="id" class="form-field" />
-
-                  <VaInput v-model="herramienta.cantidad_solicitada" label="Cantidad" type="number"
-                    class="form-field" />
-
-                  <VaDateInput v-model="herramienta.fecha_devolucion" label="Fecha Devolución" class="form-field" />
-                </div>
-
-                <VaButton preset="plain" icon="delete" color="danger" @click="removeHerramientaAdicional(index)"
-                  class="remove-btn" />
-              </div>
-
-              <VaButton preset="secondary" icon="add" @click="addHerramientaAdicional">
-                Agregar Herramienta Adicional
-              </VaButton>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha Requerida *</label>
+              <input 
+                type="date" 
+                v-model="formData.fecha_requerida"
+                :min="minDate"
+                required
+              >
+              <div v-if="errors.fecha_requerida" class="error-message">{{ errors.fecha_requerida }}</div>
             </div>
-          </VaCardContent>
-        </VaCard>
-      </div>
+            
+            <div class="form-group">
+              <label>Fecha Estimada de Entrega</label>
+              <input 
+                type="date" 
+                v-model="formData.fecha_estimada_entrega"
+                :min="formData.fecha_requerida || minDate"
+              >
+            </div>
+          </div>
 
-      <!-- Paso 5: Gestión de Materiales y Stock -->
-      <div v-if="currentStep === 5" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="inventory" class="step-icon" />
-            Gestión de Materiales y Stock
-          </VaCardTitle>
-          <VaCardContent>
-            <!-- Materiales Sugeridos del Plano -->
-            <div v-if="materialesSugeridos.length > 0" class="materiales-sugeridos">
-              <h4 class="section-subtitle">Materiales Sugeridos del Plano</h4>
-              <span class="ToDo">
-                TODO: debe venir de la API el listado de productos del plano seleccionado
-              </span>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prioridad *</label>
+              <select v-model="formData.prioridad" required>
+                <option value="1">Alta (1)</option>
+                <option value="2">Media-Alta (2)</option>
+                <option value="3" selected>Media (3)</option>
+                <option value="4">Media-Baja (4)</option>
+                <option value="5">Baja (5)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Proyecto Asociado</label>
+              <input 
+                type="text" 
+                v-model="formData.proyecto_asociado"
+                placeholder="Nombre del proyecto (opcional)"
+              >
+            </div>
+          </div>
 
-              <div v-for="material in materialesSugeridos" :key="material.id" class="material-row">
-                <VaCard class="material-card">
-                  <VaCardContent>
-                    <div class="material-info">
-                      <div class="material-header">
-                        <h5>{{ material.nombre }}</h5>
-                        <div class="stock-info">
-                          <span class="stock-label">Stock Disponible:</span>
-                          <VaBadge :color="material.stock_suficiente ? 'success' : 'danger'">
-                            {{ material.stock_actual }} {{ material.unidad_medida }}
-                          </VaBadge>
-                        </div>
-                      </div>
-
-                      <div class="form-grid">
-                        <VaInput v-model="material.cantidad_solicitada" label="Cantidad Solicitada" type="number"
-                          :placeholder="material.cantidad_sugerida.toString()" class="form-field" />
-
-                        <VaSelect v-model="material.unidad_medida_id" label="Unidad de Medida"
-                          :options="unidadesMedidaOptions" text-by="nombre" value-by="id" class="form-field" />
-
-                        <VaSelect v-model="material.tipo_stock_destino" label="Tipo de Stock Destino"
-                          :options="tiposStockOptions" class="form-field" />
-
-                        <VaInput v-model="material.desperdicio_estimado" label="Desperdicio Estimado (%)" type="number"
-                          min="0" max="100" class="form-field" />
-                      </div>
-
-                      <div class="material-calculations">
-                        <p><strong>Costo Unitario:</strong> ${{ material.costo_unitario }}</p>
-                        <p><strong>Costo Total:</strong> ${{ calculateMaterialCost(material) }}</p>
-                      </div>
-                    </div>
-                  </VaCardContent>
-                </VaCard>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Costo Estimado</label>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0"
+                v-model="formData.costo_estimado"
+                placeholder="0.00"
+              >
+              <small class="field-help">Costo interno estimado del proyecto</small>
+            </div>
+            
+            <div class="form-group">
+              <label>Precio Final *</label>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0.01"
+                v-model="formData.precio_final"
+                placeholder="0.00"
+                required
+              >
+              <div v-if="errors.precio_final" class="error-message">{{ errors.precio_final }}</div>
+              <div v-if="priceValidationMessage" :class="'price-validation ' + priceValidationClass">
+                {{ priceValidationMessage }}
               </div>
             </div>
+          </div>
 
-            <!-- Materiales Adicionales -->
-            <div class="materiales-adicionales">
-              <h4 class="section-subtitle">Materiales Adicionales</h4>
-
-              <div v-for="(material, index) in formData.materiales_adicionales" :key="index"
-                class="material-adicional-row">
-                <div class="form-grid">
-                  <VaSelect v-model="material.material_id" label="Material" placeholder="Seleccione material"
-                    :options="todosMaterialesOptions" text-by="nombre" value-by="id" class="form-field" />
-
-                  <VaInput v-model="material.cantidad_solicitada" label="Cantidad" type="number" class="form-field" />
-
-                  <VaSelect v-model="material.unidad_medida_id" label="Unidad" :options="unidadesMedidaOptions"
-                    text-by="nombre" value-by="id" class="form-field" />
-                </div>
-
-                <VaButton preset="plain" icon="delete" color="danger" @click="removeMaterialAdicional(index)"
-                  class="remove-btn" />
-              </div>
-
-              <VaButton preset="secondary" icon="add" @click="addMaterialAdicional">
-                Agregar Material Adicional
-              </VaButton>
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label>Notas</label>
+              <textarea 
+                v-model="formData.notas"
+                rows="3"
+                placeholder="Notas adicionales del trabajo a realizar..."
+              ></textarea>
             </div>
-
-            <!-- Alertas de Stock -->
-            <VaAlert v-if="alertasStock.length > 0" color="warning" class="stock-alerts">
-              <template #title>Alertas de Stock</template>
-              <ul>
-                <li v-for="alerta in alertasStock" :key="alerta.id">
-                  {{ alerta.mensaje }}
-                </li>
-              </ul>
-            </VaAlert>
-          </VaCardContent>
-        </VaCard>
-      </div>
-
-      <!-- Paso 6: Presupuesto y Costos -->
-      <div v-if="currentStep === 6" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="attach_money" class="step-icon" />
-            Presupuesto y Costos
-          </VaCardTitle>
-          <VaCardContent>
-            <!-- Resumen de Costos -->
-            <div class="costos-resumen">
-              <VaCard class="costo-card">
-                <VaCardTitle>Desglose de Costos</VaCardTitle>
-                <VaCardContent>
-                  <div class="costo-item">
-                    <span>Costo de Materiales:</span>
-                    <span class="costo-valor">${{ formData.costo_materiales }}</span>
-                  </div>
-                  <div class="costo-item">
-                    <span>Costo de Herramientas:</span>
-                    <span class="costo-valor">${{ formData.costo_herramientas }}</span>
-                  </div>
-                  <div class="costo-item">
-                    <span>Costo de Mano de Obra:</span>
-                    <span class="costo-valor">${{ formData.costo_mano_obra }}</span>
-                  </div>
-                  <hr>
-                  <div class="costo-item total">
-                    <span><strong>Costo Total Estimado:</strong></span>
-                    <span class="costo-valor"><strong>${{ costoTotalEstimado }}</strong></span>
-                  </div>
-                </VaCardContent>
-              </VaCard>
-            </div>
-
-            <!-- Precio Final y Ajustes -->
-            <div class="form-grid">
-              <VaInput v-model="formData.precio_final" label="Precio Final *" type="number"
-                placeholder="Precio para cliente externo" class="form-field" />
-
-              <VaSelect v-model="formData.centro_costos" label="Centro de Costos/Departamento"
-                placeholder="Seleccione centro" :options="centrosCostosOptions" class="form-field" />
-            </div>
-
-            <VaTextarea v-model="formData.justificacion_ajustes" label="Justificación de Ajustes"
-              placeholder="Explique cualquier ajuste al presupuesto..." :min-rows="2" class="form-field full-width" />
-
-            <!-- Validaciones de Presupuesto -->
-            <VaAlert v-if="presupuestoExcedeLimite" color="warning" class="presupuesto-alert">
-              <template #title>Atención: Presupuesto Excede Límites</template>
-              Este presupuesto requiere aprobación especial. Se enviará automáticamente para revisión.
-            </VaAlert>
-          </VaCardContent>
-        </VaCard>
-      </div>
-
-      <!-- Paso 7: Revisión Final y Confirmación -->
-      <div v-if="currentStep === 7" class="step-content">
-        <VaCard>
-          <VaCardTitle class="step-card-title">
-            <VaIcon name="check_circle" class="step-icon" />
-            Revisión Final y Confirmación
-          </VaCardTitle>
-          <VaCardContent>
-            <!-- Resumen Completo -->
-            <div class="revision-completa">
-              <!-- Información del Pedido -->
-              <VaCard class="revision-section">
-                <VaCardTitle>Información del Pedido</VaCardTitle>
-                <VaCardContent>
-                  <div class="revision-grid">
-                    <div><strong>Código:</strong> {{ formData.codigo_pedido }}</div>
-                    <div><strong>Tipo:</strong> {{ getTipoPedidoNombre() }}</div>
-                    <div><strong>Fecha Requerida:</strong> {{ formatDate(formData.fecha_requerida) }}</div>
-                    <div><strong>Prioridad:</strong> {{ getPrioridadTexto() }}</div>
-                    <div><strong>Proyecto:</strong> {{ formData.proyecto_asociado || 'N/A' }}</div>
-                  </div>
-                </VaCardContent>
-              </VaCard>
-
-              <!-- Personal Asignado -->
-              <VaCard class="revision-section">
-                <VaCardTitle>Personal Asignado</VaCardTitle>
-                <VaCardContent>
-                  <p><strong>Supervisor:</strong> {{ getSupervisorNombre() }}</p>
-                  <div class="tecnicos-resumen">
-                    <p><strong>Técnicos ({{ formData.tecnicos_asignados.length }}):</strong></p>
-                    <ul>
-                      <li v-for="asignacion in formData.tecnicos_asignados" :key="asignacion.tecnico_id">
-                        {{ getTecnicoNombre(asignacion.tecnico_id) }} - {{ asignacion.horas_asignadas }} horas
-                      </li>
-                    </ul>
-                  </div>
-                </VaCardContent>
-              </VaCard>
-
-              <!-- Presupuesto Final -->
-              <VaCard class="revision-section">
-                <VaCardTitle>Presupuesto Final</VaCardTitle>
-                <VaCardContent>
-                  <div class="presupuesto-final">
-                    <div class="presupuesto-item">
-                      <span>Costo Total Estimado:</span>
-                      <span>${{ costoTotalEstimado }}</span>
-                    </div>
-                    <div class="presupuesto-item">
-                      <span>Precio Final:</span>
-                      <span><strong>${{ formData.precio_final }}</strong></span>
-                    </div>
-                  </div>
-                </VaCardContent>
-              </VaCard>
-
-              <!-- Timeline del Proyecto -->
-              <VaCard class="revision-section">
-                <VaCardTitle>Timeline del Proyecto</VaCardTitle>
-                <VaCardContent>
-                  <div class="timeline-info">
-                    <p><strong>Fecha de Inicio Estimada:</strong> {{ getFechaInicioEstimada() }}</p>
-                    <p><strong>Duración Estimada:</strong> {{ getDuracionEstimada() }} días</p>
-                    <p><strong>Fecha de Entrega:</strong> {{ formatDate(formData.fecha_requerida) }}</p>
-                  </div>
-                </VaCardContent>
-              </VaCard>
-            </div>
-          </VaCardContent>
-        </VaCard>
-      </div>
-    </div>
-
-    <!-- Wizard Navigation -->
-    <template #footer>
-      <div class="wizard-footer">
-        <div class="navigation-buttons">
-          <VaButton v-if="currentStep > 1" preset="secondary" icon="chevron_left" @click="previousStep">
-            Anterior
-          </VaButton>
-
-          <VaButton preset="secondary" icon="save" @click="saveAsDraft">
-            Guardar Borrador
-          </VaButton>
-
-          <VaButton preset="secondary" @click="close">
-            Cancelar
-          </VaButton>
-
-          <VaButton v-if="currentStep < totalSteps" color="primary" icon-right="chevron_right" @click="nextStep">
-            Siguiente
-          </VaButton>
-
-          <!-- Botones finales en el último paso -->
-          <div v-if="currentStep === totalSteps" class="final-actions">
-            <VaButton color="success" icon="send" @click="sendForApproval">
-              Enviar para Aprobación
-            </VaButton>
-
-            <VaButton v-if="canCreateImmediately" color="primary" icon="check_circle" @click="createImmediately">
-              Crear Inmediatamente
-            </VaButton>
           </div>
         </div>
       </div>
-    </template>
-  </VaModal>
+      
+      <div class="modal-footer">
+        <button class="btn secondary" @click="close">Cancelar</button>
+        <button 
+          class="btn primary" 
+          @click="save" 
+          :disabled="loadingCatalogs || saving"
+        >
+          {{ saving ? 'Guardando...' : (mode === 'create' ? 'Crear Orden' : 'Actualizar') }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script src="./scripts/NewWorkOrderWizardModal.js"></script>
-<style src="@/assets/NewWorkOrderWizardModal.css" scoped></style>
+<script>
+export default {
+  name: 'WorkOrderModal',
+  props: {
+    show: {
+      type: Boolean,
+      default: false
+    },
+  computed: {
+    minDate() {
+      return new Date().toISOString().split('T')[0]
+    },
+    isFormValid() {
+      return this.formData.tipo_pedido_id && 
+             this.formData.plano_id && 
+             this.formData.solicitante_id && 
+             this.formData.fecha_requerida && 
+             this.formData.precio_final &&
+             parseFloat(this.formData.precio_final) > 0
+    },
+    priceValidationMessage() {
+      if (!this.formData.precio_final || !this.formData.costo_estimado) {
+        return null
+      }
+      
+      const precioFinal = parseFloat(this.formData.precio_final)
+      const costoEstimado = parseFloat(this.formData.costo_estimado)
+      
+      if (precioFinal <= costoEstimado) {
+        return 'El precio final debe ser mayor que el costo estimado'
+      }
+      
+      const margen = ((precioFinal - costoEstimado) / costoEstimado * 100).toFixed(1)
+      return `Margen de ganancia: ${margen}%`
+    },
+    priceValidationClass() {
+      if (!this.priceValidationMessage) return ''
+      return this.priceValidationMessage.includes('debe ser mayor') ? 'error' : 'success'
+    }
+  },
+    mode: {
+      type: String,
+      default: 'create'
+    },
+    pedido: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  data() {
+    return {
+      // Form data
+      formData: {
+        codigo_pedido: '',
+        tipo_pedido_id: '',
+        plano_id: '',
+        solicitante_id: '',
+        aprobador_id: '',
+        supervisor_id: '',
+        descripcion: '',
+        fecha_entrega: '',
+        prioridad: 'media'
+      },
+      errors: {},
+      
+      // Data arrays
+      tiposPedido: [],
+      planos: [],
+      usuarios: [], // Solicitantes (Puesto 5)
+      usuariosAprobadores: [], // Puesto 1
+      usuariosSupervisores: [], // Supervisores/Coordinadores (Puesto 2)
+      estadosPedido: [],
+      
+      // Loading states
+      loadingCatalogs: false,
+      loadingError: null,
+      saving: false
+    }
+  },
+  watch: {
+    show: {
+      handler(newVal) {
+        if (newVal) {
+          this.initializeForm()
+          this.loadCatalogs()
+        }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    initializeForm() {
+      if (this.mode === 'edit' && this.pedido) {
+        this.formData = {
+          codigo_pedido: this.pedido.codigo_pedido || '',
+          tipo_pedido_id: this.pedido.tipo_pedido_id || '',
+          plano_id: this.pedido.plano_id || '',
+          solicitante_id: this.pedido.solicitante_id || '',
+          aprobador_id: this.pedido.aprobador_id || '',
+          supervisor_id: this.pedido.supervisor_id || '',
+          fecha_requerida: this.pedido.fecha_requerida || '',
+          fecha_estimada_entrega: this.pedido.fecha_estimada_entrega || '',
+          prioridad: this.pedido.prioridad || 3,
+          proyecto_asociado: this.pedido.proyecto_asociado || '',
+          costo_estimado: this.pedido.costo_estimado || '',
+          precio_final: this.pedido.precio_final || '',
+          notas: this.pedido.notas || ''
+        }
+      } else {
+        this.formData = {
+          codigo_pedido: '',
+          tipo_pedido_id: '',
+          plano_id: '',
+          solicitante_id: '',
+          aprobador_id: '',
+          supervisor_id: '',
+          fecha_requerida: '',
+          fecha_estimada_entrega: '',
+          prioridad: 3,
+          proyecto_asociado: '',
+          costo_estimado: '',
+          precio_final: '',
+          notas: ''
+        }
+      }
+      this.errors = {}
+      this.loadingError = null
+    },
+    
+
+async loadCatalogs() {
+  console.log('🚀 INICIANDO loadCatalogs...')
+  this.loadingCatalogs = true
+  this.loadingError = null
+  
+  try {
+    console.log('🔄 Cargando catálogos...')
+    console.log('🔑 Token:', this.getAuthToken() ? 'Existe' : 'No existe')
+    
+    // Cargar Tipos de Pedido
+    console.log('📡 Iniciando carga de Tipos de Pedido...')
+    try {
+      const tiposResponse = await fetch('/api/Tipo_Pedido', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Tipos de Pedido:', {
+        status: tiposResponse.status,
+        statusText: tiposResponse.statusText,
+        ok: tiposResponse.ok,
+        url: tiposResponse.url
+      })
+      
+      if (tiposResponse.ok) {
+        const tiposData = await tiposResponse.json()
+        console.log('📦 Data Tipos de Pedido (raw):', tiposData)
+        console.log('📦 Es array?', Array.isArray(tiposData))
+        
+        if (Array.isArray(tiposData)) {
+          this.tiposPedido = tiposData
+          console.log('✅ Tipos de Pedido asignados:', this.tiposPedido.length, this.tiposPedido)
+        } else {
+          console.log('⚠️ Tipos de Pedido no es array, intentando extraer...')
+          this.tiposPedido = []
+        }
+      } else {
+        const errorText = await tiposResponse.text()
+        console.error('❌ Error response Tipos de Pedido:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando tipos de pedido:', error)
+    }
+    
+    // Cargar Planos
+    console.log('📡 Iniciando carga de Planos...')
+    try {
+      const planosResponse = await fetch('/api/Plano', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Planos:', {
+        status: planosResponse.status,
+        statusText: planosResponse.statusText,
+        ok: planosResponse.ok
+      })
+      
+      if (planosResponse.ok) {
+        const planosData = await planosResponse.json()
+        console.log('📦 Data Planos (raw):', planosData)
+        console.log('📦 Es array?', Array.isArray(planosData))
+        
+        if (Array.isArray(planosData)) {
+          this.planos = planosData
+          console.log('✅ Planos asignados:', this.planos.length, this.planos)
+        } else {
+          console.log('⚠️ Planos no es array, intentando extraer...')
+          this.planos = []
+        }
+      } else {
+        const errorText = await planosResponse.text()
+        console.error('❌ Error response Planos:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando planos:', error)
+    }
+    
+    // Cargar Usuarios Solicitantes (Puesto 5)
+    console.log('📡 Iniciando carga de Usuarios Solicitantes...')
+    try {
+      const usuariosResponse = await fetch('/api/Usuario/Puesto/5', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Usuarios Solicitantes:', {
+        status: usuariosResponse.status,
+        statusText: usuariosResponse.statusText,
+        ok: usuariosResponse.ok
+      })
+      
+      if (usuariosResponse.ok) {
+        const usuariosData = await usuariosResponse.json()
+        console.log('📦 Data Usuarios Solicitantes (raw):', usuariosData)
+        console.log('📦 Es array?', Array.isArray(usuariosData))
+        
+        if (Array.isArray(usuariosData)) {
+          this.usuarios = usuariosData
+          console.log('✅ Usuarios Solicitantes asignados:', this.usuarios.length, this.usuarios)
+        } else {
+          console.log('⚠️ Usuarios Solicitantes no es array, intentando extraer...')
+          this.usuarios = []
+        }
+      } else {
+        const errorText = await usuariosResponse.text()
+        console.error('❌ Error response Usuarios Solicitantes:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando usuarios solicitantes:', error)
+    }
+    
+    // Cargar Usuarios Aprobadores (Puesto 1)
+    console.log('📡 Iniciando carga de Usuarios Aprobadores...')
+    try {
+      const aprobadoresResponse = await fetch('/api/Usuario/Puesto/1', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Usuarios Aprobadores:', {
+        status: aprobadoresResponse.status,
+        statusText: aprobadoresResponse.statusText,
+        ok: aprobadoresResponse.ok
+      })
+      
+      if (aprobadoresResponse.ok) {
+        const aprobadoresData = await aprobadoresResponse.json()
+        console.log('📦 Data Usuarios Aprobadores (raw):', aprobadoresData)
+        console.log('📦 Es array?', Array.isArray(aprobadoresData))
+        
+        if (Array.isArray(aprobadoresData)) {
+          this.usuariosAprobadores = aprobadoresData
+          console.log('✅ Usuarios Aprobadores asignados:', this.usuariosAprobadores.length, this.usuariosAprobadores)
+        } else {
+          console.log('⚠️ Usuarios Aprobadores no es array, intentando extraer...')
+          this.usuariosAprobadores = []
+        }
+      } else {
+        const errorText = await aprobadoresResponse.text()
+        console.error('❌ Error response Usuarios Aprobadores:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando usuarios aprobadores:', error)
+    }
+    
+    // Cargar Usuarios Supervisores (Puesto 2)
+    console.log('📡 Iniciando carga de Usuarios Supervisores...')
+    try {
+      const supervisoresResponse = await fetch('/api/Usuario/Puesto/2', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Usuarios Supervisores:', {
+        status: supervisoresResponse.status,
+        statusText: supervisoresResponse.statusText,
+        ok: supervisoresResponse.ok
+      })
+      
+      if (supervisoresResponse.ok) {
+        const supervisoresData = await supervisoresResponse.json()
+        console.log('📦 Data Usuarios Supervisores (raw):', supervisoresData)
+        console.log('📦 Es array?', Array.isArray(supervisoresData))
+        
+        if (Array.isArray(supervisoresData)) {
+          this.usuariosSupervisores = supervisoresData
+          console.log('✅ Usuarios Supervisores asignados:', this.usuariosSupervisores.length, this.usuariosSupervisores)
+        } else {
+          console.log('⚠️ Usuarios Supervisores no es array, intentando extraer...')
+          this.usuariosSupervisores = []
+        }
+      } else {
+        const errorText = await supervisoresResponse.text()
+        console.error('❌ Error response Usuarios Supervisores:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando usuarios supervisores:', error)
+    }
+    
+    // Cargar Estados de Pedido
+    console.log('📡 Iniciando carga de Estados de Pedido...')
+    try {
+      const estadosResponse = await fetch('/api/EstadoPedido', {
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}` 
+        }
+      })
+      
+      console.log('📊 Response Estados de Pedido:', {
+        status: estadosResponse.status,
+        statusText: estadosResponse.statusText,
+        ok: estadosResponse.ok
+      })
+      
+      if (estadosResponse.ok) {
+        const estadosData = await estadosResponse.json()
+        console.log('📦 Data Estados de Pedido (raw):', estadosData)
+        console.log('📦 Es array?', Array.isArray(estadosData))
+        
+        if (Array.isArray(estadosData)) {
+          this.estadosPedido = estadosData
+          console.log('✅ Estados de Pedido asignados:', this.estadosPedido.length, this.estadosPedido)
+        } else {
+          console.log('⚠️ Estados de Pedido no es array, intentando extraer...')
+          this.estadosPedido = []
+        }
+      } else {
+        const errorText = await estadosResponse.text()
+        console.error('❌ Error response Estados de Pedido:', errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error cargando estados de pedido:', error)
+    }
+    
+    console.log('📊 RESUMEN FINAL - Estado de arrays después de carga:')
+    console.log('   tiposPedido:', this.tiposPedido?.length || 0, this.tiposPedido)
+    console.log('   planos:', this.planos?.length || 0, this.planos)
+    console.log('   usuarios:', this.usuarios?.length || 0, this.usuarios)
+    console.log('   usuariosAprobadores:', this.usuariosAprobadores?.length || 0, this.usuariosAprobadores)
+    console.log('   usuariosSupervisores:', this.usuariosSupervisores?.length || 0, this.usuariosSupervisores)
+    console.log('   estadosPedido:', this.estadosPedido?.length || 0, this.estadosPedido)
+    
+  } catch (error) {
+    console.error('❌ Error general en loadCatalogs:', error)
+    this.loadingError = `Error de carga: ${error.message}`
+  } finally {
+    this.loadingCatalogs = false
+    console.log('✅ loadCatalogs FINALIZADO - loadingCatalogs:', this.loadingCatalogs)
+  }
+},
+
+// También elimina completamente el método loadSingleAPI() ya que no lo necesitas
+    
+    /*async loadSingleAPI(url, dataProperty, displayName) {
+      try {
+        console.log(`📡 Cargando ${displayName} desde ${url}`)
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.getAuthToken() && { 'Authorization': `Bearer ${this.getAuthToken()}` })
+          }
+        })
+        
+        console.log(`📊 Response ${displayName}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        console.log(`📦 Data ${displayName}:`, data)
+        
+        // Verificar que sea un array
+        if (Array.isArray(data)) {
+          this[dataProperty] = data
+          console.log(`✅ ${displayName} cargado: ${data.length} items`)
+        } else if (data && typeof data === 'object') {
+          // Si no es array pero tiene datos, intentar extraerlos
+          const possibleArrays = Object.values(data).filter(v => Array.isArray(v))
+          if (possibleArrays.length > 0) {
+            this[dataProperty] = possibleArrays[0]
+            console.log(`🔧 Usando array encontrado en objeto para ${displayName}:`, possibleArrays[0].length)
+          } else {
+            this[dataProperty] = []
+            console.warn(`⚠️ ${displayName}: No se encontró array en la respuesta`)
+          }
+        } else {
+          this[dataProperty] = []
+          console.warn(`⚠️ ${displayName}: Respuesta no es un array ni objeto válido`)
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error cargando ${displayName}:`, error)
+        this[dataProperty] = []
+        // No lanzar el error para que continúe con las otras APIs
+      }
+    },*/
+    
+    async retryLoad() {
+      await this.loadCatalogs()
+    },
+    
+    validateForm() {
+      this.errors = {}
+      
+      if (!this.formData.tipo_pedido_id) {
+        this.errors.tipo_pedido_id = 'El tipo de pedido es requerido'
+      }
+      
+      if (!this.formData.plano_id) {
+        this.errors.plano_id = 'El plano es requerido'
+      }
+      
+      if (!this.formData.solicitante_id) {
+        this.errors.solicitante_id = 'El solicitante es requerido'
+      }
+
+      if (!this.formData.fecha_requerida) {
+        this.errors.fecha_requerida = 'La fecha requerida es obligatoria'
+      } else {
+        const fechaRequerida = new Date(this.formData.fecha_requerida)
+        const hoy = new Date()
+        hoy.setHours(0, 0, 0, 0)
+        
+        if (fechaRequerida < hoy) {
+          this.errors.fecha_requerida = 'La fecha requerida no puede ser anterior a hoy'
+        }
+      }
+
+      if (!this.formData.precio_final) {
+        this.errors.precio_final = 'El precio final es obligatorio'
+      } else {
+        const precioFinal = parseFloat(this.formData.precio_final)
+        if (precioFinal <= 0) {
+          this.errors.precio_final = 'El precio final debe ser mayor a 0'
+        }
+        
+        if (this.formData.costo_estimado) {
+          const costoEstimado = parseFloat(this.formData.costo_estimado)
+          if (precioFinal <= costoEstimado) {
+            this.errors.precio_final = 'El precio final debe ser mayor que el costo estimado'
+          }
+        }
+      }
+      
+      return Object.keys(this.errors).length === 0
+    },
+    
+    prepareOrderData() {
+      // Generar código si no existe
+      const codigoPedido = this.formData.codigo_pedido || this.generateOrderCode()
+      
+      const orderData = {
+        codigo_pedido: codigoPedido,
+        tipo_pedido_id: parseInt(this.formData.tipo_pedido_id),
+        plano_id: parseInt(this.formData.plano_id),
+        solicitante_id: parseInt(this.formData.solicitante_id),
+        fecha_solicitud: new Date().toISOString(),
+        fecha_requerida: this.formData.fecha_requerida,
+        estado_id: 1, // 1 = Estado inicial (borrador o pendiente)
+        prioridad: parseInt(this.formData.prioridad),
+        precio_final: parseFloat(this.formData.precio_final)
+      }
+      
+      // Campos opcionales - solo agregar si tienen valor
+      if (this.formData.aprobador_id) {
+        orderData.aprobador_id = parseInt(this.formData.aprobador_id)
+      }
+      
+      if (this.formData.supervisor_id) {
+        orderData.supervisor_id = parseInt(this.formData.supervisor_id)
+      }
+      
+      if (this.formData.fecha_estimada_entrega) {
+        orderData.fecha_estimada_entrega = this.formData.fecha_estimada_entrega
+      }
+      
+      if (this.formData.proyecto_asociado) {
+        orderData.proyecto_asociado = this.formData.proyecto_asociado
+      }
+      
+      if (this.formData.costo_estimado) {
+        orderData.costo_estimado = parseFloat(this.formData.costo_estimado)
+      }
+      
+      if (this.formData.notas) {
+        orderData.notas = this.formData.notas
+      }
+      
+      return orderData
+    },
+
+    generateOrderCode() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const timestamp = now.getTime().toString().slice(-4)
+      
+      return `PED-${year}${month}${day}-${timestamp}`
+    },
+    
+    async save() {
+      if (!this.validateForm()) {
+        return
+      }
+      
+      this.saving = true
+      
+      try {
+        const orderData = this.prepareOrderData()
+        
+        console.log('Enviando datos:', orderData) // Debug
+        
+        const url = this.mode === 'create' ? '/api/Pedido' : `/api/Pedido/${this.pedido.id}`
+        const method = this.mode === 'create' ? 'POST' : 'PUT'
+        
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          },
+          body: JSON.stringify(orderData)
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          console.error('Error del servidor:', errorData) // Debug
+          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        const result = await response.json()
+        
+        this.$emit('saved', result)
+        this.close()
+        
+      } catch (error) {
+        console.error('Error guardando:', error)
+        alert('Error al guardar la orden de trabajo: ' + error.message)
+      } finally {
+        this.saving = false
+      }
+    },
+    
+    getAuthToken() {
+      return localStorage.getItem('authToken') || localStorage.getItem('token') || ''
+    },
+    
+    close() {
+      this.$emit('close')
+    }
+  }
+}
+</script>
+
+<style src="/src/assets/StyleCoordinador/NewWorkOrderStyle.css" scoped></style>

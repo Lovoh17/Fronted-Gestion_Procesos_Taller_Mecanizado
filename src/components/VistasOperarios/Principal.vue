@@ -8,12 +8,12 @@
             <i class="fas fa-tasks"></i>
           </div>
           <div class="header-text">
-            <h1 class="header-title">Mis Trabajos Asignados</h1>
-            <p class="header-subtitle">Gestiona y actualiza el estado de tus tareas</p>
+            <h1 class="header-title">Mis Pedidos Asignados</h1>
+            <p class="header-subtitle">Gestiona y actualiza el estado de tus pedidos</p>
           </div>
         </div>
         <div class="header-actions">
-          <va-button @click="loadTrabajos" :disabled="loading" color="#003366" icon="sync-alt" :loading="loading">
+          <va-button @click="loadDashboard" :disabled="loading" color="#003366" icon="sync-alt" :loading="loading">
             {{ loading ? 'Actualizando...' : 'Actualizar' }}
           </va-button>
         </div>
@@ -24,14 +24,13 @@
     <div class="stats-container">
       <div class="stat-card stat-pending">
         <div class="stat-trend">
-
         </div>
         <div class="stat-card-content">
           <div class="stat-icon">
             <i class="fas fa-clock"></i>
           </div>
           <div class="stat-info">
-            <h3>{{ trabajosPendientes }}</h3>
+            <h3>{{ pedidosDesconocidos }}</h3>
             <p>Pendientes</p>
           </div>
         </div>
@@ -46,7 +45,7 @@
             <i class="fas fa-cog"></i>
           </div>
           <div class="stat-info">
-            <h3>{{ trabajosEnProceso }}</h3>
+            <h3>{{ pedidosEnProceso }}</h3>
             <p>En Proceso</p>
           </div>
         </div>
@@ -61,21 +60,36 @@
             <i class="fas fa-check-circle"></i>
           </div>
           <div class="stat-info">
-            <h3>{{ trabajosCompletados }}</h3>
-            <p>Completados Hoy</p>
+            <h3>{{ pedidosCompletados }}</h3>
+            <p>Completados</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-tools">
+        <div class="stat-trend">
+          <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-card-content">
+          <div class="stat-icon">
+            <i class="fas fa-wrench"></i>
+          </div>
+          <div class="stat-info">
+            <h3>{{ totalHerramientas }}</h3>
+            <p>Herramientas Asignadas</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Filtros y lista de trabajos -->
+    <!-- Filtros y lista de pedidos -->
     <div class="works-section">
       <div class="section-header">
-        <h2>Lista de Trabajos</h2>
+        <h2>Lista de Pedidos</h2>
         <div class="filter-container">
-          <select v-model="filtroEstado" @change="filtrarTrabajos" class="filter-select">
+          <select v-model="filtroEstado" @change="filtrarPedidos" class="filter-select">
             <option value="">Todos los estados</option>
-            <option value="pendiente">Pendientes</option>
+            <option value="desconocido">Pendientes</option>
             <option value="en_proceso">En Proceso</option>
             <option value="completado">Completados</option>
           </select>
@@ -85,74 +99,99 @@
       <!-- Estados de carga -->
       <div v-if="loading" class="loading-state">
         <i class="fas fa-spinner fa-spin"></i>
-        <p>Cargando trabajos...</p>
+        <p>Cargando pedidos...</p>
       </div>
 
-      <div v-else-if="trabajosFiltrados.length === 0" class="empty-state">
+      <div v-else-if="error" class="error-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Error al cargar datos</h3>
+        <p>{{ error }}</p>
+        <va-button @click="loadDashboard" color="primary">
+          Reintentar
+        </va-button>
+      </div>
+
+      <div v-else-if="pedidosFiltrados.length === 0" class="empty-state">
         <i class="fas fa-clipboard-list"></i>
-        <h3>No hay trabajos asignados</h3>
-        <p>No tienes trabajos asignados en este momento.</p>
+        <h3>No hay pedidos asignados</h3>
+        <p>No tienes pedidos asignados en este momento.</p>
       </div>
 
-      <!-- Grid de trabajos -->
+      <!-- Grid de pedidos -->
       <div v-else class="works-grid">
-        <div v-for="trabajo in trabajosFiltrados" :key="trabajo.id" class="work-card" :class="'work-' + trabajo.estado">
+        <div v-for="pedido in pedidosFiltrados" :key="pedido.asignacionId" class="work-card" :class="'work-' + getEstadoClass(pedido.estado)">
           <div class="work-header">
             <div class="work-meta">
-              <span class="work-id">#{{ trabajo.id }}</span>
-              <span class="work-status" :class="trabajo.estado">
-                {{ getEstadoText(trabajo.estado) }}
+              <span class="work-id">Asignación #{{ pedido.asignacionId }}</span>
+              <span class="work-status" :class="getEstadoClass(pedido.estado)">
+                {{ getEstadoText(pedido.estado) }}
               </span>
             </div>
-            <div class="work-priority" :class="trabajo.prioridad">
+            <div class="work-priority" :class="getPrioridad(pedido)">
               <i class="fas fa-exclamation-circle"></i>
-              {{ trabajo.prioridad }}
+              {{ getPrioridad(pedido) }}
             </div>
           </div>
 
           <div class="work-body">
-            <h3 class="work-title">{{ trabajo.titulo }}</h3>
-            <p class="work-description">{{ trabajo.descripcion }}</p>
+            <h3 class="work-title">Pedido #{{ pedido.pedidoId }}</h3>
+            <p class="work-description">Pedido asignado para procesamiento</p>
 
             <div class="work-details">
               <div class="detail-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Asignado: {{ formatDate(trabajo.fechaAsignacion) }}</span>
+                <i class="fas fa-hashtag"></i>
+                <span>ID Asignación: {{ pedido.asignacionId }}</span>
               </div>
               <div class="detail-item">
-                <i class="fas fa-clock"></i>
-                <span>Tiempo estimado: {{ trabajo.tiempoEstimado }}h</span>
+                <i class="fas fa-shopping-cart"></i>
+                <span>ID Pedido: {{ pedido.pedidoId }}</span>
               </div>
-              <div class="detail-item" v-if="trabajo.cliente">
-                <i class="fas fa-user"></i>
-                <span>Cliente: {{ trabajo.cliente }}</span>
-              </div>
-            </div>
-
-            <div class="work-tools" v-if="trabajo.herramientasRequeridas?.length">
-              <h4>Herramientas requeridas:</h4>
-              <div class="tools-list">
-                <span v-for="herramienta in trabajo.herramientasRequeridas" :key="herramienta.id" class="tool-tag">
-                  {{ herramienta.nombre }}
-                </span>
+              <div class="detail-item">
+                <i class="fas fa-info-circle"></i>
+                <span>Estado: {{ getEstadoText(pedido.estado) }}</span>
               </div>
             </div>
           </div>
 
           <div class="work-actions">
-            <va-button v-if="trabajo.estado === 'pendiente'" @click="iniciarTrabajo(trabajo.id)" color="success"
-              icon="play">
+            <va-button v-if="pedido.estado === 'desconocido'" @click="iniciarPedido(pedido)" color="success">
               Iniciar
             </va-button>
 
-            <va-button v-if="trabajo.estado === 'en_proceso'" @click="completarTrabajo(trabajo.id)" color="primary"
+            <va-button v-if="pedido.estado === 'en_proceso'" @click="completarPedido(pedido)" color="primary"
               icon="check">
               Completar
             </va-button>
 
-            <va-button @click="verDetalles(trabajo)" color="secondary" icon="eye">
+            <va-button @click="verDetalles(pedido)" color="secondary">
               Detalles
             </va-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Herramientas -->
+    <div class="tools-section" v-if="dashboardData?.herramientas">
+      <div class="section-header">
+        <h2>Herramientas Asignadas</h2>
+        <span class="tools-count">Total: {{ totalHerramientas }}</span>
+      </div>
+
+      <div v-if="dashboardData.herramientas.detalle.length === 0" class="empty-state">
+        <i class="fas fa-tools"></i>
+        <h3>No hay herramientas asignadas</h3>
+        <p>No tienes herramientas específicas asignadas actualmente.</p>
+      </div>
+
+      <div v-else class="tools-grid">
+        <div v-for="herramienta in dashboardData.herramientas.detalle" :key="herramienta.id" class="tool-card">
+          <div class="tool-icon">
+            <i class="fas fa-wrench"></i>
+          </div>
+          <div class="tool-info">
+            <h4>{{ herramienta.nombre || 'Herramienta' }}</h4>
+            <p>{{ herramienta.descripcion || 'Sin descripción' }}</p>
           </div>
         </div>
       </div>
@@ -162,55 +201,30 @@
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>Detalles del Trabajo</h3>
+          <h3>Detalles del Pedido</h3>
           <va-button @click="closeModal" preset="plain" color="secondary" icon="times">
           </va-button>
         </div>
-        <div class="modal-body" v-if="trabajoSeleccionado">
+        <div class="modal-body" v-if="pedidoSeleccionado">
           <div class="detail-row">
-            <label>ID:</label>
-            <span>#{{ trabajoSeleccionado.id }}</span>
+            <label>ID Asignación:</label>
+            <span>#{{ pedidoSeleccionado.asignacionId }}</span>
           </div>
           <div class="detail-row">
-            <label>Título:</label>
-            <span>{{ trabajoSeleccionado.titulo }}</span>
-          </div>
-          <div class="detail-row">
-            <label>Descripción:</label>
-            <span>{{ trabajoSeleccionado.descripcion }}</span>
+            <label>ID Pedido:</label>
+            <span>#{{ pedidoSeleccionado.pedidoId }}</span>
           </div>
           <div class="detail-row">
             <label>Estado:</label>
-            <span class="status-badge" :class="trabajoSeleccionado.estado">
-              {{ getEstadoText(trabajoSeleccionado.estado) }}
+            <span class="status-badge" :class="getEstadoClass(pedidoSeleccionado.estado)">
+              {{ getEstadoText(pedidoSeleccionado.estado) }}
             </span>
           </div>
           <div class="detail-row">
             <label>Prioridad:</label>
-            <span class="priority-badge" :class="trabajoSeleccionado.prioridad">
-              {{ trabajoSeleccionado.prioridad }}
+            <span class="priority-badge" :class="getPrioridad(pedidoSeleccionado)">
+              {{ getPrioridad(pedidoSeleccionado) }}
             </span>
-          </div>
-          <div class="detail-row">
-            <label>Fecha asignación:</label>
-            <span>{{ formatDate(trabajoSeleccionado.fechaAsignacion) }}</span>
-          </div>
-          <div class="detail-row">
-            <label>Tiempo estimado:</label>
-            <span>{{ trabajoSeleccionado.tiempoEstimado }} horas</span>
-          </div>
-          <div class="detail-row" v-if="trabajoSeleccionado.cliente">
-            <label>Cliente:</label>
-            <span>{{ trabajoSeleccionado.cliente }}</span>
-          </div>
-          <div class="detail-row" v-if="trabajoSeleccionado.herramientasRequeridas?.length">
-            <label>Herramientas:</label>
-            <span>
-              <span v-for="(herramienta, index) in trabajoSeleccionado.herramientasRequeridas" :key="herramienta.id"
-                class="tool-tag">
-                {{ herramienta.nombre }}{{ index < trabajoSeleccionado.herramientasRequeridas.length - 1 ? ', ' : '' }}
-                  </span>
-              </span>
           </div>
         </div>
       </div>
@@ -218,154 +232,18 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-
-const authStore = useAuthStore();
-const loading = ref(false);
-const trabajos = ref([]);
-const filtroEstado = ref('');
-const showModal = ref(false);
-const trabajoSeleccionado = ref(null);
-
-// Computed properties
-const trabajosPendientes = computed(() =>
-  trabajos.value.filter(t => t.estado === 'pendiente').length
-);
-
-const trabajosEnProceso = computed(() =>
-  trabajos.value.filter(t => t.estado === 'en_proceso').length
-);
-
-const trabajosCompletados = computed(() =>
-  trabajos.value.filter(t => t.estado === 'completado' && isToday(t.fechaCompletado)).length
-);
-
-const trabajosFiltrados = computed(() => {
-  if (!filtroEstado.value) return trabajos.value;
-  return trabajos.value.filter(t => t.estado === filtroEstado.value);
-});
-
-// Methods
-const loadTrabajos = async () => {
-  try {
-    loading.value = true;
-    const operarioId = authStore.user?.id;
-
-    const response = await fetch(`/api/Trabajos/Operario/${operarioId}`);
-    if (!response.ok) throw new Error('Error al cargar trabajos');
-
-    trabajos.value = await response.json();
-  } catch (error) {
-    console.error('Error cargando trabajos:', error);
-    // Datos de ejemplo para desarrollo
-    trabajos.value = [
-      {
-        id: 1,
-        titulo: 'Reparación de Motor',
-        descripcion: 'Revisar y reparar motor de vehículo modelo 2020',
-        estado: 'pendiente',
-        prioridad: 'alta',
-        fechaAsignacion: '2024-06-20',
-        tiempoEstimado: 4,
-        cliente: 'Juan Pérez',
-        herramientasRequeridas: [
-          { id: 1, nombre: 'Llave inglesa' },
-          { id: 2, nombre: 'Destornillador' }
-        ]
-      },
-      {
-        id: 2,
-        titulo: 'Cambio de Aceite',
-        descripcion: 'Cambio de aceite y filtro estándar',
-        estado: 'en_proceso',
-        prioridad: 'media',
-        fechaAsignacion: '2024-06-21',
-        tiempoEstimado: 1,
-        cliente: 'María González',
-        herramientasRequeridas: [
-          { id: 3, nombre: 'Llave de filtro' }
-        ]
-      }
-    ];
-  } finally {
-    loading.value = false;
+<script>
+import { defineComponent } from 'vue';
+import useDashboard from './scripts/dashboard.js';
+export default defineComponent({
+  name: 'Principal',
+  setup() {
+    const dashboard = useDashboard();
+    return {
+      ...dashboard
+    };
   }
-};
-
-const iniciarTrabajo = async (trabajoId) => {
-  try {
-    const response = await fetch(`/api/Trabajos/${trabajoId}/iniciar`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (response.ok) {
-      const trabajo = trabajos.value.find(t => t.id === trabajoId);
-      if (trabajo) trabajo.estado = 'en_proceso';
-    }
-  } catch (error) {
-    console.error('Error iniciando trabajo:', error);
-  }
-};
-
-const completarTrabajo = async (trabajoId) => {
-  try {
-    const response = await fetch(`/api/Trabajos/${trabajoId}/completar`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (response.ok) {
-      const trabajo = trabajos.value.find(t => t.id === trabajoId);
-      if (trabajo) {
-        trabajo.estado = 'completado';
-        trabajo.fechaCompletado = new Date().toISOString();
-      }
-    }
-  } catch (error) {
-    console.error('Error completando trabajo:', error);
-  }
-};
-
-const verDetalles = (trabajo) => {
-  trabajoSeleccionado.value = trabajo;
-  showModal.value = true;
-};
-
-const closeModal = () => {
-  showModal.value = false;
-  trabajoSeleccionado.value = null;
-};
-
-const getEstadoText = (estado) => {
-  const estados = {
-    pendiente: 'Pendiente',
-    en_proceso: 'En Proceso',
-    completado: 'Completado'
-  };
-  return estados[estado] || estado;
-};
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('es-ES');
-};
-
-const isToday = (dateString) => {
-  if (!dateString) return false;
-  const today = new Date().toDateString();
-  const date = new Date(dateString).toDateString();
-  return today === date;
-};
-
-const filtrarTrabajos = () => {
-  // La filtración se maneja automáticamente por el computed property
-};
-
-onMounted(() => {
-  loadTrabajos();
 });
 </script>
-<style src="src/components/VistasOperarios/styles/Principal.css"></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
+
+<style src="src/assets/StyleOperario/DashboardOperarioStyle.css" scoped></style>

@@ -1,778 +1,1001 @@
 <template>
-    <div class="modal-overlay" @click.self="close">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Orden de Trabajo #{{ order.id }}</h2>
-          <div class="order-status">
-            <span class="status-badge" :class="order.status">{{ statusLabels[order.status] }}</span>
-            <span class="priority-badge" :class="order.priority">{{ priorityLabels[order.priority] }}</span>
-          </div>
-          <va-button class="close-btn" @click="close"    >
-        
+  <div class="modal-overlay" @click.self="close">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <span class="material-icons">description</span>
+          {{ isEditing ? 'Editar' : 'Detalles del' }} Pedido - {{ pedidoData.codigo_pedido }}
+        </h2>
+        <div class="header-actions">
+          <button v-if="!isEditing && canEdit" class="btn-icon edit-btn" @click="enableEdit" title="Editar">
+            <span class="material-icons">edit</span>
+          </button>
+          <button class="btn-icon close-btn" @click="close">
             <span class="material-icons">close</span>
-          
-      </va-button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="order-section">
-            <h3 class="section-title">
-              <span class="material-icons">info</span> Información General
-            </h3>
-            
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Cliente:</label>
-                <span>{{ order.client.name }}</span>
-              </div>
-              <div class="info-item">
-                <label>Fecha Creación:</label>
-                <span>{{ formatDate(order.startDate) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Fecha Entrega:</label>
-                <span>{{ formatDate(order.endDate) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Progreso:</label>
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: order.progress + '%' }"></div>
-                  <span class="progress-text">{{ order.progress }}%</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="info-item full-width">
-              <label>Descripción:</label>
-              <p>{{ order.description }}</p>
-            </div>
-          </div>
-          
-          <div class="order-section">
-            <h3 class="section-title">
-              <span class="material-icons">people</span> Recursos Asignados
-            </h3>
-            
-            <div class="resource-cards">
-              <div class="resource-card" v-for="resource in order.assignedTo" :key="resource.id">
-                <span class="material-icons resource-icon">{{ getResourceIcon(resource.id) }}</span>
-                <div class="resource-info">
-                  <div class="resource-name">{{ resource.name }}</div>
-                  <div class="resource-status">
-                    <span class="material-icons">schedule</span>
-                    {{ getResourceStatus(resource.id) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="order-section">
-            <h3 class="section-title">
-              <span class="material-icons">inventory</span> Materiales Utilizados
-            </h3>
-            
-            <table class="materials-table">
-              <thead>
-                <tr>
-                  <th>Material</th>
-                  <th>Cantidad</th>
-                  <th>Unidad</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(material, index) in order.materials" :key="index">
-                  <td>{{ getMaterialName(material.id) }}</td>
-                  <td>{{ material.quantity }}</td>
-                  <td>{{ getMaterialUnit(material.id) }}</td>
-                  <td>
-                    <span class="material-status" :class="getMaterialStatus(material)">
-                      {{ getMaterialStatus(material) }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="order-section">
-            <h3 class="section-title">
-              <span class="material-icons">notes</span> Notas y Observaciones
-            </h3>
-            
-            <div class="notes-content" v-if="order.notes">
-              {{ order.notes }}
-            </div>
-            <div class="no-notes" v-else>
-              No hay notas registradas para esta orden
-            </div>
-          </div>
-          
-          <div class="order-section" v-if="order.history && order.history.length > 0">
-            <h3 class="section-title">
-              <span class="material-icons">history</span> Historial de Cambios
-            </h3>
-            
-            <div class="timeline">
-              <div class="timeline-item" v-for="(event, index) in order.history" :key="index">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                  <div class="timeline-date">{{ formatDateTime(event.date) }}</div>
-                  <div class="timeline-event">{{ event.description }}</div>
-                  <div class="timeline-user">Por: {{ event.user }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <va-button class="btn secondary" @click="close"   >
-        Cerrar
-      </va-button>
-          <va-button class="btn primary" @click="printOrder" v-if="!isMobile"    >
-        
-            <span class="material-icons">print</span> Imprimir
-          
-      </va-button>
+          </button>
         </div>
       </div>
+      
+      <div class="modal-body">
+        <form @submit.prevent="saveChanges" v-if="isEditing">
+          <div class="detail-sections">
+            <!-- Información básica - EDITABLE -->
+            <div class="detail-section">
+              <h3><span class="material-icons">info</span> Información General</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Estado:</label>
+                  <select v-model="pedidoData.estado_id" class="form-select">
+                    <option value="1">Borrador</option>
+                    <option value="2">Pendiente Aprobación</option>
+                    <option value="3">Aprobado</option>
+                    <option value="4">En Proceso</option>
+                    <option value="5">Completado</option>
+                    <option value="6">Cancelado</option>
+                  </select>
+                </div>
+                <div class="detail-item">
+                  <label>Prioridad:</label>
+                  <select v-model="pedidoData.prioridad" class="form-select">
+                    <option value="1">Alta</option>
+                    <option value="2">Media-Alta</option>
+                    <option value="3">Media</option>
+                    <option value="4">Media-Baja</option>
+                    <option value="5">Baja</option>
+                  </select>
+                </div>
+                <div class="detail-item">
+                  <label>Tipo:</label>
+                  <input 
+                    type="text" 
+                    v-model="pedidoData.tipo_pedido.nombre" 
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+                <div class="detail-item">
+                  <label>Plano:</label>
+                  <input 
+                    type="text" 
+                    :value="`${pedidoData.plano?.nombre} - ${pedidoData.plano?.codigo}`"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Fechas - EDITABLE -->
+            <div class="detail-section">
+              <h3><span class="material-icons">event</span> Fechas</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Fecha Requerida:</label>
+                  <input 
+                    type="date" 
+                    v-model="pedidoData.fecha_requerida" 
+                    class="form-input"
+                  />
+                </div>
+                <div class="detail-item">
+                  <label>Fecha Estimada Entrega:</label>
+                  <input 
+                    type="date" 
+                    v-model="pedidoData.fecha_estimada_entrega" 
+                    class="form-input"
+                  />
+                </div>
+                <div class="detail-item">
+                  <label>Fecha Solicitud:</label>
+                  <input 
+                    type="datetime-local" 
+                    :value="formatDateTimeForInput(pedidoData.fecha_solicitud)"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+                <div v-if="pedidoData.fecha_aprobacion" class="detail-item">
+                  <label>Fecha Aprobación:</label>
+                  <input 
+                    type="datetime-local" 
+                    :value="formatDateTimeForInput(pedidoData.fecha_aprobacion)"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Información financiera - EDITABLE -->
+            <div class="detail-section">
+              <h3><span class="material-icons">attach_money</span> Información Financiera</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Costo Estimado:</label>
+                  <div class="input-group">
+                    <span class="input-prefix">$</span>
+                    <input 
+                      type="number" 
+                      v-model="pedidoData.costo_estimado" 
+                      step="0.01" 
+                      class="form-input"
+                    />
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <label>Precio Final:</label>
+                  <div class="input-group">
+                    <span class="input-prefix">$</span>
+                    <input 
+                      type="number" 
+                      v-model="pedidoData.precio_final" 
+                      step="0.01" 
+                      class="form-input"
+                    />
+                  </div>
+                </div>
+                <div v-if="pedidoData.costo_estimado && pedidoData.precio_final" class="detail-item">
+                  <label>Margen:</label>
+                  <span class="margen calculated" :class="getMargenClass(pedidoData)">
+                    {{ calcularMargen(pedidoData) }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información adicional - EDITABLE -->
+            <div class="detail-section">
+              <h3><span class="material-icons">note</span> Información Adicional</h3>
+              <div class="detail-grid">
+                <div class="detail-item full-width">
+                  <label>Proyecto Asociado:</label>
+                  <input 
+                    type="text" 
+                    v-model="pedidoData.proyecto_asociado" 
+                    class="form-input"
+                    placeholder="Nombre del proyecto asociado"
+                  />
+                </div>
+                <div class="detail-item full-width">
+                  <label>Notas:</label>
+                  <textarea 
+                    v-model="pedidoData.notas" 
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Agregar notas adicionales..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Personas involucradas - SOLO LECTURA -->
+            <div class="detail-section">
+              <h3><span class="material-icons">people</span> Personas Involucradas</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Solicitante:</label>
+                  <input 
+                    type="text" 
+                    :value="`${pedidoData.solicitante?.nombres} ${pedidoData.solicitante?.apellidos}`"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+                <div v-if="pedidoData.aprobador" class="detail-item">
+                  <label>Aprobador:</label>
+                  <input 
+                    type="text" 
+                    :value="`${pedidoData.aprobador?.nombres} ${pedidoData.aprobador?.apellidos}`"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+                <div v-if="pedidoData.supervisor" class="detail-item">
+                  <label>Supervisor:</label>
+                  <input 
+                    type="text" 
+                    :value="`${pedidoData.supervisor?.nombres} ${pedidoData.supervisor?.apellidos}`"
+                    class="form-input"
+                    readonly
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Archivos adjuntos -->
+            <div v-if="pedidoData.archivos && pedidoData.archivos.length > 0" class="detail-section">
+              <h3><span class="material-icons">attachment</span> Archivos Adjuntos ({{ pedidoData.archivos.length }})</h3>
+              <div class="file-list">
+                <div v-for="archivo in pedidoData.archivos" :key="archivo.id" class="file-item">
+                  <span class="material-icons">{{ getFileIcon(archivo) }}</span>
+                  <div class="file-info">
+                    <span class="file-name">{{ archivo.descripcion }}</span>
+                    <span class="file-type">{{ archivo.tipo_archivo }}</span>
+                  </div>
+                  <a :href="archivo.url" target="_blank" class="download-btn" title="Descargar">
+                    <span class="material-icons">download</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- MODO SOLO LECTURA -->
+        <div v-else class="detail-sections">
+          <!-- Información básica - LECTURA -->
+          <div class="detail-section">
+            <h3><span class="material-icons">info</span> Información General</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Estado:</label>
+                <span class="status-badge" :class="getStatusClass(pedidoData.estado_id)">
+                  {{ getStatusName(pedidoData.estado_id) }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <label>Prioridad:</label>
+                <span class="priority-badge" :class="`priority-${pedidoData.prioridad}`">
+                  {{ getPriorityName(pedidoData.prioridad) }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <label>Tipo:</label>
+                <span>{{ pedidoData.tipo_pedido?.nombre || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Plano:</label>
+                <span>{{ pedidoData.plano?.plano_id }} - {{ pedidoData.plano?.codigo }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fechas - LECTURA -->
+          <div class="detail-section">
+            <h3><span class="material-icons">event</span> Fechas</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Solicitud:</label>
+                <span>{{ formatDateTime(pedidoData.fecha_solicitud) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Requerida:</label>
+                <span>{{ formatDate(pedidoData.fecha_requerida) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Estimada Entrega:</label>
+                <span>{{ formatDate(pedidoData.fecha_estimada_entrega) || 'No definida' }}</span>
+              </div>
+              <div v-if="pedidoData.fecha_aprobacion" class="detail-item">
+                <label>Aprobación:</label>
+                <span>{{ formatDateTime(pedidoData.fecha_aprobacion) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personas involucradas - LECTURA -->
+          <div class="detail-section">
+            <h3><span class="material-icons">people</span> Personas Involucradas</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Solicitante:</label>
+                <span>{{ pedidoData.solicitante?.nombres }} {{ pedidoData.solicitante?.apellidos }}</span>
+              </div>
+              <div v-if="pedidoData.aprobador" class="detail-item">
+                <label>Aprobador:</label>
+                <span>{{ pedidoData.aprobador?.nombres }} {{ pedidoData.aprobador?.apellidos }}</span>
+              </div>
+              <div v-if="pedidoData.supervisor" class="detail-item">
+                <label>Supervisor:</label>
+                <span>{{ pedidoData.supervisor?.nombres }} {{ pedidoData.supervisor?.apellidos }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información financiera - LECTURA -->
+          <div class="detail-section">
+            <h3><span class="material-icons">attach_money</span> Información Financiera</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Costo Estimado:</label>
+                <span class="price">${{ pedidoData.costo_estimado?.toLocaleString('en-US', {minimumFractionDigits: 2}) || '0.00' }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Precio Final:</label>
+                <span class="price final">${{ pedidoData.precio_final?.toLocaleString('en-US', {minimumFractionDigits: 2}) || '0.00' }}</span>
+              </div>
+              <div v-if="pedidoData.costo_estimado && pedidoData.precio_final" class="detail-item">
+                <label>Margen:</label>
+                <span class="margen" :class="getMargenClass(pedidoData)">
+                  {{ calcularMargen(pedidoData) }}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información adicional - LECTURA -->
+          <div class="detail-section">
+            <h3><span class="material-icons">note</span> Información Adicional</h3>
+            <div class="detail-grid">
+              <div v-if="pedidoData.proyecto_asociado" class="detail-item full-width">
+                <label>Proyecto Asociado:</label>
+                <span>{{ pedidoData.proyecto_asociado }}</span>
+              </div>
+              <div v-if="pedidoData.notas" class="detail-item full-width">
+                <label>Notas:</label>
+                <p class="notes">{{ pedidoData.notas }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Archivos adjuntos - LECTURA -->
+          <div v-if="pedidoData.archivos && pedidoData.archivos.length > 0" class="detail-section">
+            <h3><span class="material-icons">attachment</span> Archivos Adjuntos ({{ pedidoData.archivos.length }})</h3>
+            <div class="file-list">
+              <div v-for="archivo in pedidoData.archivos" :key="archivo.id" class="file-item">
+                <span class="material-icons">{{ getFileIcon(archivo) }}</span>
+                <div class="file-info">
+                  <span class="file-name">{{ archivo.descripcion }}</span>
+                  <span class="file-type">{{ archivo.tipo_archivo }}</span>
+                </div>
+                <a :href="archivo.url" target="_blank" class="download-btn" title="Descargar">
+                  <span class="material-icons">download</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <template v-if="isEditing">
+          <button type="button" class="btn secondary" @click="cancelEdit">Cancelar</button>
+          <button type="submit" class="btn primary" @click="saveChanges" :disabled="saving">
+            <span v-if="saving" class="material-icons spinning">refresh</span>
+            {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+        </template>
+        <template v-else>
+          <button class="btn secondary" @click="close">Cerrar</button>
+        </template>
+      </div>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    props: {
-      order: {
-        type: Object,
-        required: true
-      }
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'PedidoDetalleModal',
+  props: {
+    pedido: {
+      type: Object,
+      required: true
     },
-    data() {
-      return {
-        statusLabels: {
-          pending: 'Pendiente',
-          'in-progress': 'En Progreso',
-          completed: 'Completada',
-          delayed: 'Retrasada'
-        },
-        priorityLabels: {
-          high: 'Alta',
-          medium: 'Media',
-          low: 'Baja'
-        },
-        resources: [
-          { id: 1, name: 'Máquina CNC', icon: 'precision_manufacturing', status: 'Disponible' },
-          { id: 2, name: 'Equipo Soldadura', icon: 'handyman', status: 'En uso' },
-          { id: 3, name: 'Operario 1', icon: 'engineering', status: 'Disponible' },
-          { id: 4, name: 'Operario 2', icon: 'engineering', status: 'En taller' }
-        ],
-        materialOptions: [
-          { id: 1, name: 'Acero inoxidable', unit: 'kg' },
-          { id: 2, name: 'Tornillos', unit: 'unidades' },
-          { id: 3, name: 'Pintura azul', unit: 'litros' },
-          { id: 4, name: 'Rodamientos', unit: 'unidades' }
-        ],
-        isMobile: window.innerWidth < 768
-      };
+    mode: {
+      type: String,
+      default: 'view', // 'view' o 'edit'
+      validator: value => ['view', 'edit'].includes(value)
     },
-    methods: {
-      close() {
-        this.$emit('close');
-      },
-      formatDate(dateString) {
-        if (!dateString) return 'No definida';
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('es-ES', options);
-      },
-      formatDateTime(dateString) {
-        if (!dateString) return '';
-        const options = { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        };
-        return new Date(dateString).toLocaleDateString('es-ES', options);
-      },
-      getResourceIcon(resourceId) {
-        const resource = this.resources.find(r => r.id === resourceId);
-        return resource ? resource.icon : 'help_outline';
-      },
-      getResourceStatus(resourceId) {
-        const resource = this.resources.find(r => r.id === resourceId);
-        return resource ? resource.status : 'Desconocido';
-      },
-      getMaterialName(materialId) {
-        const material = this.materialOptions.find(m => m.id === materialId);
-        return material ? material.name : 'Desconocido';
-      },
-      getMaterialUnit(materialId) {
-        const material = this.materialOptions.find(m => m.id === materialId);
-        return material ? material.unit : '';
-      },
-      getMaterialStatus(material) {
-        // Lógica para determinar estado del material
-        return 'Disponible';
-      },
-      printOrder() {
-        window.print();
-      }
+    canEdit: {
+      type: Boolean,
+      default: true
     }
-  };
-  </script>
-  
-  <style scoped>
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+  },
+  data() {
+    return {
+      isEditing: false,
+      pedidoData: {},
+      originalData: {},
+      saving: false
+    }
+  },
+  mounted() {
+    this.initializeData()
+    this.isEditing = this.mode === 'edit'
+  },
+  watch: {
+    pedido: {
+      handler() {
+        this.initializeData()
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    initializeData() {
+      // Hacer una copia profunda del pedido para edición
+      this.pedidoData = JSON.parse(JSON.stringify(this.pedido))
+      this.originalData = JSON.parse(JSON.stringify(this.pedido))
+    },
+
+    enableEdit() {
+      this.isEditing = true
+    },
+
+    cancelEdit() {
+      // Restaurar datos originales
+      this.pedidoData = JSON.parse(JSON.stringify(this.originalData))
+      this.isEditing = false
+    },
+
+    async saveChanges() {
+      if (this.saving) return
+
+      this.saving = true
+      try {
+        // Emitir evento con los datos modificados
+        this.$emit('save', {
+          id: this.pedidoData.id,
+          changes: this.getChanges()
+        })
+        
+        // Actualizar datos originales
+        this.originalData = JSON.parse(JSON.stringify(this.pedidoData))
+        this.isEditing = false
+        
+      } catch (error) {
+        console.error('Error al guardar:', error)
+        this.$emit('error', 'Error al guardar los cambios')
+      } finally {
+        this.saving = false
+      }
+    },
+
+    getChanges() {
+      const changes = {}
+      const compareFields = [
+        'estado_id', 'prioridad', 'fecha_requerida', 'fecha_estimada_entrega',
+        'costo_estimado', 'precio_final', 'proyecto_asociado', 'notas'
+      ]
+
+      compareFields.forEach(field => {
+        if (this.pedidoData[field] !== this.originalData[field]) {
+          changes[field] = this.pedidoData[field]
+        }
+      })
+
+      return changes
+    },
+
+    close() {
+      if (this.isEditing && this.hasUnsavedChanges()) {
+        if (confirm('¿Estás seguro de cerrar? Se perderán los cambios no guardados.')) {
+          this.$emit('close')
+        }
+      } else {
+        this.$emit('close')
+      }
+    },
+
+    hasUnsavedChanges() {
+      return Object.keys(this.getChanges()).length > 0
+    },
+    
+    getStatusName(estadoId) {
+      const estados = {
+        1: 'Borrador',
+        2: 'Pendiente Aprobación',
+        3: 'Aprobado',
+        4: 'En Proceso',
+        5: 'Completado',
+        6: 'Cancelado'
+      }
+      return estados[estadoId] || 'Desconocido'
+    },
+    
+    getStatusClass(estadoId) {
+      const classes = {
+        1: 'draft',
+        2: 'pending',
+        3: 'approved',
+        4: 'in-progress',
+        5: 'completed',
+        6: 'cancelled'
+      }
+      return classes[estadoId] || 'unknown'
+    },
+    
+    getPriorityName(priority) {
+      const priorityMap = {
+        '1': 'Alta',
+        '2': 'Media-Alta',
+        '3': 'Media',
+        '4': 'Media-Baja',
+        '5': 'Baja'
+      }
+      return priorityMap[priority] || 'Media'
+    },
+    
+    formatDate(dateString) {
+      if (!dateString) return 'N/A'
+      return new Date(dateString).toLocaleDateString('es-ES')
+    },
+    
+    formatDateTime(dateTimeString) {
+      if (!dateTimeString) return 'N/A'
+      return new Date(dateTimeString).toLocaleString('es-ES')
+    },
+
+    formatDateTimeForInput(dateTimeString) {
+      if (!dateTimeString) return ''
+      const date = new Date(dateTimeString)
+      return date.toISOString().slice(0, 16)
+    },
+    
+    calcularMargen(pedido) {
+      if (!pedido.costo_estimado || !pedido.precio_final) return 0
+      const margen = ((pedido.precio_final - pedido.costo_estimado) / pedido.costo_estimado) * 100
+      return margen.toFixed(1)
+    },
+    
+    getMargenClass(pedido) {
+      const margen = this.calcularMargen(pedido)
+      if (margen > 20) return 'good'
+      if (margen > 10) return 'medium'
+      return 'low'
+    },
+    
+    getFileIcon(archivo) {
+      const tipo = archivo.tipo_archivo?.toLowerCase()
+      if (tipo === 'pdf') return 'picture_as_pdf'
+      if (tipo === 'imagen') return 'image'
+      if (tipo === 'dwg' || tipo === 'dxf') return 'architecture'
+      return 'description'
+    }
   }
-  
+}
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  max-width: 900px;
+  animation: modal-appear 0.3s ease-out;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: linear-gradient(to right, #f8f9fa, #f0f4ff);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 700;
+  flex: 1;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: #e9ecef;
+  transform: scale(1.1);
+}
+
+.edit-btn {
+  color: #4a6cf7;
+}
+
+.close-btn {
+  color: #6c757d;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: #fafbfc;
+}
+
+.detail-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-section {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eaeef2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.detail-section:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.detail-section h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 1.1em;
+  font-weight: 600;
+  border-bottom: 2px solid #4a6cf7;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-grid {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #394360;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+}
+
+.detail-item label::after {
+  content: "";
+  height: 2px;
+  width: 8px;
+  background: #4a6cf7;
+  margin-left: 4px;
+  border-radius: 1px;
+}
+
+/* Estilos para elementos de solo lectura */
+.status-badge, .priority-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.status-badge.draft { background: #f3f4f6; color: #6b7280; }
+.status-badge.pending { background: #fef3c7; color: #92400e; }
+.status-badge.approved { background: #d1fae5; color: #065f46; }
+.status-badge.in-progress { background: #dbeafe; color: #1e40af; }
+.status-badge.completed { background: #d1fae5; color: #065f46; }
+.status-badge.cancelled { background: #fee2e2; color: #991b1b; }
+
+.priority-badge.priority-1 { background: #fee2e2; color: #991b1b; }
+.priority-badge.priority-2 { background: #fed7aa; color: #c2410c; }
+.priority-badge.priority-3 { background: #fef3c7; color: #92400e; }
+.priority-badge.priority-4 { background: #d1fae5; color: #065f46; }
+.priority-badge.priority-5 { background: #f3f4f6; color: #6c757d; }
+
+.price {
+  font-weight: 600;
+  color: #059669;
+  font-family: 'Courier New', monospace;
+}
+
+.price.final {
+  color: #dc2626;
+}
+
+.margen {
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.margen.good { color: #065f46; }
+.margen.medium { color: #92400e; }
+.margen.low { color: #991b1b; }
+.margen.calculated { 
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.notes {
+  margin: 0;
+  color: #6b7280;
+  font-style: italic;
+  line-height: 1.5;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e5e5e5;
+}
+
+/* Estilos para elementos de edición */
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.15);
+}
+
+.form-input:read-only {
+  background: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input-prefix {
+  background: #f0f4ff;
+  border: 2px solid #e9ecef;
+  border-right: none;
+  padding: 12px 14px;
+  border-radius: 8px 0 0 8px;
+  font-weight: 600;
+  color: #4a6cf7;
+  position: absolute;
+  left: 0;
+  height: calc(100% - 4px);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.input-group .form-input {
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding-left: 45px;
+}
+
+/* Lista de archivos */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  border-color: #4a6cf7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transform: translateX(4px);
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.file-type {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.download-btn {
+  color: #4a6cf7;
+  padding: 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.download-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Footer */
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn.primary {
+  background: linear-gradient(to right, #4a6cf7, #6a8aff);
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.3);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: linear-gradient(to right, #3a57d7, #5a7aef);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74, 108, 247, 0.4);
+}
+
+.btn.secondary {
+  background: #6c757d;
+  color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 117, 125, 0.3);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scroll personalizado para el modal */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .modal-content {
-    background-color: white;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 95%;
+    margin: 10px;
   }
-  
-  .dark-mode .modal-content {
-    background-color: #1e1e1e;
-    color: #fff;
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .detail-section {
+    padding: 16px;
   }
   
   .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    position: relative;
-  }
-  
-  .dark-mode .modal-header {
-    border-bottom-color: #333;
-  }
-  
-  .modal-header h2 {
-    margin: 0;
-    color: var(--primary-color);
-    flex: 1;
-  }
-  
-  .order-status {
-    display: flex;
-    gap: 10px;
-    margin: 0 15px;
-  }
-  
-  .status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-  
-  .status-badge.pending {
-    background-color: #e3f2fd;
-    color: #1565c0;
-  }
-  
-  .dark-mode .status-badge.pending {
-    background-color: #1a3a4a;
-    color: #90caf9;
-  }
-  
-  .status-badge.in-progress {
-    background-color: #e0f7fa;
-    color: #00838f;
-  }
-  
-  .dark-mode .status-badge.in-progress {
-    background-color: #1a3a3a;
-    color: #80deea;
-  }
-  
-  .status-badge.completed {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-  }
-  
-  .dark-mode .status-badge.completed {
-    background-color: #1a3a1a;
-    color: #a5d6a7;
-  }
-  
-  .status-badge.delayed {
-    background-color: #ffebee;
-    color: #c62828;
-  }
-  
-  .dark-mode .status-badge.delayed {
-    background-color: #4a2222;
-    color: #ffcdd2;
-  }
-  
-  .priority-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-  
-  .priority-badge.high {
-    background-color: #ffebee;
-    color: #c62828;
-  }
-  
-  .dark-mode .priority-badge.high {
-    background-color: #4a2222;
-    color: #ffcdd2;
-  }
-  
-  .priority-badge.medium {
-    background-color: #fff8e1;
-    color: #ff8f00;
-  }
-  
-  .dark-mode .priority-badge.medium {
-    background-color: #4a3a1a;
-    color: #ffe082;
-  }
-  
-  .priority-badge.low {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-  }
-  
-  .dark-mode .priority-badge.low {
-    background-color: #1a3a1a;
-    color: #a5d6a7;
-  }
-  
-  .close-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-    font-size: 24px;
-  }
-  
-  .dark-mode .close-btn {
-    color: #aaa;
-  }
-  
-  .close-btn:hover {
-    color: #333;
-  }
-  
-  .dark-mode .close-btn:hover {
-    color: #fff;
-  }
-  
-  .modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-  }
-  
-  .order-section {
-    margin-bottom: 30px;
-  }
-  
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: var(--primary-color);
-  }
-  
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-  
-  .info-item {
-    margin-bottom: 10px;
-  }
-  
-  .info-item label {
-    display: block;
-    font-weight: 500;
-    color: #666;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-  }
-  
-  .dark-mode .info-item label {
-    color: #aaa;
-  }
-  
-  .info-item span, .info-item p {
-    word-break: break-word;
-  }
-  
-  .info-item.full-width {
-    grid-column: 1 / -1;
-  }
-  
-  .progress-bar {
-    height: 24px;
-    background-color: #eee;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .dark-mode .progress-bar {
-    background-color: #333;
-  }
-  
-  .progress-fill {
-    height: 100%;
-    background-color: var(--primary-color);
-    transition: width 0.3s ease;
-  }
-  
-  .progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: 500;
-    font-size: 0.8em;
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-  }
-  
-  .resource-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-  }
-  
-  .resource-card {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-left: 4px solid var(--primary-color);
-  }
-  
-  .dark-mode .resource-card {
-    background-color: #2d2d2d;
-  }
-  
-  .resource-icon {
-    font-size: 28px;
-    color: var(--primary-color);
-  }
-  
-  .resource-info {
-    flex: 1;
-  }
-  
-  .resource-name {
-    font-weight: 500;
-    margin-bottom: 5px;
-  }
-  
-  .resource-status {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.8em;
-    color: #666;
-  }
-  
-  .dark-mode .resource-status {
-    color: #aaa;
-  }
-  
-  .resource-status .material-icons {
-    font-size: 16px;
-  }
-  
-  .materials-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-  }
-  
-  .materials-table th {
-    background-color: #f5f5f5;
-    padding: 10px 12px;
-    text-align: left;
-    font-weight: 500;
-    font-size: 0.9em;
-  }
-  
-  .dark-mode .materials-table th {
-    background-color: #2d2d2d;
-  }
-  
-  .materials-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .dark-mode .materials-table td {
-    border-bottom-color: #333;
-  }
-  
-  .material-status {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 0.8em;
-    font-weight: 500;
-  }
-  
-  .material-status.available {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-  }
-  
-  .dark-mode .material-status.available {
-    background-color: #1a3a1a;
-    color: #a5d6a7;
-  }
-  
-  .material-status.pending {
-    background-color: #fff8e1;
-    color: #ff8f00;
-  }
-  
-  .dark-mode .material-status.pending {
-    background-color: #4a3a1a;
-    color: #ffe082;
-  }
-  
-  .material-status.unavailable {
-    background-color: #ffebee;
-    color: #c62828;
-  }
-  
-  .dark-mode .material-status.unavailable {
-    background-color: #4a2222;
-    color: #ffcdd2;
-  }
-  
-  .notes-content {
-    background-color: #f9f9f9;
-    border-radius: 6px;
-    padding: 15px;
-    white-space: pre-line;
-  }
-  
-  .dark-mode .notes-content {
-    background-color: #2d2d2d;
-  }
-  
-  .no-notes {
-    color: #666;
-    font-style: italic;
-  }
-  
-  .dark-mode .no-notes {
-    color: #aaa;
-  }
-  
-  .timeline {
-    position: relative;
-    padding-left: 20px;
-    margin-left: 10px;
-  }
-  
-  .timeline::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 2px;
-    background-color: #ddd;
-  }
-  
-  .dark-mode .timeline::before {
-    background-color: #444;
-  }
-  
-  .timeline-item {
-    position: relative;
-    padding-bottom: 20px;
-  }
-  
-  .timeline-dot {
-    position: absolute;
-    left: -26px;
-    top: 0;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    border: 3px solid white;
-  }
-  
-  .dark-mode .timeline-dot {
-    border-color: #1e1e1e;
-  }
-  
-  .timeline-content {
-    background-color: #f9f9f9;
-    border-radius: 6px;
-    padding: 12px 15px;
-  }
-  
-  .dark-mode .timeline-content {
-    background-color: #2d2d2d;
-  }
-  
-  .timeline-date {
-    font-size: 0.8em;
-    color: #666;
-    margin-bottom: 5px;
-  }
-  
-  .dark-mode .timeline-date {
-    color: #aaa;
-  }
-  
-  .timeline-event {
-    margin-bottom: 3px;
-  }
-  
-  .timeline-user {
-    font-size: 0.8em;
-    color: #666;
-    font-style: italic;
-  }
-  
-  .dark-mode .timeline-user {
-    color: #aaa;
+    padding: 16px 20px;
   }
   
   .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
+    padding: 16px 20px;
   }
   
-  .dark-mode .modal-footer {
-    border-top-color: #333;
+  .file-list {
+    padding: 12px;
   }
-  
-  .btn {
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .btn.primary {
-    background-color: var(--primary-color);
-    color: white;
-  }
-  
-  .btn.primary:hover {
-    background-color: var(--secondary-color);
-  }
-  
-  .btn.secondary {
-    background-color: #e0e0e0;
-    color: #333;
-  }
-  
-  .dark-mode .btn.secondary {
-    background-color: #333;
-    color: #fff;
-  }
-  
-  .btn.secondary:hover {
-    background-color: #d0d0d0;
-  }
-  
-  .dark-mode .btn.secondary:hover {
-    background-color: #444;
-  }
-  
-  @media (max-width: 768px) {
-    .modal-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    
-    .order-status {
-      margin: 0;
-      align-self: flex-start;
-    }
-    
-    .info-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .resource-cards {
-      grid-template-columns: 1fr;
-    }
-    
-    .modal-footer {
-      flex-direction: column;
-    }
-    
-    .btn {
-      justify-content: center;
-    }
-  }
-  
-  @media print {
-    body * {
-      visibility: hidden;
-    }
-    .modal-overlay, .modal-overlay * {
-      visibility: visible;
-    }
-    .modal-overlay {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: auto;
-    }
-    .modal-content {
-      box-shadow: none;
-      max-height: none;
-      width: 100%;
-    }
-    .modal-footer {
-      display: none;
-    }
-  }
-  </style>
+}
+</style>
