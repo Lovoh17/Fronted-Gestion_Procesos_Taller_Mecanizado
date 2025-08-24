@@ -97,12 +97,12 @@
 
     <!-- Tabla con vue-good-table-next -->
     <div class="table-container">
-      <vue-good-table :columns="columns" :rows="filteredData" max-height="45vh" :fixedHeader="true"
+      <vue-good-table :columns="columns" :rows="filteredData" max-height="45vh"
         :pagination-options="paginationOptions" :sort-options="{ enabled: true, initialSortBy: sortOption }"
         :search-options="{
           enabled: true,
           externalQuery: searchTerm
-        }" :loading="isLoading" theme="nocturnal" compactMode styleClass="vgt-table striped condensed fixed-header">
+        }" :loading="isLoading" theme="rinoh" compactMode styleClass="vgt-table striped condensed fixed-header">
         <!-- Slot para Tipo de Movimiento -->
         <template #table-row="params">
           <span v-if="params.column.field === 'tipoMovimiento'"
@@ -261,4 +261,4 @@ import HistorialMovimientosScript from './scripts/HistorialMovimientosScript.js'
 export default HistorialMovimientosScript;
 </script>
 <style src="./styles/ToolUsageHistoryView.css" scoped></style>
-<style src="src/assets/EstiloBase.css"></style>
+<style src="src/assets/EstiloBase.css" scoped></style>

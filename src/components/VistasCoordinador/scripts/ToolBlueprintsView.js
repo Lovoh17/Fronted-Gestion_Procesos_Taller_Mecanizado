@@ -1,7 +1,13 @@
 import axios from 'axios';
+import UploadBlueprintModal from '../ComponentesCoordinador/UploadBlueprintModal.vue';
+import ModalDetallesPlanoHerramienta from '../ComponentesCoordinador/ModalDetallesPlanoHerramienta.vue';
 
 export default {
   name: 'ToolBlueprintsView',
+  components: {
+    UploadBlueprintModal,
+    ModalDetallesPlanoHerramienta
+  },
   data() {
     return {
       items: [],
@@ -9,17 +15,7 @@ export default {
       error: null,
       searchQuery: '',
       selectedItem: null,
-      showUploadModal: false,
-      isDragOver: false,
-      uploading: false,
-      uploadProgress: 0,
-      uploadForm: {
-        codigo: '',
-        version: '',
-        descripcion: '',
-        selectedFile: null,
-        errors: {}
-      }
+      showUploadModal: false
     };
   },
   computed: {
@@ -35,22 +31,15 @@ export default {
           item.herramienta.codigo.toLowerCase().includes(query)
         );
       });
-    },
-    canSubmit() {
-      return this.uploadForm.codigo.trim() && this.uploadForm.selectedFile && !this.uploading;
     }
   },
   watch: {
     searchQuery(newQuery) {
       // El filtrado se maneja automáticamente por el computed filteredItems
-      // pero se puede agregar lógica adicional aquí si es necesario
     }
   },
   created() {
     this.fetchData();
-  },
-  mounted() {
-    // Cualquier lógica adicional que necesite ejecutarse después del montaje
   },
   methods: {
     async fetchData() {
@@ -82,16 +71,75 @@ export default {
               id: herramienta?.id,
               nombre: herramienta?.nombre || 'Desconocida',
               codigo: herramienta?.codigo || 'N/A',
-              estado: herramienta?.estado || 'N/A'
+              estado: herramienta?.estado || 'N/A',
+              modelo: herramienta?.modelo || 'N/A',
+              fabricante: herramienta?.fabricante || 'N/A',
+              numero_serie: herramienta?.numero_serie || 'N/A',
+              especificaciones_tecnicas: herramienta?.especificaciones_tecnicas,
+              horas_uso_actual: herramienta?.horas_uso_actual
             }
           };
         });
 
       } catch (err) {
         console.error('Error fetching data from API, using fallback data:', err);
-      
-        
         this.error = 'Usando datos de ejemplo (API no disponible)';
+        
+        // Datos de ejemplo para desarrollo
+        this.items = [
+          {
+            id: 1,
+            cantidad_necesaria: 2,
+            tiempo_estimado_uso: 8,
+            notas: 'Plano principal para taladro industrial',
+            fecha_creacion: '2024-01-15',
+            fecha_actualizacion: '2024-02-20',
+            plano: {
+              id: 1,
+              codigo: 'PLN-001',
+              descripcion: 'Plano técnico para taladro de banco modelo TD-500',
+              imagen_url: 'https://via.placeholder.com/400x300?text=Plano+TD-500',
+              version: '2.1'
+            },
+            herramienta: {
+              id: 1,
+              nombre: 'Taladro de Banco',
+              codigo: 'TD-500',
+              estado: 'disponible',
+              modelo: 'TD-500X',
+              fabricante: 'IndustrialTools',
+              numero_serie: 'IT-TD-2024-001',
+              especificaciones_tecnicas: 'Motor 1.5HP, Velocidad variable 50-3000 RPM, Capacidad max 13mm',
+              horas_uso_actual: 245
+            }
+          },
+          {
+            id: 2,
+            cantidad_necesaria: 1,
+            tiempo_estimado_uso: 4,
+            notas: 'Plano para sierra circular portátil',
+            fecha_creacion: '2024-01-20',
+            fecha_actualizacion: '2024-02-15',
+            plano: {
+              id: 2,
+              codigo: 'PLN-002',
+              descripcion: 'Especificaciones técnicas para sierra circular modelo SC-180',
+              imagen_url: 'https://via.placeholder.com/400x300?text=Plano+SC-180',
+              version: '1.0'
+            },
+            herramienta: {
+              id: 2,
+              nombre: 'Sierra Circular',
+              codigo: 'SC-180',
+              estado: 'en-uso',
+              modelo: 'SC-180PRO',
+              fabricante: 'CuttingEdge',
+              numero_serie: 'CE-SC-2024-002',
+              especificaciones_tecnicas: 'Disco 184mm, Motor 1400W, Profundidad corte 65mm',
+              horas_uso_actual: 120
+            }
+          }
+        ];
       } finally {
         this.loading = false;
       }
@@ -101,202 +149,19 @@ export default {
       this.selectedItem = item;
     },
     
-    // Métodos para el modal de subida
-    closeUploadModal() {
-      this.showUploadModal = false;
-      this.resetUploadForm();
+    editarPlano(blueprintItem) {
+      // Lógica para editar el plano
+      console.log('Editar plano:', blueprintItem);
+      this.selectedItem = null;
+      // Aquí podrías abrir un modal de edición o navegar a una página de edición
     },
     
-    resetUploadForm() {
-      this.uploadForm = {
-        codigo: '',
-        version: '',
-        descripcion: '',
-        selectedFile: null,
-        errors: {}
-      };
-      this.uploadProgress = 0;
-      this.isDragOver = false;
-      this.uploading = false;
-    },
-    
-    handleDrop(e) {
-      e.preventDefault();
-      this.isDragOver = false;
+    handleUploadSuccess(uploadedData) {
+      // Manejar el éxito de la subida
+      console.log('Archivo subido exitosamente:', uploadedData);
       
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        this.processFile(files[0]);
-      }
-    },
-    
-    handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        this.processFile(file);
-      }
-    },
-    
-    processFile(file) {
-      // Validar tipo de archivo
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      
-      if (!allowedTypes.includes(file.type)) {
-        this.uploadForm.errors.file = 'Tipo de archivo no permitido. Solo se aceptan PDF, DOC y DOCX.';
-        return;
-      }
-      
-      // Validar tamaño (10MB)
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        this.uploadForm.errors.file = 'El archivo es demasiado grande. Tamaño máximo: 10MB.';
-        return;
-      }
-      
-      // Limpiar errores y establecer archivo
-      this.uploadForm.errors.file = '';
-      this.uploadForm.selectedFile = file;
-    },
-    
-    removeFile() {
-      this.uploadForm.selectedFile = null;
-      this.uploadForm.errors.file = '';
-    },
-    
-    validateForm() {
-      const errors = {};
-      
-      if (!this.uploadForm.codigo.trim()) {
-        errors.codigo = 'El código del plano es requerido.';
-      }
-      
-      if (!this.uploadForm.selectedFile) {
-        errors.file = 'Debe seleccionar un archivo.';
-      }
-      
-      this.uploadForm.errors = errors;
-      return Object.keys(errors).length === 0;
-    },
-    
-    async handleUpload() {
-      if (!this.validateForm()) return;
-      
-      this.uploading = true;
-      this.uploadProgress = 0;
-      
-      try {
-        const formData = new FormData();
-        formData.append('codigo', this.uploadForm.codigo);
-        formData.append('version', this.uploadForm.version);
-        formData.append('descripcion', this.uploadForm.descripcion);
-        formData.append('archivo', this.uploadForm.selectedFile);
-        
-        const response = await axios.post('/api/Plano/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: (progressEvent) => {
-            this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          }
-        });
-        
-        // Completar progreso
-        this.uploadProgress = 100;
-        
-        // Mostrar mensaje de éxito
-        this.$toast?.success?.('Plano subido exitosamente') || 
-        alert('Plano subido exitosamente');
-        
-        // Recargar datos y cerrar modal
-        await this.fetchData();
-        this.closeUploadModal();
-        
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        
-        // Fallback: simular subida si la API no está disponible
-        console.warn('API upload failed, simulating upload...');
-        
-        // Simular progreso de subida
-        const simulateProgress = () => {
-          return new Promise((resolve) => {
-            const interval = setInterval(() => {
-              this.uploadProgress += Math.random() * 20;
-              if (this.uploadProgress >= 100) {
-                this.uploadProgress = 100;
-                clearInterval(interval);
-                resolve();
-              }
-            }, 200);
-          });
-        };
-        
-        await simulateProgress();
-        
-        const successMessage = 'Plano subido exitosamente (modo demo)';
-        this.$toast?.success?.(successMessage) || alert(successMessage);
-        
-        this.closeUploadModal();
-        
-      } finally {
-        this.uploading = false;
-      }
-    },
-    
-    // Utilidades para archivos
-    getFileIcon(mimeType) {
-      if (!mimeType) return 'insert_drive_file';
-      
-      switch (mimeType) {
-        case 'application/pdf':
-          return 'picture_as_pdf';
-        case 'application/msword':
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-          return 'description';
-        default:
-          return 'insert_drive_file';
-      }
-    },
-    
-    getFileIconClass(mimeType) {
-      if (!mimeType) return 'file-icon';
-      
-      switch (mimeType) {
-        case 'application/pdf':
-          return 'pdf-icon';
-        case 'application/msword':
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-          return 'doc-icon';
-        default:
-          return 'file-icon';
-      }
-    },
-    
-    getFileType(mimeType) {
-      if (!mimeType) return 'Archivo';
-      
-      switch (mimeType) {
-        case 'application/pdf':
-          return 'PDF';
-        case 'application/msword':
-          return 'DOC';
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-          return 'DOCX';
-        default:
-          return 'Archivo';
-      }
-    },
-    
-    formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      // Recargar los datos para incluir el nuevo plano
+      this.fetchData();
     },
     
     formatDate(dateString) {

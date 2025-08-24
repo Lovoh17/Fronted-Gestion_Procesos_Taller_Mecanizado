@@ -1,7 +1,7 @@
 <template>
   <div class="crud-table">
     <div class="table-header">
-      <va-button @click="showAddForm = !showAddForm" class="btn-add"   >
+      <va-button @click="showAddForm = !showAddForm" class="btn-add">
         {{ showAddForm ? 'Cancelar' : '➕ Agregar Nuevo' }}
       </va-button>
     </div>
@@ -12,53 +12,30 @@
       <div class="form-grid">
         <div v-for="col in editableColumns" :key="col.field" class="form-field">
           <label>{{ col.label }}{{ col.required ? ' *' : '' }}</label>
-          
+
           <!-- Campo booleano -->
           <div v-if="col.type === 'boolean'" class="checkbox-container">
-            <input
-              type="checkbox"
-              :id="`new-${col.field}`"
-              v-model="newItem[col.field]"
-            >
+            <input type="checkbox" :id="`new-${col.field}`" v-model="newItem[col.field]">
             <label :for="`new-${col.field}`" class="checkbox-label">
               {{ newItem[col.field] ? 'Sí' : 'No' }}
             </label>
           </div>
-          
+
           <!-- Otros campos -->
-          <input
-            v-else-if="col.type === 'number'"
-            type="number"
-            v-model.number="newItem[col.field]"
-            :required="col.required"
-          >
-          <input
-            v-else-if="col.type === 'time'"
-            type="time"
-            v-model="newItem[col.field]"
-            :required="col.required"
-          >
-          <input
-            v-else-if="col.type === 'color'"
-            type="color"
-            v-model="newItem[col.field]"
-            :required="col.required"
-          >
-          <input
-            v-else
-            type="text"
-            v-model="newItem[col.field]"
-            :required="col.required"
-          >
+          <input v-else-if="col.type === 'number'" type="number" v-model.number="newItem[col.field]"
+            :required="col.required">
+          <input v-else-if="col.type === 'time'" type="time" v-model="newItem[col.field]" :required="col.required">
+          <input v-else-if="col.type === 'color'" type="color" v-model="newItem[col.field]" :required="col.required">
+          <input v-else type="text" v-model="newItem[col.field]" :required="col.required">
         </div>
       </div>
       <div class="form-actions">
-        <va-button @click="addItem" class="btn-save"   >
-        Guardar
-      </va-button>
-        <va-button @click="cancelAdd" class="btn-cancel"   >
-        Cancelar
-      </va-button>
+        <va-button @click="addItem" class="btn-save">
+          Guardar
+        </va-button>
+        <va-button @click="cancelAdd" class="btn-cancel">
+          Cancelar
+        </va-button>
       </div>
     </div>
 
@@ -85,49 +62,25 @@
             <td v-for="col in columns" :key="col.field">
               <template v-if="editingItem?.id === item.id">
                 <!-- Campos de edición -->
-                
+
                 <!-- Campo booleano en edición -->
                 <div v-if="col.type === 'boolean'" class="checkbox-container">
-                  <input
-                    type="checkbox"
-                    :id="`edit-${col.field}-${item.id}`"
-                    v-model="editingItem[col.field]"
-                    :disabled="col.readonly"
-                  >
+                  <input type="checkbox" :id="`edit-${col.field}-${item.id}`" v-model="editingItem[col.field]"
+                    :disabled="col.readonly">
                   <label :for="`edit-${col.field}-${item.id}`" class="checkbox-label">
                     {{ editingItem[col.field] ? 'Sí' : 'No' }}
                   </label>
                 </div>
-                
+
                 <!-- Otros campos en edición -->
-                <input
-                  v-else-if="col.type === 'number'"
-                  type="number"
-                  v-model.number="editingItem[col.field]"
-                  :disabled="col.readonly"
-                  :required="col.required"
-                >
-                <input
-                  v-else-if="col.type === 'time'"
-                  type="time"
-                  v-model="editingItem[col.field]"
-                  :disabled="col.readonly"
-                  :required="col.required"
-                >
-                <input
-                  v-else-if="col.type === 'color'"
-                  type="color"
-                  v-model="editingItem[col.field]"
-                  :disabled="col.readonly"
-                  :required="col.required"
-                >
-                <input
-                  v-else
-                  type="text"
-                  v-model="editingItem[col.field]"
-                  :disabled="col.readonly"
-                  :required="col.required"
-                >
+                <input v-else-if="col.type === 'number'" type="number" v-model.number="editingItem[col.field]"
+                  :disabled="col.readonly" :required="col.required">
+                <input v-else-if="col.type === 'time'" type="time" v-model="editingItem[col.field]"
+                  :disabled="col.readonly" :required="col.required">
+                <input v-else-if="col.type === 'color'" type="color" v-model="editingItem[col.field]"
+                  :disabled="col.readonly" :required="col.required">
+                <input v-else type="text" v-model="editingItem[col.field]" :disabled="col.readonly"
+                  :required="col.required">
               </template>
               <template v-else>
                 <!-- Visualización normal -->
@@ -137,7 +90,7 @@
                   </span>
                 </span>
                 <span v-else-if="col.type === 'color'" class="color-display">
-                  <span class="color-box" :style="{backgroundColor: item[col.field]}"></span>
+                  <span class="color-box" :style="{ backgroundColor: item[col.field] }"></span>
                   {{ item[col.field] }}
                 </span>
                 <span v-else>
@@ -147,20 +100,20 @@
             </td>
             <td class="actions">
               <template v-if="editingItem?.id === item.id">
-                <va-button @click="saveItem" class="btn-save"   >
-        💾
-      </va-button>
-                <va-button @click="cancelEdit" class="btn-cancel"   >
-        ✖
-      </va-button>
+                <va-button @click="saveItem" class="btn-save">
+                  💾
+                </va-button>
+                <va-button @click="cancelEdit" class="btn-cancel">
+                  ✖
+                </va-button>
               </template>
               <template v-else>
-                <va-button @click="startEdit(item)" class="btn-edit"   >
-        ✏️
-      </va-button>
-                <va-button @click="deleteItem(item)" class="btn-delete"   >
-        🗑️
-      </va-button>
+                <va-button @click="startEdit(item)" class="btn-edit">
+                  ✏️
+                </va-button>
+                <va-button @click="deleteItem(item)" class="btn-delete">
+                  🗑️
+                </va-button>
               </template>
             </td>
           </tr>
@@ -220,7 +173,7 @@ export default {
         }
       })
     },
-    
+
     startEdit(item) {
       this.editingItem = { ...item }
       // Asegurar que los campos booleanos sean booleanos
@@ -230,11 +183,11 @@ export default {
         }
       })
     },
-    
+
     cancelEdit() {
       this.editingItem = null
     },
-    
+
     async saveItem() {
       try {
         // Validar campos requeridos
@@ -253,12 +206,12 @@ export default {
         alert(error.message)
       }
     },
-    
+
     cancelAdd() {
       this.newItem = {}
       this.showAddForm = false
     },
-    
+
     async addItem() {
       try {
         // Validar campos requeridos
@@ -278,17 +231,17 @@ export default {
         alert(error.message)
       }
     },
-    
+
     async deleteItem(item) {
       const itemName = item.nombre || item.descripcion || `ID: ${item.id}`
       if (confirm(`¿Estás seguro de que deseas eliminar "${itemName}"?`)) {
         this.$emit('delete', item.id)
       }
     },
-    
+
     formatValue(value, type) {
       if (value === null || value === undefined) return '-'
-      
+
       switch (type) {
         case 'number':
           return typeof value === 'number' ? value.toLocaleString() : value
@@ -320,7 +273,6 @@ export default {
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
 }
@@ -332,7 +284,6 @@ export default {
 .add-form {
   background: #f9f9f9;
   border: 1px solid #ddd;
-  border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -363,7 +314,6 @@ export default {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: 4px;
   box-sizing: border-box;
 }
 
@@ -394,7 +344,6 @@ export default {
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
   cursor: pointer;
 }
 
@@ -407,7 +356,6 @@ export default {
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
   cursor: pointer;
 }
 
@@ -418,7 +366,6 @@ export default {
 .table-responsive {
   overflow-x: auto;
   border: 1px solid #ddd;
-  border-radius: 8px;
 }
 
 table {
@@ -426,7 +373,8 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #eee;
@@ -440,7 +388,8 @@ th {
   top: 0;
 }
 
-.loading-row, .empty-row {
+.loading-row,
+.empty-row {
   text-align: center;
   padding: 30px;
   color: #666;
@@ -454,7 +403,6 @@ th {
 
 .boolean-badge {
   padding: 4px 8px;
-  border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
@@ -479,7 +427,6 @@ th {
 .color-box {
   width: 20px;
   height: 20px;
-  border-radius: 3px;
   border: 1px solid #ddd;
 }
 
@@ -492,7 +439,6 @@ th {
   margin: 0 3px;
   padding: 5px 8px;
   border: 1px solid #ddd;
-  border-radius: 3px;
   cursor: pointer;
   background: white;
   transition: all 0.2s ease;
@@ -515,15 +461,16 @@ th {
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .table-responsive {
     font-size: 14px;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 8px;
   }
-  
+
   .actions button {
     padding: 3px 6px;
     font-size: 12px;

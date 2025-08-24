@@ -66,7 +66,7 @@
                   initialSortBy: { field: 'codigo', type: 'asc' }
                 }" :select-options="{
                   enabled: false
-                }" styleClass="vgt-table striped bordered" theme="nocturnal">
+                }" styleClass="vgt-table striped bordered" theme="rinoh">
 
                 <!-- Slot personalizado para cada celda -->
                 <template #table-row="props">
