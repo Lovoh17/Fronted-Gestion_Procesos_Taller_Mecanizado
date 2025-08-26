@@ -107,19 +107,12 @@
     </transition>
 
     <!-- Modal de detalles (componente separado) -->
-    <ModalDetallesPlanoHerramienta
-      :blueprint-item="selectedItem"
-      @cerrar="selectedItem = null"
-      @editar="editarPlano"
-    />
+    <ModalDetallesPlanoHerramienta :blueprint-item="selectedItem" @cerrar="selectedItem = null" @editar="editarPlano" />
 
     <!-- Modal de Subida de Archivos (Componente separado) -->
     <transition name="modal">
-      <UploadBlueprintModal 
-        v-if="showUploadModal"
-        @close="showUploadModal = false"
-        @upload-success="handleUploadSuccess"
-      />
+      <UploadBlueprintModal v-if="showUploadModal" @close="showUploadModal = false"
+        @upload-success="handleUploadSuccess" />
     </transition>
   </div>
 </template>

@@ -21,14 +21,27 @@ export default {
   computed: {
     filteredItems() {
       if (!this.searchQuery) return this.items;
-      
-      const query = this.searchQuery.toLowerCase();
+
+      const query = this.searchQuery.toLowerCase().trim();
       return this.items.filter(item => {
+        // Función auxiliar para buscar en texto, manejando objetos y strings
+        const searchInText = (text) => {
+          if (!text) return false;
+          if (typeof text === 'object') {
+            return JSON.stringify(text).toLowerCase().includes(query);
+          }
+          return text.toString().toLowerCase().includes(query);
+        };
+
         return (
-          item.herramienta.nombre.toLowerCase().includes(query) ||
-          item.plano.codigo.toLowerCase().includes(query) ||
-          (item.plano.descripcion && item.plano.descripcion.toLowerCase().includes(query)) ||
-          item.herramienta.codigo.toLowerCase().includes(query)
+          searchInText(item.herramienta?.nombre) ||
+          searchInText(item.herramienta?.codigo) ||
+          searchInText(item.plano?.codigo) ||
+          searchInText(item.plano?.descripcion) ||
+          searchInText(item.plano?.nombre) ||
+          searchInText(item.herramienta?.fabricante) ||
+          searchInText(item.herramienta?.modelo) ||
+          searchInText(item.notas)
         );
       });
     }
@@ -45,125 +58,197 @@ export default {
     async fetchData() {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        // Intentar cargar datos reales de la API
+        // Cargar datos de las 3 APIs
         const [relacionesRes, planosRes, herramientasRes] = await Promise.all([
           axios.get('/api/Plano_Herramienta'),
           axios.get('/api/Plano'),
           axios.get('/api/Herramienta')
         ]);
 
+        // Mapear correctamente según la estructura real de la API
         this.items = relacionesRes.data.map(relacion => {
           const plano = planosRes.data.find(p => p.id === relacion.plano_id);
           const herramienta = herramientasRes.data.find(h => h.id === relacion.herramienta_id);
-          
+
           return {
             ...relacion,
             plano: {
               id: plano?.id,
-              codigo: plano?.codigo || 'N/A',
+              // Usar 'nombre' como código si no existe 'codigo'
+              codigo: plano?.codigo || plano?.nombre || 'N/A',
+              nombre: plano?.nombre,
               descripcion: plano?.descripcion,
-              imagen_url: plano?.imagen_url,
-              version: plano?.version
+              // Mapear correctamente la imagen
+              imagen_url: plano?.imagen_ruta || plano?.imagen_url,
+              version: plano?.version,
+              estado: plano?.estado,
+              archivo_ruta: plano?.archivo_ruta
             },
             herramienta: {
               id: herramienta?.id,
               nombre: herramienta?.nombre || 'Desconocida',
-              codigo: herramienta?.codigo || 'N/A',
-              estado: herramienta?.estado || 'N/A',
+              // Usar 'codigo_inventario' o 'codigo_unico' como código
+              codigo: herramienta?.codigo || herramienta?.codigo_inventario || herramienta?.codigo_unico || 'N/A',
+              // Mapear el estado desde 'estado_herramienta_id'
+              estado: this.getEstadoTexto(herramienta?.estado_herramienta_id) || 'N/A',
               modelo: herramienta?.modelo || 'N/A',
               fabricante: herramienta?.fabricante || 'N/A',
               numero_serie: herramienta?.numero_serie || 'N/A',
               especificaciones_tecnicas: herramienta?.especificaciones_tecnicas,
-              horas_uso_actual: herramienta?.horas_uso_actual
+              horas_uso_actual: herramienta?.horas_uso_actual,
+              vida_util_horas: herramienta?.vida_util_horas,
+              fecha_adquisicion: herramienta?.fecha_adquisicion,
+              imagen_ruta: herramienta?.imagen_ruta
             }
           };
         });
 
       } catch (err) {
-        console.error('Error fetching data from API, using fallback data:', err);
-        this.error = 'Usando datos de ejemplo (API no disponible)';
-        
-        // Datos de ejemplo para desarrollo
-        this.items = [
-          {
-            id: 1,
-            cantidad_necesaria: 2,
-            tiempo_estimado_uso: 8,
-            notas: 'Plano principal para taladro industrial',
-            fecha_creacion: '2024-01-15',
-            fecha_actualizacion: '2024-02-20',
-            plano: {
-              id: 1,
-              codigo: 'PLN-001',
-              descripcion: 'Plano técnico para taladro de banco modelo TD-500',
-              imagen_url: 'https://via.placeholder.com/400x300?text=Plano+TD-500',
-              version: '2.1'
-            },
-            herramienta: {
-              id: 1,
-              nombre: 'Taladro de Banco',
-              codigo: 'TD-500',
-              estado: 'disponible',
-              modelo: 'TD-500X',
-              fabricante: 'IndustrialTools',
-              numero_serie: 'IT-TD-2024-001',
-              especificaciones_tecnicas: 'Motor 1.5HP, Velocidad variable 50-3000 RPM, Capacidad max 13mm',
-              horas_uso_actual: 245
-            }
-          },
-          {
-            id: 2,
-            cantidad_necesaria: 1,
-            tiempo_estimado_uso: 4,
-            notas: 'Plano para sierra circular portátil',
-            fecha_creacion: '2024-01-20',
-            fecha_actualizacion: '2024-02-15',
-            plano: {
-              id: 2,
-              codigo: 'PLN-002',
-              descripcion: 'Especificaciones técnicas para sierra circular modelo SC-180',
-              imagen_url: 'https://via.placeholder.com/400x300?text=Plano+SC-180',
-              version: '1.0'
-            },
-            herramienta: {
-              id: 2,
-              nombre: 'Sierra Circular',
-              codigo: 'SC-180',
-              estado: 'en-uso',
-              modelo: 'SC-180PRO',
-              fabricante: 'CuttingEdge',
-              numero_serie: 'CE-SC-2024-002',
-              especificaciones_tecnicas: 'Disco 184mm, Motor 1400W, Profundidad corte 65mm',
-              horas_uso_actual: 120
-            }
-          }
-        ];
+        console.error('Error fetching data from API:', err);
+        this.error = 'Error al cargar datos de la API - usando datos de ejemplo';
+        // Cargar datos de ejemplo como fallback
+        this.loadFallbackData();
       } finally {
         this.loading = false;
       }
     },
-    
+
+    // Método para convertir ID de estado a texto
+    getEstadoTexto(estadoId) {
+      const estados = {
+        1: 'disponible',
+        2: 'en-uso',
+        3: 'mantenimiento',
+        4: 'fuera-de-servicio'
+      };
+      return estados[estadoId] || 'desconocido';
+    },
+
+    // Método separado para datos de fallback
+    loadFallbackData() {
+      this.items = [
+        {
+          id: "1",
+          plano_id: "1",
+          herramienta_id: "2",
+          cantidad_necesaria: 2,
+          tiempo_estimado_uso: "8.5",
+          notas: "Soldadoras MIG para estructura principal",
+          plano: {
+            id: "1",
+            codigo: "Estructura Soporte Principal",
+            nombre: "Estructura Soporte Principal",
+            descripcion: "Soporte para equipo pesado de soldadura",
+            imagen_url: "/planos/estructura_soporte_principal_v1.2.dwg",
+            version: "1.2",
+            estado: "aprobado",
+            archivo_ruta: "/planos/estructura_soporte_principal_v1.2.dwg"
+          },
+          herramienta: {
+            id: "2",
+            nombre: "Soldadora TIG-ACDC Premium",
+            codigo: "SLD-TIG225-001",
+            estado: "disponible",
+            modelo: "Precision TIG 225",
+            fabricante: "Lincoln Electric",
+            numero_serie: "SN-TIG225-001",
+            especificaciones_tecnicas: {
+              rango_amperaje: "5-225A",
+              frecuencia: "20-400Hz"
+            },
+            horas_uso_actual: "800",
+            vida_util_horas: "6000",
+            fecha_adquisicion: "2022-03-10",
+            imagen_ruta: "/img/herramientas/soldadora_tig225.jpg"
+          }
+        },
+        {
+          id: "2",
+          plano_id: "1",
+          herramienta_id: "4",
+          cantidad_necesaria: 1,
+          tiempo_estimado_uso: "3.0",
+          notas: "Cortadora plasma para cortes precisos",
+          plano: {
+            id: "1",
+            codigo: "Estructura Soporte Principal",
+            nombre: "Estructura Soporte Principal",
+            descripcion: "Soporte para equipo pesado de soldadura",
+            imagen_url: "/planos/estructura_soporte_principal_v1.2.dwg",
+            version: "1.2",
+            estado: "aprobado"
+          },
+          herramienta: {
+            id: "4",
+            nombre: "Cortadora Plasma CNC",
+            codigo: "CRT-PLASMA-001",
+            estado: "disponible",
+            modelo: "PlasmaMax 45",
+            fabricante: "HyperTherm",
+            numero_serie: "SN-PLS45-001",
+            especificaciones_tecnicas: {
+              corriente_corte: "45A",
+              espesor_max: "16mm"
+            },
+            horas_uso_actual: "150",
+            vida_util_horas: "5000"
+          }
+        },
+        {
+          id: "3",
+          plano_id: "2",
+          herramienta_id: "2",
+          cantidad_necesaria: 1,
+          tiempo_estimado_uso: "6.0",
+          notas: "Soldadora TIG para acabados de calidad",
+          plano: {
+            id: "2",
+            codigo: "Bancada de Trabajo Ajustable",
+            nombre: "Bancada de Trabajo Ajustable",
+            descripcion: "Bancada ajustable para soldadura TIG",
+            imagen_url: "/planos/bancada_trabajo_ajustable_v2.0.dwg",
+            version: "2.0",
+            estado: "aprobado"
+          },
+          herramienta: {
+            id: "2",
+            nombre: "Soldadora TIG-ACDC Premium",
+            codigo: "SLD-TIG225-001",
+            estado: "disponible",
+            modelo: "Precision TIG 225",
+            fabricante: "Lincoln Electric",
+            numero_serie: "SN-TIG225-001",
+            especificaciones_tecnicas: {
+              rango_amperaje: "5-225A",
+              frecuencia: "20-400Hz"
+            },
+            horas_uso_actual: "800"
+          }
+        }
+      ];
+    },
+
     openDetails(item) {
       this.selectedItem = item;
     },
-    
+
     editarPlano(blueprintItem) {
       // Lógica para editar el plano
       console.log('Editar plano:', blueprintItem);
       this.selectedItem = null;
       // Aquí podrías abrir un modal de edición o navegar a una página de edición
     },
-    
+
     handleUploadSuccess(uploadedData) {
       // Manejar el éxito de la subida
       console.log('Archivo subido exitosamente:', uploadedData);
-      
+
       // Recargar los datos para incluir el nuevo plano
       this.fetchData();
     },
-    
+
     formatDate(dateString) {
       if (!dateString) return 'N/A';
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
