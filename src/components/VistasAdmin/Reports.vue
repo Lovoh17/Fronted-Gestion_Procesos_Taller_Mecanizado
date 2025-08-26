@@ -158,7 +158,7 @@
                     </div>
                   </span>
 
-                  <!-- Columna de Acciones (simplificada) -->
+                  <!-- Columna de Acciones -->
                   <span v-else-if="props.column.field === 'actions'">
                     <div class="action-buttons">
                       <va-button size="small" preset="plain" color="info" @click="viewAlert(props.row)"
@@ -167,7 +167,7 @@
                       <va-button size="small" preset="plain" color="primary" @click="editAlert(props.row)" icon="edit"
                         class="mr-1" title="Editar"></va-button>
 
-                      <va-button size="small" preset="plain" color="danger" @click="deleteAlert(props.row.id)"
+                      <va-button size="small" preset="plain" color="danger" @click="confirmDeleteAlert(props.row.id)"
                         icon="delete" title="Eliminar"></va-button>
                     </div>
                   </span>
@@ -213,12 +213,254 @@
       </main>
     </div>
 
-    <!-- Modal para nueva alerta (placeholder) -->
-    <!-- <NewAlertModal v-if="showNewAlertModal" @close="showNewAlertModal = false" @save="addAlert" /> -->
+    <!-- Modal para Ver Detalles de Alerta -->
+    <va-modal v-model="showViewModal" title="Detalles de la Alerta" size="large" :close-button="true">
+      <div v-if="selectedAlert" class="alert-details">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-group">
+              <label class="detail-label">ID de Alerta:</label>
+              <span class="detail-value">{{ selectedAlert.id }}</span>
+            </div>
+            <div class="detail-group">
+              <label class="detail-label">Herramienta:</label>
+              <span class="detail-value">{{ getHerramientaNombre(selectedAlert.herramienta_id) }}</span>
+            </div>
+            <div class="detail-group">
+              <label class="detail-label">Tipo de Alerta:</label>
+              <span :class="['badge', 'badge-lg', getTipoAlertaClass(selectedAlert.tipo_alerta_id)]">
+                {{ getTipoAlerta(selectedAlert.tipo_alerta_id) }}
+              </span>
+            </div>
+            <div class="detail-group">
+              <label class="detail-label">Prioridad:</label>
+              <span :class="['badge', 'badge-lg', getPrioridadClass(selectedAlert.prioridad_id)]">
+                {{ getPrioridadText(selectedAlert.prioridad_id) }}
+              </span>
+            </div>
+            <div class="detail-group">
+              <label class="detail-label">Estado:</label>
+              <span :class="['badge', 'badge-lg', getEstadoClass(selectedAlert.estado_reparacion)]">
+                {{ getEstadoText(selectedAlert.estado_reparacion) }}
+              </span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-group">
+              <label class="detail-label">Fecha de Generación:</label>
+              <span class="detail-value">{{ formatDate(selectedAlert.fecha_generacion) }}</span>
+            </div>
+            <div class="detail-group">
+              <label class="detail-label">Fecha Límite:</label>
+              <span class="detail-value" :class="getDaysLeftClass(selectedAlert.fecha_limite)">
+                {{ formatDate(selectedAlert.fecha_limite) }}
+                <small class="d-block">{{ getDaysLeft(selectedAlert.fecha_limite) }}</small>
+              </span>
+            </div>
+            <div class="detail-group" v-if="selectedAlert.fecha_resolucion">
+              <label class="detail-label">Fecha de Resolución:</label>
+              <span class="detail-value">{{ formatDate(selectedAlert.fecha_resolucion) }}</span>
+            </div>
+            <div class="detail-group" v-if="selectedAlert.resuelta_por">
+              <label class="detail-label">Resuelta por:</label>
+              <span class="detail-value">{{ getUsuarioNombre(selectedAlert.resuelta_por) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-group mt-3" v-if="selectedAlert.descripcion">
+          <label class="detail-label">Descripción:</label>
+          <p class="detail-value">{{ selectedAlert.descripcion }}</p>
+        </div>
+        
+        <div class="detail-group" v-if="selectedAlert.observaciones">
+          <label class="detail-label">Observaciones:</label>
+          <p class="detail-value">{{ selectedAlert.observaciones }}</p>
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="modal-actions">
+          <va-button @click="showViewModal = false" preset="secondary">
+            Cerrar
+          </va-button>
+          <va-button @click="editCurrentAlert" color="primary" icon="edit">
+            Editar
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
+
+    <!-- Modal para Nueva/Editar Alerta -->
+    <va-modal v-model="showEditModal" :title="isEditing ? 'Editar Alerta' : 'Nueva Alerta'" size="large" :close-button="true">
+      <va-form ref="alertForm" @submit.prevent="saveAlert">
+        <div class="row">
+          <div class="col-md-6">
+            <va-select
+              v-model="alertForm.herramienta_id"
+              :options="herramientaOptions"
+              label="Herramienta"
+              placeholder="Seleccionar herramienta"
+              :rules="[required]"
+              text-by="nombre"
+              value-by="id"
+            />
+            
+            <va-select
+              v-model="alertForm.tipo_alerta_id"
+              :options="tipoAlertaOptions"
+              label="Tipo de Alerta"
+              placeholder="Seleccionar tipo"
+              :rules="[required]"
+              text-by="nombre_alertas"
+              value-by="id"
+            />
+            
+            <va-select
+              v-model="alertForm.prioridad_id"
+              :options="prioridadOptions"
+              label="Prioridad"
+              placeholder="Seleccionar prioridad"
+              :rules="[required]"
+            />
+            
+            <va-select
+              v-model="alertForm.estado_reparacion"
+              :options="estadoOptions"
+              label="Estado"
+              placeholder="Seleccionar estado"
+              :rules="[required]"
+            />
+          </div>
+          
+          <div class="col-md-6">
+            <va-date-input
+              v-model="alertForm.fecha_generacion"
+              label="Fecha de Generación"
+              :rules="[required]"
+            />
+            
+            <va-date-input
+              v-model="alertForm.fecha_limite"
+              label="Fecha Límite"
+              :rules="[required]"
+            />
+            
+            <va-date-input
+              v-model="alertForm.fecha_resolucion"
+              label="Fecha de Resolución"
+              v-if="alertForm.estado_reparacion === '5'"
+            />
+            
+            <va-select
+              v-model="alertForm.resuelta_por"
+              :options="usuarioOptions"
+              label="Resuelta por"
+              placeholder="Seleccionar usuario"
+              text-by="nombre_completo"
+              value-by="id"
+              v-if="alertForm.estado_reparacion === '5'"
+            />
+          </div>
+        </div>
+        
+        <div class="row mt-3">
+          <div class="col-12">
+            <va-textarea
+              v-model="alertForm.descripcion"
+              label="Descripción"
+              placeholder="Descripción de la alerta"
+              :rules="[required]"
+            />
+            
+            <va-textarea
+              v-model="alertForm.observaciones"
+              label="Observaciones"
+              placeholder="Observaciones adicionales"
+            />
+          </div>
+        </div>
+      </va-form>
+      
+      <template #footer>
+        <div class="modal-actions">
+          <va-button @click="cancelEdit" preset="secondary">
+            Cancelar
+          </va-button>
+          <va-button @click="saveAlert" color="primary" :loading="saving">
+            {{ isEditing ? 'Actualizar' : 'Crear' }}
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
+
+    <!-- Modal de Confirmación para Eliminar -->
+    <va-modal v-model="showDeleteModal" title="Confirmar Eliminación" size="small" :close-button="false">
+      <p>¿Está seguro de que desea eliminar esta alerta?</p>
+      <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+      
+      <template #footer>
+        <div class="modal-actions">
+          <va-button @click="showDeleteModal = false" preset="secondary">
+            Cancelar
+          </va-button>
+          <va-button @click="deleteAlert" color="danger" :loading="deleting">
+            Eliminar
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
   </div>
 </template>
 
 <style src="src/assets/EstiloBase.css" scoped></style>
+<style scoped>
+.alert-details {
+  padding: 1rem 0;
+}
+
+.detail-group {
+  margin-bottom: 1rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.badge-lg {
+  font-size: 0.85rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.herramienta-info strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.herramienta-info small {
+  font-size: 0.75rem;
+}
+</style>
+
 <script>
 import api from '@/api.js'
 
@@ -227,13 +469,34 @@ export default {
   data() {
     return {
       loading: false,
+      saving: false,
+      deleting: false,
       searchQuery: '',
       showNewAlertModal: false,
+      showViewModal: false,
+      showEditModal: false,
+      showDeleteModal: false,
       selectedAlert: null,
+      isEditing: false,
+      alertToDelete: null,
       alertas: [],
       herramientas: [],
       tiposAlertas: [],
       usuarios: [],
+      
+      // Formulario para nueva/editar alerta
+      alertForm: {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
+      },
 
       tableColumns: [
         {
@@ -291,7 +554,6 @@ export default {
 
   computed: {
     filteredAlertas() {
-      // Transform the data to include formatted dates
       return this.alertas.map(alert => ({
         ...alert,
         fecha_generacion_formatted: this.formatDate(alert.fecha_generacion),
@@ -314,6 +576,43 @@ export default {
 
     alertasResueltas() {
       return this.alertas.filter(alert => alert.estado_reparacion === '5').length
+    },
+
+    // Opciones para los selects
+    herramientaOptions() {
+      return this.herramientas
+    },
+
+    tipoAlertaOptions() {
+      return this.tiposAlertas
+    },
+
+    usuarioOptions() {
+      return this.usuarios.map(user => ({
+        ...user,
+        nombre_completo: `${user.nombre} ${user.apellido}`
+      }))
+    },
+
+    prioridadOptions() {
+      return [
+        { id: '1', text: 'Muy Baja' },
+        { id: '2', text: 'Baja' },
+        { id: '3', text: 'Media' },
+        { id: '4', text: 'Alta' },
+        { id: '5', text: 'Muy Alta' },
+        { id: '6', text: 'Crítica' }
+      ]
+    },
+
+    estadoOptions() {
+      return [
+        { id: '1', text: 'Pendiente' },
+        { id: '2', text: 'En Progreso' },
+        { id: '3', text: 'En Revisión' },
+        { id: '4', text: 'Pausado' },
+        { id: '5', text: 'Resuelto' }
+      ]
     }
   },
 
@@ -322,32 +621,20 @@ export default {
   },
 
   methods: {
+    // Regla de validación
+    required(value) {
+      return !!value || 'Este campo es obligatorio'
+    },
+
     // Método helper para mostrar notificaciones
     showToast(message, color = 'info') {
-      // Verificar si $va está disponible
       if (this.$va && this.$va.toast) {
         this.$va.toast({
           message,
           color
         })
       } else {
-        // Fallback a console.log si $va no está disponible
         console.log(`[${color.toUpperCase()}] ${message}`)
-      }
-    },
-
-    // Método helper para confirmar acciones
-    async showConfirm(title, message, okText = 'Confirmar', cancelText = 'Cancelar') {
-      if (this.$va && this.$va.confirm) {
-        return await this.$va.confirm({
-          title,
-          message,
-          okText,
-          cancelText
-        })
-      } else {
-        // Fallback a confirm nativo del navegador
-        return confirm(`${title}\n\n${message}`)
       }
     },
 
@@ -404,15 +691,159 @@ export default {
       }
     },
 
-    getUsuarioNombre(id) {
-      const usuario = this.usuarios.find(u => u.id === id)
-      return usuario ? `${usuario.nombre} ${usuario.apellido}` : '-'
+    // Métodos de acciones de la tabla
+    viewAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.showViewModal = true
     },
 
-    // Métodos de formateo
+    editAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.isEditing = true
+      this.populateForm(alert)
+      this.showEditModal = true
+    },
+
+    editCurrentAlert() {
+      this.showViewModal = false
+      this.editAlert(this.selectedAlert)
+    },
+
+    confirmDeleteAlert(alertId) {
+      this.alertToDelete = alertId
+      this.showDeleteModal = true
+    },
+
+    // Métodos del formulario
+    populateForm(alert) {
+      this.alertForm = {
+        id: alert.id,
+        herramienta_id: alert.herramienta_id,
+        tipo_alerta_id: alert.tipo_alerta_id,
+        prioridad_id: alert.prioridad_id,
+        estado_reparacion: alert.estado_reparacion,
+        fecha_generacion: alert.fecha_generacion ? alert.fecha_generacion.split('T')[0] : '',
+        fecha_limite: alert.fecha_limite ? alert.fecha_limite.split('T')[0] : '',
+        fecha_resolucion: alert.fecha_resolucion ? alert.fecha_resolucion.split('T')[0] : '',
+        resuelta_por: alert.resuelta_por,
+        descripcion: alert.descripcion || '',
+        observaciones: alert.observaciones || ''
+      }
+    },
+
+    resetForm() {
+      this.alertForm = {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
+      }
+    },
+
+    cancelEdit() {
+      this.showEditModal = false
+      this.isEditing = false
+      this.selectedAlert = null
+      this.resetForm()
+    },
+
+    async saveAlert() {
+      if (!this.$refs.alertForm.validate()) {
+        this.showToast('Por favor, complete todos los campos requeridos', 'warning')
+        return
+      }
+
+      this.saving = true
+      try {
+        const alertData = { ...this.alertForm }
+        
+        // Convertir fechas al formato correcto
+        if (alertData.fecha_generacion) {
+          alertData.fecha_generacion = new Date(alertData.fecha_generacion).toISOString()
+        }
+        if (alertData.fecha_limite) {
+          alertData.fecha_limite = new Date(alertData.fecha_limite).toISOString()
+        }
+        if (alertData.fecha_resolucion) {
+          alertData.fecha_resolucion = new Date(alertData.fecha_resolucion).toISOString()
+        }
+
+        if (this.isEditing) {
+          // Actualizar alerta existente
+          await api.put(`/AlertaReparacion/${alertData.id}`, alertData)
+          
+          // Actualizar en la lista local
+          const index = this.alertas.findIndex(a => a.id === alertData.id)
+          if (index !== -1) {
+            this.alertas[index] = { ...this.alertas[index], ...alertData }
+          }
+          
+          this.showToast('Alerta actualizada correctamente', 'success')
+        } else {
+          // Crear nueva alerta
+          const newAlert = await api.post('/AlertaReparacion', alertData)
+          this.alertas.unshift(newAlert)
+          this.showToast('Alerta creada correctamente', 'success')
+        }
+
+        this.cancelEdit()
+      } catch (error) {
+        console.error('Error guardando alerta:', error)
+        this.showToast('Error al guardar la alerta', 'danger')
+      } finally {
+        this.saving = false
+      }
+    },
+
+    async deleteAlert() {
+      if (!this.alertToDelete) return
+
+      this.deleting = true
+      try {
+        await api.delete(`/AlertaReparacion/${this.alertToDelete}`)
+        
+        // Remover de la lista local
+        this.alertas = this.alertas.filter(alert => alert.id !== this.alertToDelete)
+        
+        this.showToast('Alerta eliminada correctamente', 'success')
+        this.showDeleteModal = false
+        this.alertToDelete = null
+      } catch (error) {
+        console.error('Error eliminando alerta:', error)
+        this.showToast('Error al eliminar la alerta', 'danger')
+      } finally {
+        this.deleting = false
+      }
+    },
+
+    // Métodos de formateo y helpers
+    getUsuarioNombre(id) {
+      if (!id) return '-'
+      const usuario = this.usuarios.find(u => u.id === id)
+      return usuario ? `${usuario.nombre} ${usuario.apellido}` : `Usuario ${id}`
+    },
+
     getTipoAlerta(id) {
       const tipo = this.tiposAlertas.find(t => t.id === id)
       return tipo ? tipo.nombre_alertas : `Tipo ${id}`
+    },
+
+    getTipoAlertaClass(id) {
+      const classes = {
+        '1': 'badge-warning',
+        '2': 'badge-danger', 
+        '3': 'badge-info',
+        '4': 'badge-primary',
+        '5': 'badge-secondary',
+        '6': 'badge-dark'
+      }
+      return classes[id] || 'badge-light'
     },
 
     getHerramientaNombre(id) {
@@ -456,7 +887,7 @@ export default {
 
     getPrioridadClass(prioridad) {
       const classes = {
-        '1': 'badge-secondary',
+        '1': 'badge-light',
         '2': 'badge-info',
         '3': 'badge-warning',
         '4': 'badge-danger',
@@ -517,65 +948,31 @@ export default {
       }
     },
 
-    // Métodos de acciones simplificados
-    viewAlert(alert) {
-      this.selectedAlert = alert
-      this.showToast(`Viendo detalles de alerta ${alert.id}`, 'info')
-      // Aquí podrías abrir un modal o navegar a una vista de detalles
-    },
-
-    editAlert(alert) {
-      this.selectedAlert = alert
-      this.showToast(`Editando alerta ${alert.id}`, 'primary')
-      // Aquí podrías abrir un modal de edición o navegar a una vista de edición
-    },
-
-    async deleteAlert(alertId) {
-      try {
-        const confirmed = await this.showConfirm(
-          'Eliminar Alerta',
-          '¿Está seguro de que desea eliminar esta alerta? Esta acción no se puede deshacer.',
-          'Sí, eliminar',
-          'Cancelar'
-        )
-
-        if (confirmed) {
-          // Llamada a la API para eliminar la alerta
-          await api.delete(`/AlertaReparacion/${alertId}`)
-
-          // Actualizar la lista local
-          this.alertas = this.alertas.filter(alert => alert.id !== alertId)
-          this.showToast('Alerta eliminada correctamente', 'success')
-        }
-      } catch (error) {
-        console.error('Error eliminando alerta:', error)
-        this.showToast('Error al eliminar la alerta', 'danger')
-      }
-    },
-
+    // Método para exportar a CSV
     exportToCSV() {
       try {
-        // Lógica básica para exportar a CSV
-        const headers = ['ID', 'Herramienta', 'Tipo', 'Fecha Generación', 'Estado', 'Prioridad']
+        const headers = ['ID', 'Herramienta', 'Tipo', 'Fecha Generación', 'Fecha Límite', 'Estado', 'Prioridad', 'Descripción']
         const data = this.alertas.map(alert => [
           alert.id,
           this.getHerramientaNombre(alert.herramienta_id),
           this.getTipoAlerta(alert.tipo_alerta_id),
           this.formatDate(alert.fecha_generacion),
+          this.formatDate(alert.fecha_limite),
           this.getEstadoText(alert.estado_reparacion),
-          this.getPrioridadText(alert.prioridad_id)
+          this.getPrioridadText(alert.prioridad_id),
+          alert.descripcion || ''
         ])
 
         let csvContent = "data:text/csv;charset=utf-8,"
         csvContent += headers.join(",") + "\n"
         data.forEach(row => {
-          csvContent += row.join(",") + "\n"
+          csvContent += row.map(field => `"${field}"`).join(",") + "\n"
         })
 
         const encodedUri = encodeURI(csvContent)
         const link = document.createElement("a")
         link.setAttribute("href", encodedUri)
-        link.setAttribute("download", "alertas_reparacion.csv")
+        link.setAttribute("download", `alertas_reparacion_${new Date().toISOString().split('T')[0]}.csv`)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -584,6 +981,36 @@ export default {
       } catch (error) {
         console.error('Error exportando CSV:', error)
         this.showToast('Error al exportar las alertas', 'danger')
+      }
+    },
+
+    // Método para manejar el watch del showNewAlertModal
+    handleNewAlertModal() {
+      if (this.showNewAlertModal) {
+        this.isEditing = false
+        this.resetForm()
+        this.showEditModal = true
+        this.showNewAlertModal = false
+      }
+    }
+  },
+
+  watch: {
+    showNewAlertModal(newVal) {
+      if (newVal) {
+        this.handleNewAlertModal()
+      }
+    },
+
+    // Watch para actualizar campos cuando cambia el estado
+    'alertForm.estado_reparacion'(newVal) {
+      if (newVal === '5') { // Si es "Resuelto"
+        if (!this.alertForm.fecha_resolucion) {
+          this.alertForm.fecha_resolucion = new Date().toISOString().split('T')[0]
+        }
+      } else {
+        this.alertForm.fecha_resolucion = null
+        this.alertForm.resuelta_por = null
       }
     }
   }
