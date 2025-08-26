@@ -1,34 +1,42 @@
 import axios from 'axios'
+import { VueGoodTable } from 'vue-good-table-next'
+import 'vue-good-table-next/dist/vue-good-table-next.css'
 
 export default {
-  name: 'ReportsDashboard',
+  name: 'AlertasDashboard',
+  components: {
+    VueGoodTable
+  },
   
   data() {
     return {
       // Datos básicos
-      reports: [],
+      alertas: [],
+      tiposAlerta: [],
+      herramientas: [],
+      prioridades: [], // Removido datos de prueba
       loading: false,
       searchQuery: '',
       showFilters: true,
       viewMode: 'table',
-      selectedReport: null,
-      showNewReportModal: false,
+      selectedAlerta: null,
+      showNewAlertaModal: false,
       
-      // Filtros
-      reportType: 'all',
+      // Filtros - Inicializar con valores válidos
+      tipoAlertaFilter: null,
       statusFilters: {
-        pending: true,
-        in_progress: true,
-        resolved: true,
-        generated: true
+        '0': true, // Pendiente
+        '1': true, // Resuelta
+        '2': true, // En proceso (si existe)
       },
       dateRange: {
         start: '',
         end: ''
       },
-      priorityFilter: 'all',
+      prioridadFilter: null,
+      herramientaFilter: null,
       
-      // Configuración de columnas para vue-good-table-next
+      // Configuración de columnas - CORREGIDA
       tableColumns: [
         {
           label: 'ID',
@@ -38,46 +46,46 @@ export default {
           width: '80px'
         },
         {
-          label: 'Tipo',
-          field: 'tipo',
+          label: 'Herramienta',
+          field: 'herramienta_nombre',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            filterDropdownItems: [
-              { value: 'produccion', text: 'Producción' },
-              { value: 'calidad', text: 'Control de Calidad' },
-              { value: 'mantenimiento', text: 'Mantenimiento' },
-              { value: 'inventario', text: 'Inventario' },
-              { value: 'costos', text: 'Costos' },
-              { value: 'performance', text: 'Performance' }
-            ],
-            filterMultiselect: false,
-            placeholder: 'Todos los tipos'
+            placeholder: 'Filtrar por herramienta'
           }
         },
         {
-          label: 'Título',
-          field: 'titulo',
+          label: 'Tipo de Alerta',
+          field: 'tipo_alerta_nombre',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por título'
+            placeholder: 'Filtrar por tipo'
+          }
+        },
+        {
+          label: 'Descripción',
+          field: 'descripcion',
+          type: 'string',
+          sortable: true,
+          filterOptions: {
+            enabled: true,
+            placeholder: 'Filtrar por descripción'
           }
         },
         {
           label: 'Estado',
-          field: 'estado',
+          field: 'estado_reparacion',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
             filterDropdownItems: [
-              { value: 'pending', text: 'Pendiente' },
-              { value: 'in_progress', text: 'En Proceso' },
-              { value: 'generated', text: 'Generado' },
-              { value: 'delivered', text: 'Entregado' }
+              { value: '0', text: 'Pendiente' },
+              { value: '1', text: 'Resuelta' },
+              { value: '2', text: 'En Proceso' }
             ],
             filterMultiselect: false,
             placeholder: 'Todos los estados'
@@ -85,59 +93,49 @@ export default {
         },
         {
           label: 'Prioridad',
-          field: 'prioridad',
+          field: 'prioridad_nombre',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            filterDropdownItems: [
-              { value: 'baja', text: 'Baja' },
-              { value: 'media', text: 'Media' },
-              { value: 'alta', text: 'Alta' },
-              { value: 'critica', text: 'Crítica' }
-            ],
-            filterMultiselect: false,
-            placeholder: 'Todas las prioridades'
+            placeholder: 'Filtrar por prioridad'
           }
         },
         {
-          label: 'Solicitante',
-          field: 'solicitante_nombre',
+          label: 'F. Generación',
+          field: 'fecha_generacion',
+          type: 'string',
+          sortable: true
+        },
+        {
+          label: 'F. Límite',
+          field: 'fecha_limite',
+          type: 'string',
+          sortable: true
+        },
+        {
+          label: 'Resuelta Por',
+          field: 'resuelta_por',
           type: 'string',
           sortable: true,
           filterOptions: {
             enabled: true,
-            placeholder: 'Filtrar por solicitante'
+            placeholder: 'Filtrar por técnico'
           }
         },
         {
-          label: 'F. Solicitud',
-          field: 'fecha_solicitud',
-          type: 'date',
-          dateInputFormat: 'yyyy-MM-dd HH:mm:ss',
-          dateOutputFormat: 'dd/MM/yyyy',
+          label: 'F. Resolución',
+          field: 'fecha_resolucion',
+          type: 'string',
           sortable: true
-        },
-        {
-          label: 'F. Entrega',
-          field: 'fecha_entrega_estimada',
-          type: 'date',
-          dateInputFormat: 'yyyy-MM-dd',
-          dateOutputFormat: 'dd/MM/yyyy',
-          sortable: true
-        },
-        {
-          label: 'Progreso',
-          field: 'progreso',
-          type: 'number',
-          sortable: true,
-          width: '100px'
         },
         {
           label: 'Acciones',
           field: 'actions',
+          type: 'string',
           sortable: false,
-          width: '150px'
+          width: '150px',
+          tdClass: 'text-center'
         }
       ]
     }
@@ -145,51 +143,145 @@ export default {
 
   computed: {
     // Filtros aplicados
-    filteredReports() {
-      return this.reports.filter(report => {
-        // Filtro por tipo
-        const matchesType = this.reportType === 'all' || report.tipo === this.reportType;
+    filteredAlertas() {
+      if (!Array.isArray(this.alertas)) {
+        return [];
+      }
+
+      return this.alertas.filter(alerta => {
+        // Filtro por tipo de alerta
+        const matchesType = !this.tipoAlertaFilter || 
+                           alerta.tipo_alerta_id == this.tipoAlertaFilter;
         
         // Filtro por estado
-        const matchesStatus = this.statusFilters[report.estado] !== false;
+        const matchesStatus = this.statusFilters[alerta.estado_reparacion?.toString()] !== false;
         
         // Filtro por prioridad
-        const matchesPriority = this.priorityFilter === 'all' || report.prioridad === this.priorityFilter;
+        const matchesPriority = !this.prioridadFilter || 
+                               alerta.prioridad_id == this.prioridadFilter;
+        
+        // Filtro por herramienta
+        const matchesHerramienta = !this.herramientaFilter || 
+                                  alerta.herramienta_id == this.herramientaFilter;
         
         // Filtro por búsqueda
-        const matchesSearch = this.searchQuery === '' ||
-          report.titulo.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          report.solicitante_nombre.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesSearch = !this.searchQuery ||
+          (alerta.descripcion && alerta.descripcion.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (alerta.herramienta_nombre && alerta.herramienta_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (alerta.tipo_alerta_nombre && alerta.tipo_alerta_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+          (alerta.resuelta_por && alerta.resuelta_por.toLowerCase().includes(this.searchQuery.toLowerCase()));
           
         // Filtro por fecha
-        const matchesDate = (!this.dateRange.start || new Date(report.fecha_solicitud) >= new Date(this.dateRange.start)) &&
-                          (!this.dateRange.end || new Date(report.fecha_solicitud) <= new Date(this.dateRange.end));
+        const matchesDate = (!this.dateRange.start || new Date(alerta.fecha_generacion) >= new Date(this.dateRange.start)) &&
+                          (!this.dateRange.end || new Date(alerta.fecha_generacion) <= new Date(this.dateRange.end));
         
-        return matchesType && matchesStatus && matchesPriority && matchesSearch && matchesDate;
+        return matchesType && matchesStatus && matchesPriority && matchesHerramienta && matchesSearch && matchesDate;
       });
     },
     
     // Estadísticas para cards
     totalReports() {
-      return this.reports.length;
+      return Array.isArray(this.alertas) ? this.alertas.length : 0;
     },
     
     pendingReports() {
-      return this.reports.filter(report => report.estado === 'pending').length;
+      return Array.isArray(this.alertas) 
+        ? this.alertas.filter(alerta => alerta.estado_reparacion === '0').length 
+        : 0;
     },
     
     inProgressReports() {
-      return this.reports.filter(report => report.estado === 'in_progress').length;
+      return Array.isArray(this.alertas) 
+        ? this.alertas.filter(alerta => alerta.estado_reparacion === '2').length 
+        : 0;
     },
     
     generatedReports() {
-      return this.reports.filter(report => report.estado === 'generated' || report.estado === 'delivered').length;
+      return Array.isArray(this.alertas) 
+        ? this.alertas.filter(alerta => alerta.estado_reparacion === '1').length 
+        : 0;
+    },
+
+    // Estadísticas para alertas (alias)
+    totalAlertas() {
+      return this.totalReports;
     },
     
+    alertasActivas() {
+      return this.pendingReports;
+    },
+    
+    alertasPendientes() {
+      return this.pendingReports;
+    },
+    
+    alertasEnProceso() {
+      return this.inProgressReports;
+    },
+    
+    alertasResueltas() {
+      return this.generatedReports;
+    },
+    
+    alertasCriticas() {
+      return Array.isArray(this.alertas) 
+        ? this.alertas.filter(alerta => this.isAlertaCritica(alerta)).length 
+        : 0;
+    },
+
+    // Opciones para el filtro de tipos de alerta
+    tipoAlertaOptions() {
+      const options = [{ text: 'Todos los tipos', value: null }];
+      
+      if (Array.isArray(this.tiposAlerta)) {
+        this.tiposAlerta.forEach(tipo => {
+          options.push({
+            text: tipo.nombre || tipo.tipo_alerta || `Tipo ${tipo.id}`,
+            value: tipo.id
+          });
+        });
+      }
+      
+      return options;
+    },
+
+    // Opciones para el filtro de herramientas
+    herramientaOptions() {
+      const options = [{ text: 'Todas las herramientas', value: null }];
+      
+      if (Array.isArray(this.herramientas)) {
+        this.herramientas.forEach(herramienta => {
+          options.push({
+            text: herramienta.nombre || `Herramienta ${herramienta.id}`,
+            value: herramienta.id
+          });
+        });
+      }
+      
+      return options;
+    },
+
+    // Opciones para el filtro de prioridades
+    prioridadOptions() {
+      const options = [{ text: 'Todas las prioridades', value: null }];
+      
+      if (Array.isArray(this.prioridades)) {
+        this.prioridades.forEach(prioridad => {
+          options.push({
+            text: prioridad.nombre || `Prioridad ${prioridad.id}`,
+            value: prioridad.id
+          });
+        });
+      }
+      
+      return options;
+    },
+
     // Contadores de filtros activos
     hasActiveFilters() {
-      return this.reportType !== 'all' ||
-             this.priorityFilter !== 'all' ||
+      return this.tipoAlertaFilter !== null ||
+             this.prioridadFilter !== null ||
+             this.herramientaFilter !== null ||
              this.dateRange.start !== '' ||
              this.dateRange.end !== '' ||
              this.searchQuery !== '' ||
@@ -198,115 +290,146 @@ export default {
     
     activeFiltersCount() {
       let count = 0;
-      if (this.reportType !== 'all') count++;
-      if (this.priorityFilter !== 'all') count++;
+      if (this.tipoAlertaFilter !== null) count++;
+      if (this.prioridadFilter !== null) count++;
+      if (this.herramientaFilter !== null) count++;
       if (this.dateRange.start !== '') count++;
       if (this.dateRange.end !== '') count++;
       if (this.searchQuery !== '') count++;
       if (!Object.values(this.statusFilters).every(val => val === true)) count++;
       return count;
+    },
+
+    // Para compatibilidad con el template de reportes
+    filteredReports() {
+      return this.filteredAlertas;
+    },
+
+    // Método auxiliar para calcular días desde detección
+    diasDesdeDeteccion() {
+      return (fecha) => {
+        if (!fecha) return 0;
+        const ahora = new Date();
+        const fechaLimite = new Date(fecha);
+        const diferencia = Math.floor((ahora - fechaLimite) / (1000 * 60 * 60 * 24));
+        return diferencia;
+      };
     }
   },
 
   methods: {
     // Métodos de carga de datos
-    async loadReports() {
+    async loadAlertas() {
       try {
         this.loading = true;
         
-        // Simulamos datos realistas de reportes
-        // En producción, esto vendría de una API
-        this.reports = this.generateMockReports();
+        const response = await axios.get('/api/AlertaReparacion', {
+          headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          }
+        });
         
-        // Si tienes una API real, descomenta esto:
-        // const response = await axios.get('/api/reports');
-        // this.reports = response.data;
+        let alertas = Array.isArray(response.data) ? response.data : [];
+        
+        // Enriquecer alertas con nombres de relaciones
+        alertas = await this.enrichAlertasData(alertas);
+        
+        this.alertas = alertas;
+        
+        console.log('Alertas cargadas:', alertas);
         
       } catch (error) {
-        console.error('Error cargando reportes:', error);
-        this.showToast('Error al cargar reportes', 'error');
+        console.error('Error cargando alertas:', error);
+        this.showToast('Error al cargar alertas de reparación', 'error');
+        this.alertas = [];
       } finally {
         this.loading = false;
       }
     },
+
+    // Enriquecer datos de alertas con nombres de las relaciones
+    async enrichAlertasData(alertas) {
+      return alertas.map(alerta => ({
+        ...alerta,
+        tipo_alerta_nombre: this.getTipoAlertaNombre(alerta.tipo_alerta_id),
+        herramienta_nombre: this.getHerramientaNombre(alerta.herramienta_id),
+        prioridad_nombre: this.getPrioridadNombre(alerta.prioridad_id),
+        estado_nombre: this.getEstadoNombre(alerta.estado_reparacion)
+      }));
+    },
     
-    // Genera datos mock para demostración
-    generateMockReports() {
-      const tipos = ['produccion', 'calidad', 'mantenimiento', 'inventario', 'costos', 'performance'];
-      const estados = ['pending', 'in_progress', 'generated', 'delivered'];
-      const prioridades = ['baja', 'media', 'alta', 'critica'];
-      const solicitantes = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Martín', 'Luis Rodríguez'];
-      
-      const reportes = [];
-      
-      for (let i = 1; i <= 30; i++) {
-        const fechaSolicitud = new Date();
-        fechaSolicitud.setDate(fechaSolicitud.getDate() - Math.floor(Math.random() * 90));
-        
-        const fechaEntrega = new Date(fechaSolicitud);
-        fechaEntrega.setDate(fechaEntrega.getDate() + Math.floor(Math.random() * 14) + 1);
-        
-        const tipo = tipos[Math.floor(Math.random() * tipos.length)];
-        const estado = estados[Math.floor(Math.random() * estados.length)];
-        const prioridad = prioridades[Math.floor(Math.random() * prioridades.length)];
-        
-        reportes.push({
-          id: i,
-          tipo: tipo,
-          titulo: this.generateReportTitle(tipo, i),
-          descripcion: this.generateReportDescription(tipo),
-          estado: estado,
-          prioridad: prioridad,
-          solicitante_id: Math.floor(Math.random() * 5) + 1,
-          solicitante_nombre: solicitantes[Math.floor(Math.random() * solicitantes.length)],
-          fecha_solicitud: fechaSolicitud.toISOString(),
-          fecha_entrega_estimada: fechaEntrega.toISOString().split('T')[0],
-          progreso: estado === 'delivered' ? 100 : 
-                   estado === 'generated' ? Math.floor(Math.random() * 20) + 80 :
-                   estado === 'in_progress' ? Math.floor(Math.random() * 60) + 20 :
-                   0,
-          archivo_url: estado === 'generated' || estado === 'delivered' ? `/reports/report_${i}.pdf` : null,
-          notas: this.generateReportNotes(estado, tipo),
-          createdAt: fechaSolicitud.toISOString(),
-          updatedAt: new Date().toISOString()
+    async loadTiposAlerta() {
+      try {
+        const response = await axios.get('/api/Tipos_Alertas', {
+          headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          }
         });
+        
+        this.tiposAlerta = Array.isArray(response.data) ? response.data : [];
+        
+      } catch (error) {
+        console.error('Error cargando tipos de alerta:', error);
+        this.showToast('Error al cargar tipos de alerta', 'error');
+        this.tiposAlerta = [];
       }
-      
-      return reportes;
     },
-    
-    generateReportTitle(tipo, id) {
-      const titles = {
-        produccion: [`Reporte de Producción Semanal #${id}`, `Análisis de Rendimiento Productivo ${id}`, `Informe de Órdenes Completadas ${id}`],
-        calidad: [`Control de Calidad Mensual #${id}`, `Reporte de Defectos ${id}`, `Análisis de Conformidad ${id}`],
-        mantenimiento: [`Mantenimiento Preventivo #${id}`, `Reporte de Reparaciones ${id}`, `Estado de Equipos ${id}`],
-        inventario: [`Inventario de Materiales #${id}`, `Reporte de Stock ${id}`, `Movimientos de Almacén ${id}`],
-        costos: [`Análisis de Costos #${id}`, `Reporte Financiero ${id}`, `Evaluación Presupuestaria ${id}`],
-        performance: [`KPI Dashboard #${id}`, `Métricas de Rendimiento ${id}`, `Análisis de Eficiencia ${id}`]
-      };
-      return titles[tipo][Math.floor(Math.random() * titles[tipo].length)];
+
+    // Cargar herramientas
+    async loadHerramientas() {
+      try {
+        const response = await axios.get('/api/Herramienta', {
+          headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          }
+        });
+        
+        this.herramientas = Array.isArray(response.data) ? response.data : [];
+        
+      } catch (error) {
+        console.error('Error cargando herramientas:', error);
+        this.herramientas = [];
+      }
     },
-    
-    generateReportDescription(tipo) {
-      const descriptions = {
-        produccion: 'Análisis detallado de la producción, tiempos de ciclo y eficiencia operacional',
-        calidad: 'Evaluación de estándares de calidad, defectos y conformidad de productos',
-        mantenimiento: 'Estado de equipos, mantenimientos realizados y programaciones futuras',
-        inventario: 'Control de stock, movimientos de materiales y reposición de inventario',
-        costos: 'Análisis financiero de costos operacionales y desviaciones presupuestarias',
-        performance: 'Métricas de rendimiento y KPIs del sistema de producción'
-      };
-      return descriptions[tipo];
+
+    // Cargar prioridades desde API
+    async loadPrioridades() {
+      try {
+        const response = await axios.get('/api/Prioridades', {
+          headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
+          }
+        });
+        
+        this.prioridades = Array.isArray(response.data) ? response.data : [];
+        
+      } catch (error) {
+        console.error('Error cargando prioridades:', error);
+        this.prioridades = [];
+      }
     },
-    
-    generateReportNotes(estado, tipo) {
-      const notes = {
-        pending: ['Esperando aprobación', 'En cola de procesamiento', 'Pendiente de recursos'],
-        in_progress: ['Recopilando datos', 'Procesando información', 'Generando gráficos'],
-        generated: ['Reporte completado', 'Listo para revisión', 'Pendiente de entrega'],
-        delivered: ['Entregado exitosamente', 'Reporte enviado', 'Completado sin observaciones']
-      };
-      return notes[estado][Math.floor(Math.random() * notes[estado].length)];
+
+    // Método para refrescar datos
+    async refreshData() {
+      try {
+        await Promise.all([
+          this.loadTiposAlerta(),
+          this.loadHerramientas(),
+          this.loadPrioridades()
+        ]);
+        
+        // Cargar alertas después para poder enriquecer los datos
+        await this.loadAlertas();
+      } catch (error) {
+        console.error('Error en refreshData:', error);
+        // Intentar cargar alertas aunque fallen las otras APIs
+        await this.loadAlertas();
+      }
+    },
+
+    // Alias para compatibilidad con template de reportes
+    async loadReports() {
+      return this.loadAlertas();
     },
     
     // Métodos de UI
@@ -315,132 +438,208 @@ export default {
     },
     
     applyFilters() {
-      // Los filtros se aplican automáticamente via computed
       this.showToast('Filtros aplicados', 'success');
     },
     
     resetFilters() {
-      this.reportType = 'all';
-      this.priorityFilter = 'all';
+      this.tipoAlertaFilter = null;
+      this.prioridadFilter = null;
+      this.herramientaFilter = null;
       this.searchQuery = '';
       this.dateRange = { start: '', end: '' };
       this.statusFilters = {
-        pending: true,
-        in_progress: true,
-        resolved: true,
-        generated: true
+        '0': true,
+        '1': true,
+        '2': true
       };
       this.showToast('Filtros restablecidos', 'success');
     },
     
     // Métodos de acciones
+    viewAlerta(alerta) {
+      this.selectedAlerta = { ...alerta };
+      console.log('Viendo alerta:', alerta);
+    },
+
     viewReport(report) {
-      this.selectedReport = { ...report };
-      // Aquí puedes abrir un modal o navegar a vista detalle
+      return this.viewAlerta(report);
     },
-    
+
     downloadReport(report) {
-      if (report.archivo_url) {
-        // Simular descarga
-        this.showToast(`Descargando: ${report.titulo}`, 'success');
-        // En producción: window.open(report.archivo_url);
-      } else {
-        this.showToast('El reporte aún no está disponible para descarga', 'warning');
-      }
+      console.log('Funcionalidad de descarga no implementada para alertas');
+      this.showToast('Función de descarga no disponible para alertas', 'warning');
     },
-    
+
     generateReport(report) {
-      if (report.estado === 'pending' || report.estado === 'in_progress') {
-        this.showToast('Generando reporte...', 'info');
-        // Simular generación
-        setTimeout(() => {
-          const index = this.reports.findIndex(r => r.id === report.id);
-          if (index !== -1) {
-            this.reports[index].estado = 'generated';
-            this.reports[index].progreso = 100;
-            this.reports[index].archivo_url = `/reports/report_${report.id}.pdf`;
+      console.log('Funcionalidad de generación no implementada para alertas');
+      this.showToast('Función de generación no disponible para alertas', 'warning');
+    },
+
+    async resolverAlerta(alertaId, resuelto_por) {
+      try {
+        const response = await axios.put(`/api/AlertaReparacion/${alertaId}`, {
+          estado_reparacion: '1', // 1 = Resuelta
+          fecha_resolucion: new Date().toISOString(),
+          resuelta_por: resuelto_por
+        }, {
+          headers: {
+            'Authorization': `Bearer ${this.getAuthToken()}`
           }
-          this.showToast('Reporte generado exitosamente', 'success');
-        }, 2000);
+        });
+        
+        // Actualizar la alerta en la lista local
+        const index = this.alertas.findIndex(a => a.id === alertaId);
+        if (index !== -1) {
+          this.alertas[index] = { ...this.alertas[index], ...response.data };
+        }
+        
+        this.showToast('Alerta resuelta exitosamente', 'success');
+        
+      } catch (error) {
+        console.error('Error resolviendo alerta:', error);
+        this.showToast('Error al resolver alerta', 'error');
       }
     },
-    
+
+    async deleteAlerta(alertaId) {
+      if (confirm('¿Estás seguro de que deseas eliminar esta alerta?')) {
+        try {
+          await axios.delete(`/api/AlertaReparacion/${alertaId}`, {
+            headers: {
+              'Authorization': `Bearer ${this.getAuthToken()}`
+            }
+          });
+          
+          this.alertas = this.alertas.filter(a => a.id !== alertaId);
+          this.showToast('Alerta eliminada', 'success');
+          
+        } catch (error) {
+          console.error('Error eliminando alerta:', error);
+          this.showToast('Error al eliminar alerta', 'error');
+        }
+      }
+    },
+
     deleteReport(reportId) {
-      if (confirm('¿Estás seguro de que deseas eliminar este reporte?')) {
-        this.reports = this.reports.filter(r => r.id !== reportId);
-        this.showToast('Reporte eliminado', 'success');
-      }
+      return this.deleteAlerta(reportId);
     },
     
-    // Métodos de formato
+    // Métodos de formato y helpers
     formatStatus(estado) {
       const estados = {
-        'pending': 'Pendiente',
-        'in_progress': 'En Proceso',
-        'generated': 'Generado',
-        'delivered': 'Entregado'
+        '0': 'Pendiente',
+        '1': 'Resuelta', 
+        '2': 'En Proceso'
       };
-      return estados[estado] || estado;
+      return estados[estado?.toString()] || `Estado ${estado}`;
     },
     
     statusClass(estado) {
       return {
-        'pending': 'badge-warning',
-        'in_progress': 'badge-info',
-        'generated': 'badge-success',
-        'delivered': 'badge-primary'
-      }[estado] || 'badge-secondary';
+        '0': 'badge-warning',   // Pendiente
+        '1': 'badge-success',   // Resuelta
+        '2': 'badge-info'       // En Proceso
+      }[estado?.toString()] || 'badge-secondary';
     },
     
     formatPriority(prioridad) {
-      const prioridades = {
-        'baja': 'Baja',
-        'media': 'Media',
-        'alta': 'Alta',
-        'critica': 'Crítica'
-      };
-      return prioridades[prioridad] || prioridad;
+      return this.getPrioridadNombre(prioridad) || `Prioridad ${prioridad}`;
     },
     
     priorityClass(prioridad) {
       return {
-        'baja': 'badge-secondary',
-        'media': 'badge-info',
-        'alta': 'badge-warning',
-        'critica': 'badge-danger'
-      }[prioridad] || 'badge-light';
+        '1': 'badge-secondary', // Baja
+        '2': 'badge-info',      // Media
+        '3': 'badge-warning',   // Alta
+        '4': 'badge-danger'     // Crítica
+      }[prioridad?.toString()] || 'badge-light';
+    },
+
+    formatReportType(tipo) {
+      return this.getTipoAlertaNombre(tipo) || `Tipo ${tipo}`;
     },
     
     formatDate(dateString) {
       if (!dateString) return '';
-      return new Date(dateString).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
+      try {
+        return new Date(dateString).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (error) {
+        return dateString;
+      }
     },
     
-    formatReportType(tipo) {
-      const tipos = {
-        'produccion': 'Producción',
-        'calidad': 'Control de Calidad',
-        'mantenimiento': 'Mantenimiento',
-        'inventario': 'Inventario',
-        'costos': 'Costos',
-        'performance': 'Performance'
-      };
-      return tipos[tipo] || tipo;
+    formatDateOnly(dateString) {
+      if (!dateString) return '';
+      try {
+        return new Date(dateString).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } catch (error) {
+        return dateString;
+      }
+    },
+
+    // Días desde detección
+    diasDesdeDeteccion(fecha) {
+      if (!fecha) return 0;
+      const ahora = new Date();
+      const fechaLimite = new Date(fecha);
+      const diferencia = Math.floor((ahora - fechaLimite) / (1000 * 60 * 60 * 24));
+      return diferencia;
+    },
+
+    // Verificar si una alerta es crítica
+    isAlertaCritica(alerta) {
+      return (alerta.prioridad_id == 4 && alerta.estado_reparacion !== '1') ||
+             (this.isVencida(alerta.fecha_limite, alerta.estado_reparacion));
+    },
+
+    isVencida(fechaLimite, estado) {
+      if (estado === '1') return false; // Si está resuelta, no está vencida
+      if (!fechaLimite) return false;
+      
+      const now = new Date();
+      const limite = new Date(fechaLimite);
+      return now > limite;
+    },
+    
+    // Métodos para obtener nombres de las relaciones
+    getTipoAlertaNombre(tipoId) {
+      const tipo = this.tiposAlerta.find(t => t.id == tipoId);
+      return tipo ? (tipo.nombre || tipo.tipo_alerta) : null;
+    },
+
+    getHerramientaNombre(herramientaId) {
+      const herramienta = this.herramientas.find(h => h.id == herramientaId);
+      return herramienta ? herramienta.nombre : null;
+    },
+
+    getPrioridadNombre(prioridadId) {
+      const prioridad = this.prioridades.find(p => p.id == prioridadId);
+      return prioridad ? prioridad.nombre : null;
+    },
+
+    getEstadoNombre(estado) {
+      return this.formatStatus(estado);
     },
     
     // Método para exportar
     exportToCSV() {
       try {
-        if (this.$refs.vueGoodTable) {
-          const fileName = `reportes_${new Date().toISOString().split('T')[0]}.csv`;
+        if (this.$refs.vueGoodTable && this.filteredAlertas.length > 0) {
+          const fileName = `alertas_reparacion_${new Date().toISOString().split('T')[0]}.csv`;
           this.$refs.vueGoodTable.exportCsv(fileName);
           this.showToast('Tabla exportada exitosamente', 'success');
         } else {
-          this.showToast('Error al exportar: tabla no encontrada', 'error');
+          this.showToast('No hay datos para exportar', 'warning');
         }
       } catch (error) {
         console.error('Error exportando CSV:', error);
@@ -448,15 +647,36 @@ export default {
       }
     },
     
+    // Helper para obtener token de auth
+    getAuthToken() {
+      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    },
+    
     // Helper para mostrar notificaciones
     showToast(message, type = 'success') {
       console.log(`${type.toUpperCase()}: ${message}`);
-      // Aquí puedes integrar tu sistema de notificaciones
-      alert(`${type.toUpperCase()}: ${message}`);
+      
+      if (type === 'error') {
+        console.error(message);
+      } else {
+        console.info(message);
+      }
     }
   },
 
-  mounted() {
-    this.loadReports();
+  async mounted() {
+    try {
+      await this.refreshData();
+    } catch (error) {
+      console.error('Error en mounted:', error);
+      this.alertas = [];
+      this.tiposAlerta = [];
+      this.herramientas = [];
+      this.prioridades = [];
+    }
+  },
+  
+  beforeUnmount() {
+    // Limpiar cualquier interval o timeout si los tienes
   }
 }
