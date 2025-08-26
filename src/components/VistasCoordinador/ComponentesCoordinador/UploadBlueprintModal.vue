@@ -1,15 +1,7 @@
 <template>
-  <VaModal 
-    :model-value="true" 
-    title="Subir Plano de Herramienta" 
-    size="large" 
-    :close-button="false"
-    hide-default-actions 
-    @close="closeModal" 
-    :z-index="10000" 
-    :backdrop-z-index="9999"
-  >
-    
+  <VaModal :model-value="true" title="Subir Plano de Herramienta" size="large" :close-button="false"
+    hide-default-actions @close="closeModal" :z-index="10000" :backdrop-z-index="9999">
+
     <div class="upload-blueprint-details">
       <!-- Información del Plano -->
       <VaCardTitle>
@@ -23,31 +15,14 @@
           <!-- Grid de información básica -->
           <div class="detail-grid">
             <div class="detail-row">
-              <VaInput 
-                v-model="form.codigo" 
-                label="Código del Plano *" 
-                placeholder="Ej: PLN-001"
-                class="detail-field"
-                :error="!!form.errors.codigo"
-                :error-messages="form.errors.codigo ? [form.errors.codigo] : []"
-              />
-              <VaInput 
-                v-model="form.version" 
-                label="Versión" 
-                placeholder="Ej: 1.0"
-                class="detail-field"
-              />
+              <VaInput v-model="form.codigo" label="Código del Plano *" placeholder="Ej: PLN-001" class="detail-field"
+                :error="!!form.errors.codigo" :error-messages="form.errors.codigo ? [form.errors.codigo] : []" />
+              <VaInput v-model="form.version" label="Versión" placeholder="Ej: 1.0" class="detail-field" />
             </div>
 
             <div class="detail-full-width">
-              <VaTextarea 
-                v-model="form.descripcion"
-                label="Descripción"
-                placeholder="Descripción detallada del plano..."
-                :min-rows="3"
-                :max-rows="5"
-                class="detail-field"
-              />
+              <VaTextarea v-model="form.descripcion" label="Descripción"
+                placeholder="Descripción detallada del plano..." :min-rows="3" :max-rows="5" class="detail-field" />
             </div>
           </div>
         </div>
@@ -61,18 +36,12 @@
         </div>
       </VaCardTitle>
       <VaCardContent>
-        <div 
-          class="upload-zone" 
-          :class="{
-            'drag-over': isDragOver,
-            'has-file': form.selectedFile,
-            'error': form.errors.file
-          }" 
-          @drop="handleDrop" 
-          @dragover.prevent="isDragOver = true" 
-          @dragleave="isDragOver = false"
-          @click="$refs.fileInput.click()"
-        >
+        <div class="upload-zone" :class="{
+          'drag-over': isDragOver,
+          'has-file': form.selectedFile,
+          'error': form.errors.file
+        }" @drop="handleDrop" @dragover.prevent="isDragOver = true" @dragleave="isDragOver = false"
+          @click="$refs.fileInput.click()">
           <!-- Estado sin archivo -->
           <div v-if="!form.selectedFile" class="upload-placeholder">
             <VaIcon name="cloud_upload" size="48px" color="secondary" class="upload-icon" />
@@ -84,12 +53,8 @@
           <!-- Estado con archivo seleccionado -->
           <div v-else class="file-preview">
             <div class="file-info">
-              <VaIcon 
-                :name="getFileIcon(form.selectedFile.type)" 
-                size="32px" 
-                :color="getFileIconColor(form.selectedFile.type)"
-                class="file-icon"
-              />
+              <VaIcon :name="getFileIcon(form.selectedFile.type)" size="32px"
+                :color="getFileIconColor(form.selectedFile.type)" class="file-icon" />
               <div class="file-details">
                 <h4>{{ form.selectedFile.name }}</h4>
                 <p>{{ formatFileSize(form.selectedFile.size) }} • {{ getFileType(form.selectedFile.type) }}</p>
@@ -99,14 +64,8 @@
           </div>
         </div>
 
-        <input 
-          ref="fileInput" 
-          type="file" 
-          accept=".pdf,.doc,.docx" 
-          @change="handleFileSelect"
-          style="display: none"
-        >
-        
+        <input ref="fileInput" type="file" accept=".pdf,.doc,.docx" @change="handleFileSelect" style="display: none">
+
         <div v-if="form.errors.file" class="error-message-container">
           <span class="error-message">{{ form.errors.file }}</span>
         </div>
@@ -127,11 +86,7 @@
                 <span>Subiendo archivo...</span>
                 <span>{{ uploadProgress }}%</span>
               </div>
-              <VaProgressBar 
-                :model-value="uploadProgress"
-                color="info"
-                class="mt-2"
-              />
+              <VaProgressBar :model-value="uploadProgress" color="info" class="mt-2" />
             </div>
           </VaCardContent>
         </div>
@@ -143,12 +98,7 @@
         <VaButton preset="secondary" @click="closeModal" :disabled="uploading">
           Cancelar
         </VaButton>
-        <VaButton 
-          @click="handleUpload" 
-          color="primary" 
-          :disabled="!canSubmit || uploading"
-          :loading="uploading"
-        >
+        <VaButton @click="handleUpload" color="primary" :disabled="!canSubmit || uploading" :loading="uploading">
           <template v-if="!uploading">
             <VaIcon name="upload" size="16px" class="mr-1" />
           </template>
@@ -189,7 +139,7 @@ export default {
       this.resetForm();
       this.$emit('close');
     },
-    
+
     resetForm() {
       this.form = {
         codigo: '',
@@ -202,24 +152,24 @@ export default {
       this.isDragOver = false;
       this.uploading = false;
     },
-    
+
     handleDrop(e) {
       e.preventDefault();
       this.isDragOver = false;
-      
+
       const files = e.dataTransfer.files;
       if (files.length > 0) {
         this.processFile(files[0]);
       }
     },
-    
+
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
         this.processFile(file);
       }
     },
-    
+
     processFile(file) {
       // Validar tipo de archivo
       const allowedTypes = [
@@ -227,57 +177,57 @@ export default {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ];
-      
+
       if (!allowedTypes.includes(file.type)) {
         this.form.errors.file = 'Tipo de archivo no permitido. Solo se aceptan PDF, DOC y DOCX.';
         return;
       }
-      
+
       // Validar tamaño (10MB)
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         this.form.errors.file = 'El archivo es demasiado grande. Tamaño máximo: 10MB.';
         return;
       }
-      
+
       // Limpiar errores y establecer archivo
       this.form.errors.file = '';
       this.form.selectedFile = file;
     },
-    
+
     removeFile() {
       this.form.selectedFile = null;
       this.form.errors.file = '';
     },
-    
+
     validateForm() {
       const errors = {};
-      
+
       if (!this.form.codigo.trim()) {
         errors.codigo = 'El código del plano es requerido.';
       }
-      
+
       if (!this.form.selectedFile) {
         errors.file = 'Debe seleccionar un archivo.';
       }
-      
+
       this.form.errors = errors;
       return Object.keys(errors).length === 0;
     },
-    
+
     async handleUpload() {
       if (!this.validateForm()) return;
-      
+
       this.uploading = true;
       this.uploadProgress = 0;
-      
+
       try {
         const formData = new FormData();
         formData.append('codigo', this.form.codigo);
         formData.append('version', this.form.version);
         formData.append('descripcion', this.form.descripcion);
         formData.append('archivo', this.form.selectedFile);
-        
+
         const response = await axios.post('/api/Plano/upload', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -286,24 +236,24 @@ export default {
             this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           }
         });
-        
+
         // Completar progreso
         this.uploadProgress = 100;
-        
+
         // Emitir evento de éxito
         this.$emit('upload-success', response.data);
-        
+
         // Mostrar mensaje de éxito
         this.$vaToast.success('Plano subido exitosamente');
-        
+
         this.closeModal();
-        
+
       } catch (error) {
         console.error('Error uploading file:', error);
-        
+
         // Fallback: simular subida si la API no está disponible
         console.warn('API upload failed, simulating upload...');
-        
+
         // Simular progreso de subida
         const simulateProgress = () => {
           return new Promise((resolve) => {
@@ -317,9 +267,9 @@ export default {
             }, 200);
           });
         };
-        
+
         await simulateProgress();
-        
+
         // Emitir evento de éxito con datos simulados
         const simulatedData = {
           id: Date.now(),
@@ -328,22 +278,22 @@ export default {
           descripcion: this.form.descripcion,
           filename: this.form.selectedFile.name
         };
-        
+
         this.$emit('upload-success', simulatedData);
-        
+
         this.$vaToast.success('Plano subido exitosamente (modo demo)');
-        
+
         this.closeModal();
-        
+
       } finally {
         this.uploading = false;
       }
     },
-    
+
     // Utilidades para archivos
     getFileIcon(mimeType) {
       if (!mimeType) return 'insert_drive_file';
-      
+
       switch (mimeType) {
         case 'application/pdf':
           return 'picture_as_pdf';
@@ -354,10 +304,10 @@ export default {
           return 'insert_drive_file';
       }
     },
-    
+
     getFileIconColor(mimeType) {
       if (!mimeType) return 'secondary';
-      
+
       switch (mimeType) {
         case 'application/pdf':
           return 'danger';
@@ -368,10 +318,10 @@ export default {
           return 'secondary';
       }
     },
-    
+
     getFileType(mimeType) {
       if (!mimeType) return 'Archivo';
-      
+
       switch (mimeType) {
         case 'application/pdf':
           return 'PDF';
@@ -383,7 +333,7 @@ export default {
           return 'Archivo';
       }
     },
-    
+
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -396,19 +346,11 @@ export default {
 </script>
 
 <style scoped>
-.upload-blueprint-details {
-  max-width: 100%;
-}
-
 .section-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-}
-
-.detail-content {
-  width: 100%;
 }
 
 .detail-grid {
@@ -427,10 +369,6 @@ export default {
   margin-bottom: 1rem;
 }
 
-.detail-field {
-  width: 100%;
-}
-
 /* Zona de subida de archivos */
 .upload-zone {
   border: 2px dashed var(--va-background-border);
@@ -440,7 +378,6 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--va-background-secondary);
-  position: relative;
 }
 
 .upload-zone:hover,
@@ -520,10 +457,6 @@ export default {
   color: var(--va-text-secondary);
 }
 
-.remove-file-button {
-  flex-shrink: 0;
-}
-
 .error-message-container {
   margin-top: 0.5rem;
 }
@@ -586,15 +519,15 @@ export default {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
-  
+
   .upload-zone {
     padding: 1.5rem 1rem;
   }
-  
+
   .upload-placeholder h4 {
     font-size: 1rem;
   }
-  
+
   .upload-placeholder p {
     font-size: 0.85rem;
   }
@@ -605,17 +538,17 @@ export default {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .modal-actions .va-button {
     width: 100%;
   }
-  
+
   .file-preview {
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
   }
-  
+
   .file-info {
     width: 100%;
   }
