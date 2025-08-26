@@ -324,6 +324,15 @@
   border-color: #e9ecef #e9ecef #dee2e6;
 }
 
+.card {
+  border: 1px solid rgba(8, 255, 21, 0.125);
+  border-radius: 0.25rem;
+  margin-bottom: 20px;
+}
+
+.card-body {
+  padding: 20px;
+}
 
 .form-control {
   display: block;
