@@ -20,8 +20,93 @@
       </div>
     </div>
 
-    <!-- Sección de Gráficos de Pedidos -->
-    <div class="pedidos-chart-section">
+          <!-- Resumen de métricas -->
+      <div v-if="!loading" class="metrics-summary">
+        <!-- Métricas de RRHH -->
+        <div class="metric-card">
+          <div class="metric-icon rrhh">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ totalOperarios }}</span>
+            <span class="metric-label">Total Operarios</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon available">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ operariosActivos }}</span>
+            <span class="metric-label">Operarios Activos</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon capacity">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ capacidadTotalHoras }}</span>
+            <span class="metric-label">Horas/Semana Total</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon supervisors">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ operariosSupervisores }}</span>
+            <span class="metric-label">Supervisores</span>
+          </div>
+        </div>
+
+        <!-- Métricas de Pedidos (si existen) -->
+        <div v-if="pedidos.length > 0" class="metric-card">
+          <div class="metric-icon pedidos">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ totalPedidos }}</span>
+            <span class="metric-label">Total Pedidos</span>
+          </div>
+        </div>
+
+        <div v-if="pedidos.length > 0" class="metric-card">
+          <div class="metric-icon success">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ pedidosCompletados }}</span>
+            <span class="metric-label">Completados</span>
+          </div>
+        </div>
+
+        <div v-if="pedidos.length > 0" class="metric-card">
+          <div class="metric-icon warning">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ pedidosEnProceso }}</span>
+            <span class="metric-label">En Proceso</span>
+          </div>
+        </div>
+
+        <div v-if="pedidos.length > 0" class="metric-card">
+          <div class="metric-icon danger">
+            <i class="fas fa-exclamation"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-value">{{ pedidosAlta }}</span>
+            <span class="metric-label">Prioridad Alta</span>
+          </div>
+        </div>
+      </div>
+    <!-- Sección de Gráficos -->
+    <div class="charts-main-section">
+      
 
       <!-- Loading state -->
       <div v-if="loading" class="chart-loading">
@@ -32,9 +117,28 @@
       </div>
 
       <!-- Charts Grid -->
-      <div v-if="!loading && pedidos.length > 0" class="charts-grid">
-        <!-- Gráfico de Estados -->
-        <div class="chart-card">
+      <div v-if="!loading" class="charts-grid">
+        <!-- Gráfico de Capacidad de Operarios -->
+        <div class="chart-card chart-full-width">
+          <div class="card-header">
+            <h4 class="card-title">
+              <i class="fas fa-users-cog"></i>
+              Capacidad de Operarios por Puesto
+            </h4>
+            <div class="chart-actions">
+              <va-badge 
+                :text="`Total: ${totalOperarios} operarios`" 
+                color="primary"
+              />
+            </div>
+          </div>
+          <div class="chart-wrapper chart-large">
+            <canvas ref="capacidadCanvas" width="800" height="400"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico de Estados de Pedidos -->
+        <div class="chart-card" v-if="pedidos.length > 0">
           <div class="card-header">
             <h4 class="card-title">
               <i class="fas fa-tasks"></i>
@@ -47,7 +151,7 @@
         </div>
 
         <!-- Gráfico de Prioridades -->
-        <div class="chart-card">
+        <div class="chart-card" v-if="pedidos.length > 0">
           <div class="card-header">
             <h4 class="card-title">
               <i class="fas fa-exclamation-triangle"></i>
@@ -59,8 +163,21 @@
           </div>
         </div>
 
-        <!-- Gráfico de Timeline -->
-        <div class="chart-card chart-full-width">
+        <!-- Gráfico de Disponibilidad por Tipo de Contrato -->
+        <div class="chart-card">
+          <div class="card-header">
+            <h4 class="card-title">
+              <i class="fas fa-handshake"></i>
+              Tipo de Contrato
+            </h4>
+          </div>
+          <div class="chart-wrapper">
+            <canvas ref="contratoCanvas" width="400" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico de Timeline de Pedidos -->
+        <div class="chart-card chart-full-width" v-if="pedidos.length > 0">
           <div class="card-header">
             <h4 class="card-title">
               <i class="fas fa-calendar-alt"></i>
@@ -78,52 +195,11 @@
         <div class="empty-icon">
           <i class="fas fa-chart-line"></i>
         </div>
-        <h4 class="empty-title">Sin datos disponibles</h4>
-        <p class="empty-description">No hay pedidos registrados para mostrar estadísticas</p>
+        <h4 class="empty-title">Sin datos de pedidos disponibles</h4>
+        <p class="empty-description">No hay pedidos registrados para mostrar estadísticas, pero puedes ver la información de recursos humanos</p>
       </div>
 
-      <!-- Resumen de métricas -->
-      <div v-if="!loading && pedidos.length > 0" class="metrics-summary">
-        <div class="metric-card">
-          <div class="metric-icon">
-            <i class="fas fa-clipboard-list"></i>
-          </div>
-          <div class="metric-info">
-            <span class="metric-value">{{ totalPedidos }}</span>
-            <span class="metric-label">Total Pedidos</span>
-          </div>
-        </div>
 
-        <div class="metric-card">
-          <div class="metric-icon success">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <div class="metric-info">
-            <span class="metric-value">{{ pedidosCompletados }}</span>
-            <span class="metric-label">Completados</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-icon warning">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="metric-info">
-            <span class="metric-value">{{ pedidosEnProceso }}</span>
-            <span class="metric-label">En Proceso</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-icon danger">
-            <i class="fas fa-exclamation"></i>
-          </div>
-          <div class="metric-info">
-            <span class="metric-value">{{ pedidosAlta }}</span>
-            <span class="metric-label">Prioridad Alta</span>
-          </div>
-        </div>
-      </div>
     </div>
 
   </div>
@@ -132,6 +208,7 @@
 <script>
 import { Chart, registerables } from 'chart.js';
 import { pedidoService } from '@/services/pedidoService.js';
+import api from '@/api.js';
 
 Chart.register(...registerables);
 
@@ -140,15 +217,37 @@ export default {
   data() {
     return {
       pedidos: [],
+      usuarios: [],
+      puestos: [],
       loading: false,
       charts: {
         estados: null,
         prioridades: null,
-        timeline: null
+        timeline: null,
+        capacidad: null,
+        contrato: null
       }
     };
   },
   computed: {
+    // Métricas de RRHH
+    totalOperarios() {
+      return this.usuarios.length;
+    },
+    operariosActivos() {
+      return this.usuarios.filter(u => u.estado_id === 1).length;
+    },
+    capacidadTotalHoras() {
+      return this.usuarios
+        .filter(u => u.estado_id === 1)
+        .reduce((total, u) => total + (u.capacidad_horas_semana || 0), 0);
+    },
+    operariosSupervisores() {
+      const puestosSupervisores = this.puestos.filter(p => p.es_supervisor).map(p => p.id.toString());
+      return this.usuarios.filter(u => puestosSupervisores.includes(u.puesto_id)).length;
+    },
+    
+    // Métricas de Pedidos (existentes)
     totalPedidos() {
       return this.pedidos.length;
     },
@@ -161,6 +260,94 @@ export default {
     pedidosAlta() {
       return this.pedidos.filter(p => p.prioridad === 1).length;
     },
+
+    // Data para gráfico de capacidad
+    capacidadData() {
+      const puestoCapacidad = {};
+      const puestoMap = {};
+      
+      // Crear mapa de puestos
+      this.puestos.forEach(puesto => {
+        puestoMap[puesto.id] = puesto.nombre_puesto;
+        puestoCapacidad[puesto.nombre_puesto] = {
+          operarios: 0,
+          horasSemanales: 0,
+          activos: 0
+        };
+      });
+
+      // Contar operarios por puesto (solo puestos del 2 al 6)
+      this.usuarios
+        .filter(u => parseInt(u.puesto_id) >= 2 && parseInt(u.puesto_id) <= 6)
+        .forEach(usuario => {
+          const nombrePuesto = puestoMap[parseInt(usuario.puesto_id)];
+          if (nombrePuesto && puestoCapacidad[nombrePuesto]) {
+            puestoCapacidad[nombrePuesto].operarios++;
+            puestoCapacidad[nombrePuesto].horasSemanales += usuario.capacidad_horas_semana || 0;
+            if (usuario.estado_id === 1) {
+              puestoCapacidad[nombrePuesto].activos++;
+            }
+          }
+        });
+
+      const labels = Object.keys(puestoCapacidad);
+      
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Total Operarios',
+            data: labels.map(label => puestoCapacidad[label].operarios),
+            backgroundColor: 'rgba(0, 51, 102, 0.7)',
+            borderColor: '#003366',
+            borderWidth: 2,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Operarios Activos',
+            data: labels.map(label => puestoCapacidad[label].activos),
+            backgroundColor: 'rgba(76, 205, 196, 0.7)',
+            borderColor: '#4ECDC4',
+            borderWidth: 2,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Horas Semanales',
+            data: labels.map(label => puestoCapacidad[label].horasSemanales),
+            backgroundColor: 'rgba(255, 159, 64, 0.7)',
+            borderColor: '#FF9F40',
+            borderWidth: 2,
+            type: 'line',
+            yAxisID: 'y1'
+          }
+        ]
+      };
+    },
+
+    // Data para gráfico de tipo de contrato
+    contratoData() {
+      const contratos = this.usuarios.reduce((acc, usuario) => {
+        const tipo = usuario.es_subcontratado ? 'Subcontratado' : 'Planta';
+        acc[tipo] = (acc[tipo] || 0) + 1;
+        return acc;
+      }, {});
+
+      return {
+        labels: Object.keys(contratos),
+        datasets: [{
+          data: Object.values(contratos),
+          backgroundColor: [
+            '#003366', // Planta - Azul oscuro
+            '#4ECDC4'  // Subcontratado - Verde azulado
+          ],
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 4
+        }]
+      };
+    },
+
+    // Datos existentes para gráficos de pedidos
     estadosData() {
       const estadosCount = {};
       const estadosLabels = {
@@ -257,29 +444,55 @@ export default {
     }
   },
   async mounted() {
-    await this.loadPedidos();
-    // Crear gráficos después de que los datos estén cargados
+    await this.loadAllData();
     this.$nextTick(() => {
       this.createCharts();
     });
   },
   beforeUnmount() {
-    // Limpiar los gráficos al destruir el componente
     this.destroyCharts();
   },
   watch: {
+    usuarios: {
+      handler() {
+        this.$nextTick(() => {
+          this.updateRRHHCharts();
+        });
+      },
+      deep: true
+    },
     pedidos: {
       handler() {
         this.$nextTick(() => {
-          this.updateCharts();
+          this.updatePedidosCharts();
         });
       },
       deep: true
     }
   },
   methods: {
-    async loadPedidos() {
+    async loadAllData() {
       this.loading = true;
+      try {
+        await Promise.all([
+          this.loadPedidos(),
+          this.loadUsuarios(),
+          this.loadPuestos()
+        ]);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        if (this.$vaToast) {
+          this.$vaToast.create({
+            message: 'Error al cargar algunos datos',
+            color: 'warning'
+          });
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async loadPedidos() {
       try {
         const response = await pedidoService.getAll();
         this.pedidos = response.data || response || [];
@@ -287,26 +500,180 @@ export default {
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
         this.pedidos = [];
+      }
+    },
+    
+    async loadUsuarios() {
+      try {
+        const response = await api.get('/usuario');
+        this.usuarios = response.data || response || [];
+        console.log('Usuarios cargados:', this.usuarios.length);
+      } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        this.usuarios = [];
         if (this.$vaToast) {
           this.$vaToast.create({
-            message: 'Error al cargar los datos de pedidos',
+            message: 'Error al cargar datos de usuarios',
             color: 'danger'
           });
         }
-      } finally {
-        this.loading = false;
       }
     },
-    async refreshData() {
-      await this.loadPedidos();
+    
+    async loadPuestos() {
+      try {
+        const response = await api.get('/puesto');
+        this.puestos = response.data || response || [];
+        console.log('Puestos cargados:', this.puestos.length);
+      } catch (error) {
+        console.error('Error al cargar puestos:', error);
+        this.puestos = [];
+        if (this.$vaToast) {
+          this.$vaToast.create({
+            message: 'Error al cargar datos de puestos',
+            color: 'danger'
+          });
+        }
+      }
     },
+
+    async refreshAllData() {
+      await this.loadAllData();
+    },
+
     createCharts() {
-      if (this.pedidos.length === 0) return;
+      this.createCapacidadChart();
+      this.createContratoChart();
       
-      this.createEstadosChart();
-      this.createPrioridadesChart();
-      this.createTimelineChart();
+      if (this.pedidos.length > 0) {
+        this.createEstadosChart();
+        this.createPrioridadesChart();
+        this.createTimelineChart();
+      }
     },
+
+    createCapacidadChart() {
+      const canvas = this.$refs.capacidadCanvas;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (this.charts.capacidad) {
+        this.charts.capacidad.destroy();
+      }
+
+      this.charts.capacidad = new Chart(ctx, {
+        type: 'bar',
+        data: this.capacidadData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          scales: {
+            x: {
+              ticks: {
+                maxRotation: 45,
+                minRotation: 0,
+                font: { size: 11 }
+              }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Número de Operarios'
+              },
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                font: { size: 11 }
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Horas Semanales'
+              },
+              beginAtZero: true,
+              grid: {
+                drawOnChartArea: false,
+              },
+              ticks: {
+                font: { size: 11 }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                afterLabel: function(context) {
+                  if (context.datasetIndex === 2) {
+                    return 'horas/semana';
+                  }
+                  return 'operarios';
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+
+    createContratoChart() {
+      const canvas = this.$refs.contratoCanvas;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (this.charts.contrato) {
+        this.charts.contrato.destroy();
+      }
+
+      this.charts.contrato = new Chart(ctx, {
+        type: 'doughnut',
+        data: this.contratoData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                font: { size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+
     createEstadosChart() {
       const canvas = this.$refs.estadosCanvas;
       if (!canvas) return;
@@ -328,9 +695,7 @@ export default {
               labels: {
                 padding: 20,
                 usePointStyle: true,
-                font: {
-                  size: 12
-                }
+                font: { size: 12 }
               }
             },
             tooltip: {
@@ -369,9 +734,7 @@ export default {
               labels: {
                 padding: 20,
                 usePointStyle: true,
-                font: {
-                  size: 12
-                }
+                font: { size: 12 }
               }
             },
             tooltip: {
@@ -409,16 +772,12 @@ export default {
               beginAtZero: true,
               ticks: {
                 stepSize: 1,
-                font: {
-                  size: 11
-                }
+                font: { size: 11 }
               }
             },
             x: {
               ticks: {
-                font: {
-                  size: 11
-                }
+                font: { size: 11 }
               }
             }
           },
@@ -437,7 +796,17 @@ export default {
         }
       });
     },
-    updateCharts() {
+    updateRRHHCharts() {
+      if (this.charts.capacidad && this.capacidadData.labels.length > 0) {
+        this.charts.capacidad.data = this.capacidadData;
+        this.charts.capacidad.update();
+      }
+      if (this.charts.contrato && this.contratoData.labels.length > 0) {
+        this.charts.contrato.data = this.contratoData;
+        this.charts.contrato.update();
+      }
+    },
+    updatePedidosCharts() {
       if (this.charts.estados && this.estadosData.labels.length > 0) {
         this.charts.estados.data = this.estadosData;
         this.charts.estados.update();
@@ -462,250 +831,5 @@ export default {
 };
 </script>
 
-<style src="src/assets/EstiloBase.css" scoped></style>
-
-<style scoped>
-.pedidos-chart-section {
-  width: 100%;
-  padding: 1.5rem;
-  margin-top: 2rem;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.chart-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.chart-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2d3748;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0;
-}
-
-.chart-title i {
-  color: #003366;
-  font-size: 1.3rem;
-}
-
-.chart-subtitle {
-  color: #718096;
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-.chart-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-.loading-spinner {
-  text-align: center;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #003366;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-spinner p {
-  color: #718096;
-  font-weight: 600;
-}
-
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.chart-card {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.chart-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-.chart-full-width {
-  grid-column: 1 / -1;
-}
-
-.card-header {
-  padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #f8fafc, #edf2f7);
-}
-
-.card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.card-title i {
-  color: #003366;
-}
-
-.chart-wrapper {
-  padding: 1.5rem;
-  height: 250px;
-  position: relative;
-}
-
-.chart-full-width .chart-wrapper {
-  height: 300px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.empty-icon {
-  font-size: 3rem;
-  color: #a0aec0;
-  margin-bottom: 1rem;
-}
-
-.empty-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #4a5568;
-  margin: 0 0 0.5rem 0;
-}
-
-.empty-description {
-  color: #718096;
-  margin: 0;
-}
-
-.metrics-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-}
-
-.metric-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: transform 0.2s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-}
-
-.metric-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #003366;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-.metric-icon.success {
-  background: #48bb78;
-}
-
-.metric-icon.warning {
-  background: #ed8936;
-}
-
-.metric-icon.danger {
-  background: #f56565;
-}
-
-.metric-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.metric-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-.metric-label {
-  font-size: 0.85rem;
-  color: #718096;
-  font-weight: 500;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .metrics-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .chart-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .metrics-summary {
-    grid-template-columns: 1fr;
-  }
-  
-  .pedidos-chart-section {
-    padding: 1rem;
-  }
-}
-</style>
+<style src="src/assets/EstiloBase.css" scoped ></style>
+<style src="src/assets/RRHH.css" scoped ></style>

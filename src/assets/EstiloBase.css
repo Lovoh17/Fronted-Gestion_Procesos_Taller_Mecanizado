@@ -119,7 +119,6 @@
 
 .filters-panel {
   background: white;
-  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
@@ -332,7 +331,7 @@
 }
 
 .card-body {
-  padding: 0px;
+  padding: 20px;
 }
 
 .form-control {
@@ -345,7 +344,6 @@
   background-color: #fff;
   background-clip: padding-box;
   border: 1px solid #ced4da;
-  border-radius: 0.25rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 

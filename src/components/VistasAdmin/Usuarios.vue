@@ -1,6 +1,6 @@
 <template>
   <div class="admin-container">
-    <!-- Header con gradiente -->
+    <!-- Header  -->
     <div class="header-section">
       <div class="header-content">
         <div class="header-info">
@@ -83,9 +83,7 @@
                 <div class="action-buttons">
                   <va-button size="small" preset="plain" color="info" @click="editUser(props.row)" icon="edit"
                     class="mr-1"></va-button>
-                  <va-button size="small" preset="plain" color="warning" @click="toggleUserStatus(props.row)"
-                    :icon="(props.row.status === 'active' || props.row.estado_id === 1) ? 'visibility_off' : 'visibility'"
-                    class="mr-1"></va-button>
+
                   <va-button size="small" preset="plain" color="danger" @click="confirmDelete(props.row.id)"
                     icon="delete"></va-button>
                 </div>
