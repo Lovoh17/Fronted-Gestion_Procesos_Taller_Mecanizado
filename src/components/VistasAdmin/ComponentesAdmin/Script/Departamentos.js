@@ -15,12 +15,10 @@ export default {
       loading: false,
       loadingDelete: null,
       searchQuery: '',
-      estadoFilter: 'todos',
       sortField: 'nombre',
       sortDirection: 'asc',
       currentPage: 1,
       itemsPerPage: 12,
-      showFilters: true,
       showDepartamentoModal: false,
       showNuevoDepartamentoModal: false,
       selectedDepartamento: null
@@ -28,28 +26,12 @@ export default {
   },
 
   computed: {
-    hasActiveFilters() {
-      return this.searchQuery !== '' || this.estadoFilter !== 'todos';
-    },
-
-    activeFiltersCount() {
-      let count = 0;
-      if (this.searchQuery !== '') count++;
-      if (this.estadoFilter !== 'todos') count++;
-      return count;
-    },
-
     filteredDepartamentos() {
       return this.departamentos.filter(departamento => {
-        const matchesEstado = this.estadoFilter === 'todos' ||
-          departamento.estado === this.estadoFilter;
-
         const matchesSearch = this.searchQuery === '' ||
-          departamento.nombre.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          (departamento.codigo && departamento.codigo.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (departamento.responsable && departamento.responsable.toLowerCase().includes(this.searchQuery.toLowerCase()));
+          departamento.nombre.toLowerCase().includes(this.searchQuery.toLowerCase());
 
-        return matchesEstado && matchesSearch;
+        return matchesSearch;
       }).sort((a, b) => {
         const modifier = this.sortDirection === 'asc' ? 1 : -1;
         if (a[this.sortField] < b[this.sortField]) return -1 * modifier;
@@ -100,7 +82,7 @@ export default {
   },
 
   methods: {
-    // Métodos de API (mantenemos los originales)
+    // Métodos de API
     async loadDepartamentos() {
       try {
         this.loading = true;
@@ -127,7 +109,9 @@ export default {
 
     async crearDepartamento(departamentoData) {
       try {
-        const response = await axios.post('/api/DepartamentoUniversidad', departamentoData);
+        const response = await axios.post('/api/DepartamentoUniversidad', {
+          nombre: departamentoData.nombre
+        });
         return response.data;
       } catch (error) {
         console.error("Error creando departamento:", error);
@@ -138,7 +122,9 @@ export default {
 
     async actualizarDepartamento(id, departamentoData) {
       try {
-        const response = await axios.put(`/api/DepartamentoUniversidad/${id}`, departamentoData);
+        const response = await axios.put(`/api/DepartamentoUniversidad/${id}`, {
+          nombre: departamentoData.nombre
+        });
         return response.data;
       } catch (error) {
         console.error("Error actualizando departamento:", error);
@@ -158,16 +144,6 @@ export default {
     },
 
     // Métodos de UI
-    applyFilters() {
-      this.currentPage = 1;
-    },
-
-    resetFilters() {
-      this.searchQuery = '';
-      this.estadoFilter = 'todos';
-      this.currentPage = 1;
-    },
-
     async verDetalles(departamento) {
       try {
         const departamentoActualizado = await this.obtenerDepartamentoPorId(departamento.id);
@@ -237,14 +213,6 @@ export default {
       this.selectedDepartamento = null;
     },
 
-    formatEstado(estado) {
-      return estado === 'activo' ? 'Activo' : 'Inactivo';
-    },
-
-    estadoClass(estado) {
-      return estado === 'activo' ? 'status-active' : 'status-inactive';
-    },
-
     sortBy(field) {
       if (this.sortField === field) {
         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -264,10 +232,6 @@ export default {
 
     goToPage(page) {
       if (page !== '...') this.currentPage = page;
-    },
-
-    toggleFilters() {
-      this.showFilters = !this.showFilters;
     },
 
     showToast(message, type = 'success') {
