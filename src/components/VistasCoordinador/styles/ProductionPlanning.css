@@ -115,25 +115,6 @@
   transform: scale(1.1);
 }
 
-/* Header con botón Solicitar Eventual */
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, var(--univo-primary), var(--univo-secondary));
-  color: white;
-  border-radius: 0 0 1rem 1rem;
-  margin: 0 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
 /* Botón Solicitar Eventual */
 .solicitar-eventual-btn {
   display: flex;
@@ -141,7 +122,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   background: var(--gray-light);
-  color:var(--univo-primary);
+  color: var(--univo-primary);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   font-size: 0.9rem;
@@ -155,7 +136,7 @@
 
 .solicitar-eventual-btn:hover {
   background: var(--univo-secondary);
-  color:var(--univo-primary);
+  color: var(--univo-primary);
   font-weight: 600;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
@@ -176,7 +157,7 @@
   50% { transform: scale(1.05); }
 }
 
-/* Estilos para el selector de vista */
+/* Selector de vista */
 .view-selector-tabs {
   display: flex;
   background: var(--gray-light);
@@ -205,7 +186,7 @@
 
 .tab-btn:hover {
   background: var(--univo-secondary);
-  color:var(--univo-primary);
+  color: var(--univo-primary);
   font-weight: 600;
   transform: translateY(-1px);
 }
@@ -221,12 +202,13 @@
   font-size: 1.1rem;
 }
 
-/* Estilos para las vistas */
+/* Contenedores de las vistas */
 .calendar-view,
 .gantt-view {
   width: 100%;
   min-height: 600px;
   margin-top: 1rem;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .calendario-container,
@@ -238,7 +220,18 @@
   overflow: hidden;
 }
 
-/* Códigos de color para carga de trabajo - Leyenda */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Leyenda de códigos de color para carga de trabajo */
 .workload-legend {
   display: flex;
   justify-content: center;
@@ -275,6 +268,37 @@
   height: 12px;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para filas del Gantt con códigos de color de carga */
+.gantt-row-free {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border-left: 4px solid #22c55e !important;
+}
+
+.gantt-row-light {
+  background-color: rgba(132, 204, 22, 0.1) !important;
+  border-left: 4px solid #84cc16 !important;
+}
+
+.gantt-row-moderate {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+  border-left: 4px solid #eab308 !important;
+}
+
+.gantt-row-heavy {
+  background-color: rgba(249, 115, 22, 0.1) !important;
+  border-left: 4px solid #f97316 !important;
+}
+
+.gantt-row-critical {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-left: 4px solid #ef4444 !important;
+}
+
+.gantt-row-overloaded {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+  border-left: 4px solid #8b5cf6 !important;
 }
 
 /* Responsive design para tablets */
@@ -326,19 +350,12 @@
 
 /* Responsive design para móviles */
 @media (max-width: 480px) {
-  .tab-btn span {
-    display: none;
-  }
-
+  .tab-btn span,
   .solicitar-eventual-btn span {
     display: none;
   }
 
-  .tab-btn {
-    padding: 0.75rem;
-    min-width: 48px;
-  }
-
+  .tab-btn,
   .solicitar-eventual-btn {
     padding: 0.75rem;
     min-width: 48px;
@@ -372,166 +389,5 @@
   .legend-dot {
     width: 8px;
     height: 8px;
-  }
-}
-
-/* Animaciones de transición */
-.calendar-view,
-.gantt-view {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Estilos específicos para datos con códigos de color de carga */
-.gantt-row-overloaded {
-  background-color: rgba(139, 92, 246, 0.1) !important;
-  border-left: 4px solid #8b5cf6 !important;
-}
-
-.gantt-row-critical {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  border-left: 4px solid #ef4444 !important;
-}
-
-.gantt-row-heavy {
-  background-color: rgba(249, 115, 22, 0.1) !important;
-  border-left: 4px solid #f97316 !important;
-}
-
-.gantt-row-moderate {
-  background-color: rgba(234, 179, 8, 0.1) !important;
-  border-left: 4px solid #eab308 !important;
-}
-
-.gantt-row-light {
-  background-color: rgba(132, 204, 22, 0.1) !important;
-  border-left: 4px solid #84cc16 !important;
-}
-
-.gantt-row-free {
-  background-color: rgba(34, 197, 94, 0.1) !important;
-  border-left: 4px solid #22c55e !important;
-}
-/* Estilos para el selector de vista */
-.view-selector-tabs {
-  display: flex;
-  background: var(--gray-light);
-  border-radius: 10px;
-  padding: 4px;
-  gap: 4px;
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: transparent;
-  border: none;
-  color: var(--univo-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
-}
-
-.tab-btn.active {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--univo-primary);
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tab-btn i {
-  font-size: 1.1rem;
-}
-
-/* Estilos para las vistas */
-.calendar-view,
-.gantt-view {
-  width: 100%;
-  min-height: 600px;
-}
-
-.calendario-container,
-.gantt-container {
-  margin: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-/* Responsive design para tablets */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .view-selector-tabs {
-    order: -1;
-    justify-content: center;
-    width: 100%;
-    max-width: 400px;
-  }
-
-  .tab-btn {
-    flex: 1;
-    justify-content: center;
-  }
-}
-
-/* Responsive design para móviles */
-@media (max-width: 480px) {
-  .tab-btn span {
-    display: none;
-  }
-
-  .tab-btn {
-    padding: 0.75rem;
-    min-width: 48px;
-  }
-
-  .calendario-container,
-  .gantt-container {
-    margin: 0.5rem;
-  }
-}
-
-/* Animaciones de transición */
-.calendar-view,
-.gantt-view {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

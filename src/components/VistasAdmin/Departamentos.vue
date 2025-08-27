@@ -64,23 +64,6 @@
 
           <div class="card-body">
             <h3 class="department-name">{{ departamento.nombre }}</h3>
-            <div class="department-info">
-              <div class="info-item">
-                <i class="fas fa-code"></i>
-                <span>{{ departamento.codigo || 'N/A' }}</span>
-              </div>
-              <div class="info-item">
-                <i class="fas fa-user-tie"></i>
-                <span>{{ departamento.responsable || 'Sin asignar' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-footer">
-            <div class="status-badge" :class="estadoClass(departamento.estado)">
-              <i :class="departamento.estado === 'activo' ? 'fas fa-check-circle' : 'fas fa-pause-circle'"></i>
-              {{ formatEstado(departamento.estado) }}
-            </div>
           </div>
         </div>
       </transition-group>

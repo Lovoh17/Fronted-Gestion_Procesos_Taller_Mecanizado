@@ -94,7 +94,7 @@
             <span>Requiere Contratación (+100%)</span>
           </div>
         </div>
-        
+
         <div class="gantt-container">
           <GanttChartComponent :title="ganttTitle" :rows="ganttRows" :chart-start="chartStart" :chart-end="chartEnd"
             :precision="precision" :can-create-tasks="canCreateTasks" :can-edit-tasks="canEditTasks"
@@ -110,7 +110,4 @@
 
 <style src="src/assets/EstiloBase.css" scoped></style>
 <script src="./scripts/ProductionPlanning.js"></script>
-<style src="src/components/VistasCoordinador/styles/ProductionPlanning.css" ></style>
-
-
-
+<style src="src/components/VistasCoordinador/styles/ProductionPlanning.css"></style>
