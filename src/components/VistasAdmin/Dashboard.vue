@@ -17,11 +17,7 @@
             </div>
           </div>
           <div class="header-actions">
-            <VaButton 
-              class="refresh-button" 
-              @click="refreshAllData" 
-              :disabled="globalLoading"
-            >
+            <VaButton class="refresh-button" @click="refreshAllData" :disabled="globalLoading">
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': globalLoading }"></i>
               Actualizar Dashboard
             </VaButton>
@@ -162,16 +158,14 @@
                 </h3>
               </div>
               <div class="detail-content">
-                <div v-for="puesto in dashboardData.usuarios?.porPuesto || []" 
-                     :key="puesto.puesto_id" 
-                     class="detail-item">
+                <div v-for="puesto in dashboardData.usuarios?.porPuesto || []" :key="puesto.puesto_id"
+                  class="detail-item">
                   <div class="detail-info">
                     <span class="detail-name">{{ puesto.puesto.nombre_puesto }}</span>
                     <span class="detail-count">: {{ puesto.total }} usuarios</span>
                   </div>
                   <div class="detail-bar">
-                    <div class="bar-fill" 
-                         :style="{ width: (puesto.total / dashboardData.usuarios.total * 100) + '%' }">
+                    <div class="bar-fill" :style="{ width: (puesto.total / dashboardData.usuarios.total * 100) + '%' }">
                     </div>
                   </div>
                 </div>
@@ -187,16 +181,14 @@
                 </h3>
               </div>
               <div class="detail-content">
-                <div v-for="estado in dashboardData.pedidos?.porEstado || []" 
-                     :key="estado.estado_id" 
-                     class="detail-item">
+                <div v-for="estado in dashboardData.pedidos?.porEstado || []" :key="estado.estado_id"
+                  class="detail-item">
                   <div class="detail-info">
                     <span class="detail-name">{{ estado.estados_pedido.nombre }}</span>
                     <span class="detail-count">: {{ estado.total }} pedidos</span>
                   </div>
                   <div class="detail-bar">
-                    <div class="bar-fill" 
-                         :style="{ width: (estado.total / dashboardData.pedidos.total * 100) + '%' }">
+                    <div class="bar-fill" :style="{ width: (estado.total / dashboardData.pedidos.total * 100) + '%' }">
                     </div>
                   </div>
                 </div>
@@ -246,15 +238,15 @@ export default {
       try {
         globalLoading.value = true
         globalError.value = false
-        
+
         const data = await api.get('/dashboard/admin')
         dashboardData.value = data
         hasData.value = true
-        
+
         // Esperar un tick para que el DOM se actualice
         await nextTick()
         createCharts()
-        
+
       } catch (error) {
         console.error('Error loading dashboard data:', error)
         globalError.value = true
@@ -298,7 +290,7 @@ export default {
 
       const ctx = usuariosPuestoChart.value.getContext('2d')
       const data = dashboardData.value.usuarios?.porPuesto || []
-      
+
       usuariosPuestoChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -353,7 +345,7 @@ export default {
 
       const ctx = pedidosEstadoChart.value.getContext('2d')
       const data = dashboardData.value.pedidos?.porEstado || []
-      
+
       pedidosEstadoChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -391,7 +383,7 @@ export default {
 
       const ctx = herramientasEstadoChart.value.getContext('2d')
       const data = dashboardData.value.herramientas?.porEstado || []
-      
+
       herramientasEstadoChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -429,7 +421,7 @@ export default {
       }
 
       const ctx = resumenGeneralChart.value.getContext('2d')
-      
+
       resumenGeneralChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -484,4 +476,3 @@ export default {
 
 <style src="src/assets/EstiloBase.css" scoped></style>
 <style src="src/assets/DashbordAdmin.css" scoped></style>
-

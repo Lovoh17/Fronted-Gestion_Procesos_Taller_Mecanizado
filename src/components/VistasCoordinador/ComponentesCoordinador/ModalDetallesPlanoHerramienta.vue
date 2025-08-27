@@ -1,7 +1,7 @@
 <template>
   <VaModal :model-value="!!blueprintItem" title="Detalles del Plano de Herramienta" size="large" :close-button="false"
     hide-default-actions @close="cerrar" :z-index="10000" :backdrop-z-index="9999">
-    
+
     <div v-if="blueprintItem" class="blueprint-details">
       <!-- Información Principal -->
       <VaCardTitle>Información General</VaCardTitle>
@@ -9,7 +9,7 @@
         <div class="detail-content">
           <!-- Imagen y datos básicos -->
           <div class="detail-header">
-            <div class="detail-image" 
+            <div class="detail-image"
               :style="{ 'background-image': 'url(' + (blueprintItem.plano.imagen_url || defaultImage) + ')' }">
             </div>
             <div class="detail-title-section">
@@ -24,23 +24,31 @@
           <!-- Grid de información -->
           <div class="detail-grid">
             <div class="detail-row">
-              <VaInput :model-value="blueprintItem.plano.codigo || 'N/A'" label="Código del Plano" readonly class="detail-field" />
-              <VaInput :model-value="blueprintItem.plano.version || 'N/A'" label="Versión" readonly class="detail-field" />
+              <VaInput :model-value="blueprintItem.plano.codigo || 'N/A'" label="Código del Plano" readonly
+                class="detail-field" />
+              <VaInput :model-value="blueprintItem.plano.version || 'N/A'" label="Versión" readonly
+                class="detail-field" />
             </div>
 
             <div class="detail-row">
-              <VaInput :model-value="blueprintItem.herramienta.codigo || 'N/A'" label="Código de Herramienta" readonly class="detail-field" />
-              <VaInput :model-value="blueprintItem.herramienta.estado || 'N/A'" label="Estado de Herramienta" readonly class="detail-field" />
+              <VaInput :model-value="blueprintItem.herramienta.codigo || 'N/A'" label="Código de Herramienta" readonly
+                class="detail-field" />
+              <VaInput :model-value="blueprintItem.herramienta.estado || 'N/A'" label="Estado de Herramienta" readonly
+                class="detail-field" />
             </div>
 
             <div class="detail-row">
-              <VaInput :model-value="blueprintItem.cantidad_necesaria + ' unidades'" label="Cantidad Necesaria" readonly class="detail-field" />
-              <VaInput :model-value="blueprintItem.tiempo_estimado_uso + ' horas'" label="Tiempo Estimado de Uso" readonly class="detail-field" />
+              <VaInput :model-value="blueprintItem.cantidad_necesaria + ' unidades'" label="Cantidad Necesaria" readonly
+                class="detail-field" />
+              <VaInput :model-value="blueprintItem.tiempo_estimado_uso + ' horas'" label="Tiempo Estimado de Uso"
+                readonly class="detail-field" />
             </div>
 
             <div class="detail-row">
-              <VaInput :model-value="formatDate(blueprintItem.fecha_creacion) || 'N/A'" label="Fecha de Creación" readonly class="detail-field" />
-              <VaInput :model-value="formatDate(blueprintItem.fecha_actualizacion) || 'N/A'" label="Última Actualización" readonly class="detail-field" />
+              <VaInput :model-value="formatDate(blueprintItem.fecha_creacion) || 'N/A'" label="Fecha de Creación"
+                readonly class="detail-field" />
+              <VaInput :model-value="formatDate(blueprintItem.fecha_actualizacion) || 'N/A'"
+                label="Última Actualización" readonly class="detail-field" />
             </div>
           </div>
         </div>
@@ -50,14 +58,8 @@
       <VaCardTitle>Información del Plano</VaCardTitle>
       <VaCardContent>
         <div class="detail-full-width">
-          <VaTextarea 
-            :model-value="blueprintItem.plano.descripcion || 'Sin descripción disponible'" 
-            label="Descripción del Plano"
-            readonly
-            :min-rows="4"
-            :max-rows="8"
-            class="mb-4"
-          />
+          <VaTextarea :model-value="blueprintItem.plano.descripcion || 'Sin descripción disponible'"
+            label="Descripción del Plano" readonly :min-rows="4" :max-rows="8" class="mb-4" />
         </div>
       </VaCardContent>
 
@@ -65,12 +67,16 @@
       <VaCardTitle>Detalles de la Herramienta</VaCardTitle>
       <VaCardContent>
         <div class="detail-row">
-          <VaInput :model-value="blueprintItem.herramienta.nombre || 'N/A'" label="Nombre de la Herramienta" readonly class="detail-field" />
-          <VaInput :model-value="blueprintItem.herramienta.modelo || 'N/A'" label="Modelo" readonly class="detail-field" />
+          <VaInput :model-value="blueprintItem.herramienta.nombre || 'N/A'" label="Nombre de la Herramienta" readonly
+            class="detail-field" />
+          <VaInput :model-value="blueprintItem.herramienta.modelo || 'N/A'" label="Modelo" readonly
+            class="detail-field" />
         </div>
         <div class="detail-row">
-          <VaInput :model-value="blueprintItem.herramienta.fabricante || 'N/A'" label="Fabricante" readonly class="detail-field" />
-          <VaInput :model-value="blueprintItem.herramienta.numero_serie || 'N/A'" label="Número de Serie" readonly class="detail-field" />
+          <VaInput :model-value="blueprintItem.herramienta.fabricante || 'N/A'" label="Fabricante" readonly
+            class="detail-field" />
+          <VaInput :model-value="blueprintItem.herramienta.numero_serie || 'N/A'" label="Número de Serie" readonly
+            class="detail-field" />
         </div>
       </VaCardContent>
 
@@ -78,24 +84,13 @@
       <VaCardTitle>Notas y Especificaciones</VaCardTitle>
       <VaCardContent>
         <div class="detail-full-width">
-          <VaTextarea 
-            :model-value="blueprintItem.notas || 'Sin notas adicionales'"
-            label="Notas del Plano"
-            readonly
-            :min-rows="3"
-            :max-rows="6"
-            class="mb-4"
-          />
+          <VaTextarea :model-value="blueprintItem.notas || 'Sin notas adicionales'" label="Notas del Plano" readonly
+            :min-rows="3" :max-rows="6" class="mb-4" />
         </div>
-        
+
         <div class="detail-full-width" v-if="blueprintItem.herramienta.especificaciones_tecnicas">
-          <VaTextarea 
-            :model-value="formatSpecs(blueprintItem.herramienta.especificaciones_tecnicas)"
-            label="Especificaciones Técnicas de la Herramienta"
-            readonly
-            :min-rows="3"
-            :max-rows="6"
-          />
+          <VaTextarea :model-value="formatSpecs(blueprintItem.herramienta.especificaciones_tecnicas)"
+            label="Especificaciones Técnicas de la Herramienta" readonly :min-rows="3" :max-rows="6" />
         </div>
       </VaCardContent>
 
@@ -112,7 +107,7 @@
               <span class="metric-value">{{ blueprintItem.cantidad_necesaria }} unidades</span>
             </div>
           </div>
-          
+
           <div class="usage-metric">
             <div class="metric-icon">
               <i class="material-icons">schedule</i>
@@ -122,7 +117,7 @@
               <span class="metric-value">{{ blueprintItem.tiempo_estimado_uso }} horas</span>
             </div>
           </div>
-          
+
           <div class="usage-metric" v-if="blueprintItem.herramienta.horas_uso_actual">
             <div class="metric-icon">
               <i class="material-icons">hourglass_empty</i>
@@ -335,25 +330,25 @@ export default {
 }
 
 /* Estados de herramientas */
-.status-disponible { 
+.status-disponible {
   background: #ecfdf5;
   color: #065f46;
   border: 1px solid #a7f3d0;
 }
 
-.status-en-uso { 
+.status-en-uso {
   background: #fffbeb;
   color: #92400e;
   border: 1px solid #fde68a;
 }
 
-.status-mantenimiento { 
+.status-mantenimiento {
   background: #f3f4f6;
   color: #374151;
   border: 1px solid #d1d5db;
 }
 
-.status-dañado { 
+.status-dañado {
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fca5a5;
@@ -365,17 +360,17 @@ export default {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .detail-image {
     width: 100%;
     height: 200px;
   }
-  
+
   .detail-row {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
-  
+
   .detail-title-section h4 {
     font-size: 1.25rem;
   }
@@ -390,7 +385,7 @@ export default {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .modal-actions .va-button {
     width: 100%;
   }

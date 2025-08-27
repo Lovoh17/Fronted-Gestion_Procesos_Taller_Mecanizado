@@ -1,166 +1,9 @@
-/* Vuestic UI Integration Styles */
-.works-section.va-card {
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-  margin-bottom: 2rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.header-title-section {
-  display: flex;
-  align-items: center;
-}
-
-.filter-container {
-  min-width: 200px;
-}
-
-.filter-select .va-select {
-  min-width: 200px;
-}
-
-.va-card-title {
-  padding: 1.5rem 1.5rem 0 1.5rem;
-}
-
-.va-card-content {
-  padding: 1.5rem;
-}
-
-/* Utility classes for spacing */
-.mr-3 {
-  margin-right: 0.75rem;
-}
-
-.mb-0 {
-  margin-bottom: 0;
-}
-
-/* Enhanced select styling */
-.va-select {
-  border-radius: 12px;
-}
-
-.va-select .va-input-wrapper {
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.va-select .va-input-wrapper:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-/* Icon styling */
-.va-icon {
-  transition: all 0.3s ease;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  
-  .header-title-section {
-    width: 100%;
-  }
-  
-  .filter-container {
-    width: 100%;
-  }
-  
-  .filter-select {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .va-card-title,
-  .va-card-content {
-    padding: 1rem;
-  }
-}
-
 /* Estilos base */
 .operario-trabajos-container {
   padding: 2rem;
   max-width: auto;
   margin: 0 auto;
   color: #333;
-}
-
-.header-section {
-  margin-bottom: 2rem;
-}
-
-.header-content {
-  background: rgba(255, 255, 255, 0.98);
-  border-radius: 1rem;
-  padding: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.header-content:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 70px;
-  height: 70px;
-  background: #003366;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.8rem;
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #003366, #003366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-}
-
-.header-subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
 }
 
 /* Botones modernos del header */
@@ -210,136 +53,17 @@
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
-.btn-modern.btn-secondary {
-  color: #4a5568;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.btn-modern.btn-secondary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.btn-large {
-  padding: 1.2rem 2.4rem;
-  font-size: 1.2rem;
-}
-
-/* Botones del formulario y acciones principales */
-.btn-primary {
-  background-color: var(--primary-color) !important;
-  color: white !important;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
-
+/* Animation keyframes */
 @keyframes fa-spin {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
-    padding: 0 1rem;
-  }
-
-  .header-info {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .header-title {
-    font-size: 2rem;
-  }
-
-  .header-subtitle {
-    font-size: 1rem;
-  }
-
-  .header-icon {
-    padding: 1rem;
-  }
-
-  .header-icon i {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-section {
-    padding: 1.5rem 0;
-    margin-bottom: 1.5rem;
-  }
-
-  .header-title {
-    font-size: 1.75rem;
-  }
-
-  .btn-modern {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-  }
-}
-
-.title-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.title-container h1 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.title-container i {
-  font-size: 1.5rem;
-  color: #3498db;
-}
-
-.refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-/* Tarjetas de estadísticas mejoradas - armonizadas con el header */
+/* Stats Container */
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -497,33 +221,7 @@
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .stats-container {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .stat-card {
-    padding: 1.5rem;
-  }
-
-  .stat-card-content {
-    gap: 1rem;
-  }
-
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
-  }
-
-  .stat-info h3 {
-    font-size: 2rem;
-  }
-}
-
-/* Sección de trabajos */
+/* Works Section */
 .works-section {
   background-color: white;
   border-radius: 0.5rem;
@@ -546,7 +244,11 @@
   font-weight: 600;
 }
 
-/* Reemplaza el estilo actual del filter-select con estos estilos */
+.filter-container {
+  position: relative;
+  min-width: 200px;
+}
+
 .filter-select {
   width: 100%;
   padding: 0.5rem 1rem;
@@ -554,7 +256,6 @@
   border-radius: 0.375rem;
   background-color: white;
   color: #4a5568;
-  /* Color de texto oscuro para mejor contraste */
   font-size: 0.875rem;
   transition: all 0.2s ease;
   appearance: none;
@@ -570,25 +271,17 @@
   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
 }
 
-/* Estilo para las opciones del select */
 .filter-select option {
   background-color: white;
   color: #2d3748;
   padding: 0.5rem;
 }
 
-/* Contenedor del select para mejor espaciado */
-.filter-container {
-  position: relative;
-  min-width: 200px;
-}
-
-/* Estilo para el hover de las opciones */
 .filter-select option:hover {
   background-color: #ebf8ff;
 }
 
-/* Estados de carga */
+/* Loading and Empty States */
 .loading-state,
 .empty-state {
   display: flex;
@@ -617,7 +310,7 @@
   color: #2c3e50;
 }
 
-/* Grid de trabajos */
+/* Works Grid */
 .works-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -625,6 +318,7 @@
   padding: 1.5rem;
 }
 
+/* Work Cards */
 .work-card {
   border: 1px solid #e9ecef;
   border-radius: 0.5rem;
@@ -641,11 +335,11 @@
   border-left: 4px solid #f39c12;
 }
 
-.work-progress {
+.work-en_proceso {
   border-left: 4px solid #3498db;
 }
 
-.work-completed {
+.work-completado {
   border-left: 4px solid #2ecc71;
 }
 
@@ -939,12 +633,52 @@
   color: #155724;
 }
 
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .header {
+  .operario-trabajos-container {
+    padding: 1rem;
+  }
+
+  .header-content {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .header-info {
+    flex-direction: column;
     gap: 1rem;
+  }
+
+  .header-title {
+    font-size: 2rem;
+  }
+
+  .header-subtitle {
+    font-size: 1rem;
+  }
+
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    padding: 1.5rem;
+  }
+
+  .stat-card-content {
+    gap: 1rem;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+
+  .stat-info h3 {
+    font-size: 2rem;
   }
 
   .section-header {
@@ -972,5 +706,16 @@
 
   .modal-body .detail-row label {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-title {
+    font-size: 1.75rem;
+  }
+
+  .btn-modern {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
   }
 }

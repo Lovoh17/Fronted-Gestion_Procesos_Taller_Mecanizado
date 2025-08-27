@@ -1,89 +1,25 @@
 <template>
-  <VaModal 
-    :model-value="true" 
-    :title="isEditing ? 'Editar Departamento' : 'Nuevo Departamento'" 
-    size="large"
-    :close-button="!loading" 
-    :no-outside-dismiss="loading" 
-    hide-default-actions 
-    @close="closeModal"
-  >
+  <VaModal :model-value="true" :title="isEditing ? 'Editar Departamento' : 'Nuevo Departamento'" size="medium"
+    :close-button="!loading" :no-outside-dismiss="loading" hide-default-actions @close="closeModal">
     <form @submit.prevent="submitForm">
       <div class="department-form">
         <!-- Información Principal -->
-          <VaCardContent>
-            <div class="form-row">
-              <VaInput 
-                v-model="form.codigo" 
-                label="Código *" 
-                placeholder="Ej: TEC, ADM, PROD"
-                :error="!!errors.codigo"
-                :error-messages="errors.codigo"
-                class="form-field"
-                maxlength="10"
-                required 
-              />
-              
-              <VaInput 
-                v-model="form.nombre" 
-                label="Nombre *" 
-                placeholder="Nombre del departamento"
-                :error="!!errors.nombre"
-                :error-messages="errors.nombre"
-                class="form-field"
-                required 
-              />
-            </div>
-            
-            <div class="form-row">
-              <VaInput 
-                v-model="form.responsable" 
-                label="Responsable *" 
-                placeholder="Nombre del responsable"
-                :error="!!errors.responsable"
-                :error-messages="errors.responsable"
-                class="form-field"
-                required 
-              />
-              
-              <VaSelect 
-                v-model="form.estado" 
-                label="Estado *"
-                :options="estadoOptions"
-                class="form-field"
-                required
-              />
-            </div>
-            
-            <VaTextarea 
-              v-model="form.descripcion" 
-              label="Descripción" 
-              placeholder="Descripción del departamento (opcional)"
-              :error="!!errors.descripcion"
-              :error-messages="errors.descripcion"
-              :min-rows="3"
-              :max-rows="6"
-            />
-          </VaCardContent>
+        <VaCardContent>
+          <VaInput v-model="form.nombre" label="Nombre del Departamento *"
+            placeholder="Ingrese el nombre del departamento" :error="!!errors.nombre" :error-messages="errors.nombre"
+            class="form-field" maxlength="100" required />
+        </VaCardContent>
 
-        <!-- Información Adicional -->
+        <!-- Información Adicional (solo en edición) -->
         <VaCard class="form-section" v-if="isEditing">
-          <VaCardTitle>Información Adicional</VaCardTitle>
+          <VaCardTitle>Información del Departamento</VaCardTitle>
           <VaCardContent>
-            <div class="form-row info-row">
+            <div class="info-row">
               <div class="info-item">
-                <VaIcon name="calendar_today" color="primary" />
+                <VaIcon name="tag" color="primary" />
                 <div class="info-content">
-                  <span class="info-label">Fecha de Creación:</span>
-                  <span class="info-value">{{ formatDate(departamento.created_at) }}</span>
-                </div>
-              </div>
-              
-              <div class="info-item" v-if="departamento.updated_at">
-                <VaIcon name="update" color="info" />
-                <div class="info-content">
-                  <span class="info-label">Última Actualización:</span>
-                  <span class="info-value">{{ formatDate(departamento.updated_at) }}</span>
+                  <span class="info-label">ID del Departamento:</span>
+                  <span class="info-value">#{{ departamento.id }}</span>
                 </div>
               </div>
             </div>
@@ -98,13 +34,8 @@
           <VaIcon name="close" class="mr-1" />
           Cancelar
         </VaButton>
-        
-        <VaButton 
-          @click="submitForm" 
-          :disabled="loading || !isFormValid" 
-          :loading="loading" 
-          color="primary"
-        >
+
+        <VaButton @click="submitForm" :disabled="loading || !isFormValid" :loading="loading" color="primary">
           <VaIcon :name="isEditing ? 'edit' : 'add'" class="mr-1" />
           {{ isEditing ? 'Actualizar' : 'Crear' }} Departamento
         </VaButton>
@@ -131,20 +62,10 @@ const emit = defineEmits(['close', 'save'])
 
 // Data
 const form = ref({
-  codigo: '',
-  nombre: '',
-  responsable: '',
-  estado: 'activo',
-  descripcion: ''
+  nombre: ''
 })
 
 const errors = ref({})
-
-// Options para el select de estado
-const estadoOptions = [
-  { text: 'Activo', value: 'activo' },
-  { text: 'Inactivo', value: 'inactivo' }
-]
 
 // Computed
 const isEditing = computed(() => {
@@ -152,10 +73,7 @@ const isEditing = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  return form.value.codigo.trim() &&
-         form.value.nombre.trim() &&
-         form.value.responsable.trim() &&
-         form.value.estado
+  return form.value.nombre.trim().length > 0
 })
 
 // Watchers
@@ -163,11 +81,7 @@ watch(() => props.departamento, (newDepartamento) => {
   if (newDepartamento && newDepartamento.id) {
     // Cargar datos para edición
     form.value = {
-      codigo: newDepartamento.codigo || '',
-      nombre: newDepartamento.nombre || '',
-      responsable: newDepartamento.responsable || '',
-      estado: newDepartamento.estado || 'activo',
-      descripcion: newDepartamento.descripcion || ''
+      nombre: newDepartamento.nombre || ''
     }
   } else {
     // Resetear formulario para nuevo departamento
@@ -179,32 +93,13 @@ watch(() => props.departamento, (newDepartamento) => {
 const validateForm = () => {
   errors.value = {}
 
-  // Validar código
-  if (!form.value.codigo.trim()) {
-    errors.value.codigo = 'El código es requerido'
-  } else if (form.value.codigo.length > 10) {
-    errors.value.codigo = 'El código no puede exceder 10 caracteres'
-  } else if (!/^[A-Z0-9]+$/.test(form.value.codigo.trim())) {
-    errors.value.codigo = 'El código solo debe contener letras mayúsculas y números'
-  }
-
   // Validar nombre
   if (!form.value.nombre.trim()) {
     errors.value.nombre = 'El nombre es requerido'
+  } else if (form.value.nombre.trim().length < 3) {
+    errors.value.nombre = 'El nombre debe tener al menos 3 caracteres'
   } else if (form.value.nombre.length > 100) {
     errors.value.nombre = 'El nombre no puede exceder 100 caracteres'
-  }
-
-  // Validar responsable
-  if (!form.value.responsable.trim()) {
-    errors.value.responsable = 'El responsable es requerido'
-  } else if (form.value.responsable.length > 100) {
-    errors.value.responsable = 'El nombre del responsable no puede exceder 100 caracteres'
-  }
-
-  // Validar descripción (opcional pero con límite)
-  if (form.value.descripcion && form.value.descripcion.length > 500) {
-    errors.value.descripcion = 'La descripción no puede exceder 500 caracteres'
   }
 
   return Object.keys(errors.value).length === 0
@@ -216,11 +111,7 @@ const submitForm = () => {
   }
 
   const departamentoData = {
-    codigo: form.value.codigo.trim().toUpperCase(),
-    nombre: form.value.nombre.trim(),
-    responsable: form.value.responsable.trim(),
-    estado: form.value.estado,
-    descripcion: form.value.descripcion.trim() || null
+    nombre: form.value.nombre.trim()
   }
 
   // Agregar ID si estamos editando
@@ -237,30 +128,9 @@ const closeModal = () => {
 
 const resetForm = () => {
   form.value = {
-    codigo: '',
-    nombre: '',
-    responsable: '',
-    estado: 'activo',
-    descripcion: ''
+    nombre: ''
   }
   errors.value = {}
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch (error) {
-    return 'Fecha inválida'
-  }
 }
 </script>
 
@@ -276,13 +146,6 @@ const formatDate = (dateString) => {
   border: 1px solid var(--va-background-border);
   border-radius: 0.5rem;
   overflow: hidden;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .form-field {
@@ -354,24 +217,19 @@ const formatDate = (dateString) => {
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  
   .form-actions {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .form-actions .va-button {
     width: 100%;
   }
-  
+
   .info-row {
     gap: 0.5rem;
   }
-  
+
   .info-item {
     padding: 0.5rem;
     gap: 0.5rem;
@@ -382,10 +240,6 @@ const formatDate = (dateString) => {
   .department-form {
     gap: 1rem;
   }
-  
-  .form-row {
-    gap: 0.75rem;
-  }
 }
 
 /* Estilos para campos con error */
@@ -394,9 +248,26 @@ const formatDate = (dateString) => {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-  20%, 40%, 60%, 80% { transform: translateX(2px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(2px);
+  }
 }
 
 /* Mejoras visuales */
@@ -416,5 +287,24 @@ const formatDate = (dateString) => {
 /* Iconos en botones */
 .mr-1 {
   margin-right: 0.25rem;
+}
+
+/* Estilos específicos para el campo de nombre */
+.form-field {
+  margin-bottom: 1rem;
+}
+
+.form-field .va-input__label {
+  font-weight: 500;
+  color: var(--va-text-primary);
+}
+
+.form-field .va-input__content {
+  border-radius: 0.5rem;
+}
+
+.form-field .va-input__content:focus-within {
+  box-shadow: 0 0 0 2px var(--va-primary);
+  border-color: var(--va-primary);
 }
 </style>

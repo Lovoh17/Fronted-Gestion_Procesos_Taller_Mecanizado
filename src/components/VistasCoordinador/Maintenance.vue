@@ -41,8 +41,8 @@
         </div>
 
         <div v-else>
-          <vue-good-table ref="vueGoodTable" :columns="tableColumns" max-height="45vh"
-            :rows="mantenimientos" :search-options="{
+          <vue-good-table ref="vueGoodTable" :columns="tableColumns" max-height="45vh" :rows="mantenimientos"
+            :search-options="{
               enabled: true,
               placeholder: 'Buscar mantenimientos por nombre, herramienta o tipo...',
               externalQuery: searchQuery
@@ -59,9 +59,9 @@
               pageLabel: 'página',
               allLabel: 'Todos'
             }" :sort-options="{
-          enabled: true,
-          initialSortBy: { field: 'nombre', type: 'asc' }
-        }" :select-options="{
+              enabled: true,
+              initialSortBy: { field: 'nombre', type: 'asc' }
+            }" :select-options="{
           enabled: false
         }" styleClass="vgt-table striped bordered" theme="Black-rhino">
 
@@ -83,24 +83,24 @@
                   {{ props.row.tipo_mantenimiento_nombre }}
                 </span>
               </span>
-              
+
               <!-- Columna de Técnico -->
               <span v-else-if="props.column.field === 'tecnico_nombre'">
                 {{ props.row.tecnico_nombre }}
               </span>
-              
+
               <!-- Columna de Prioridad -->
               <span v-else-if="props.column.field === 'prioridad_nombre'">
                 <span :class="['badge', prioridadClass(props.row.prioridad_id)]">
                   {{ props.row.prioridad_nombre }}
                 </span>
               </span>
-              
+
               <!-- Columna de Costo Estimado -->
               <span v-else-if="props.column.field === 'costo_estimado'">
                 {{ formatCurrency(props.row.costo_estimado) }}
               </span>
-              
+
               <!-- Columna de Horas -->
               <span v-else-if="props.column.field === 'horas_trabajo'">
                 {{ props.row.horas_trabajo ? props.row.horas_trabajo + 'h' : 'N/A' }}
