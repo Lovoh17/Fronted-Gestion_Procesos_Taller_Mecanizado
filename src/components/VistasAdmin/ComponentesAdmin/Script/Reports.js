@@ -1,682 +1,1408 @@
-import axios from 'axios'
-import { VueGoodTable } from 'vue-good-table-next'
-import 'vue-good-table-next/dist/vue-good-table-next.css'
+/*import api from '@/api.js'
 
 export default {
-  name: 'AlertasDashboard',
-  components: {
-    VueGoodTable
-  },
-  
+  name: 'AlertaReparacion',
   data() {
     return {
-      // Datos básicos
-      alertas: [],
-      tiposAlerta: [],
-      herramientas: [],
-      prioridades: [], // Removido datos de prueba
       loading: false,
+      saving: false,
+      deleting: false,
       searchQuery: '',
-      showFilters: true,
-      viewMode: 'table',
-      selectedAlerta: null,
-      showNewAlertaModal: false,
+      showNewAlertModal: false,
+      showViewModal: false,
+      showEditModal: false,
+      showDeleteModal: false,
+      selectedAlert: null,
+      isEditing: false,
+      alertToDelete: null,
+      alertas: [],
+      herramientas: [],
+      tiposAlertas: [],
+      usuarios: [],
       
-      // Filtros - Inicializar con valores válidos
-      tipoAlertaFilter: null,
-      statusFilters: {
-        '0': true, // Pendiente
-        '1': true, // Resuelta
-        '2': true, // En proceso (si existe)
+      // Formulario para nueva/editar alerta
+      alertForm: {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
       },
-      dateRange: {
-        start: '',
-        end: ''
-      },
-      prioridadFilter: null,
-      herramientaFilter: null,
-      
-      // Configuración de columnas - CORREGIDA
+
       tableColumns: [
         {
           label: 'ID',
           field: 'id',
           type: 'number',
-          sortable: true,
           width: '80px'
         },
         {
           label: 'Herramienta',
-          field: 'herramienta_nombre',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por herramienta'
-          }
+          field: 'herramienta',
+          sortable: false
         },
         {
           label: 'Tipo de Alerta',
-          field: 'tipo_alerta_nombre',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por tipo'
-          }
+          field: 'tipo_alerta',
+          sortable: false
         },
         {
-          label: 'Descripción',
-          field: 'descripcion',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por descripción'
-          }
+          label: 'Fecha Generación',
+          field: 'fecha_generacion_formatted',
+          sortable: true
         },
         {
-          label: 'Estado',
-          field: 'estado_reparacion',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            filterDropdownItems: [
-              { value: '0', text: 'Pendiente' },
-              { value: '1', text: 'Resuelta' },
-              { value: '2', text: 'En Proceso' }
-            ],
-            filterMultiselect: false,
-            placeholder: 'Todos los estados'
-          }
+          label: 'Fecha Límite',
+          field: 'fecha_limite_formatted',
+          sortable: true
         },
         {
           label: 'Prioridad',
-          field: 'prioridad_nombre',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por prioridad'
-          }
+          field: 'prioridad_id'
         },
         {
-          label: 'F. Generación',
-          field: 'fecha_generacion',
-          type: 'string',
-          sortable: true
+          label: 'Estado',
+          field: 'estado_reparacion'
         },
         {
-          label: 'F. Límite',
-          field: 'fecha_limite',
-          type: 'string',
-          sortable: true
+          label: 'Resuelta por',
+          field: 'resuelta_por'
         },
         {
-          label: 'Resuelta Por',
-          field: 'resuelta_por',
-          type: 'string',
-          sortable: true,
-          filterOptions: {
-            enabled: true,
-            placeholder: 'Filtrar por técnico'
-          }
-        },
-        {
-          label: 'F. Resolución',
-          field: 'fecha_resolucion',
-          type: 'string',
+          label: 'Fecha Resolución',
+          field: 'fecha_resolucion_formatted',
           sortable: true
         },
         {
           label: 'Acciones',
           field: 'actions',
-          type: 'string',
           sortable: false,
-          width: '150px',
-          tdClass: 'text-center'
+          width: '150px'
         }
       ]
     }
   },
 
   computed: {
-    // Filtros aplicados
     filteredAlertas() {
-      if (!Array.isArray(this.alertas)) {
-        return [];
-      }
-
-      return this.alertas.filter(alerta => {
-        // Filtro por tipo de alerta
-        const matchesType = !this.tipoAlertaFilter || 
-                           alerta.tipo_alerta_id == this.tipoAlertaFilter;
-        
-        // Filtro por estado
-        const matchesStatus = this.statusFilters[alerta.estado_reparacion?.toString()] !== false;
-        
-        // Filtro por prioridad
-        const matchesPriority = !this.prioridadFilter || 
-                               alerta.prioridad_id == this.prioridadFilter;
-        
-        // Filtro por herramienta
-        const matchesHerramienta = !this.herramientaFilter || 
-                                  alerta.herramienta_id == this.herramientaFilter;
-        
-        // Filtro por búsqueda
-        const matchesSearch = !this.searchQuery ||
-          (alerta.descripcion && alerta.descripcion.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (alerta.herramienta_nombre && alerta.herramienta_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (alerta.tipo_alerta_nombre && alerta.tipo_alerta_nombre.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-          (alerta.resuelta_por && alerta.resuelta_por.toLowerCase().includes(this.searchQuery.toLowerCase()));
-          
-        // Filtro por fecha
-        const matchesDate = (!this.dateRange.start || new Date(alerta.fecha_generacion) >= new Date(this.dateRange.start)) &&
-                          (!this.dateRange.end || new Date(alerta.fecha_generacion) <= new Date(this.dateRange.end));
-        
-        return matchesType && matchesStatus && matchesPriority && matchesHerramienta && matchesSearch && matchesDate;
-      });
-    },
-    
-    // Estadísticas para cards
-    totalReports() {
-      return Array.isArray(this.alertas) ? this.alertas.length : 0;
-    },
-    
-    pendingReports() {
-      return Array.isArray(this.alertas) 
-        ? this.alertas.filter(alerta => alerta.estado_reparacion === '0').length 
-        : 0;
-    },
-    
-    inProgressReports() {
-      return Array.isArray(this.alertas) 
-        ? this.alertas.filter(alerta => alerta.estado_reparacion === '2').length 
-        : 0;
-    },
-    
-    generatedReports() {
-      return Array.isArray(this.alertas) 
-        ? this.alertas.filter(alerta => alerta.estado_reparacion === '1').length 
-        : 0;
+      return this.alertas.map(alert => ({
+        ...alert,
+        fecha_generacion_formatted: this.formatDate(alert.fecha_generacion),
+        fecha_limite_formatted: this.formatDate(alert.fecha_limite),
+        fecha_resolucion_formatted: this.formatDate(alert.fecha_resolucion)
+      }))
     },
 
-    // Estadísticas para alertas (alias)
     totalAlertas() {
-      return this.totalReports;
+      return this.alertas.length
     },
-    
-    alertasActivas() {
-      return this.pendingReports;
-    },
-    
+
     alertasPendientes() {
-      return this.pendingReports;
+      return this.alertas.filter(alert => alert.estado_reparacion === '1').length
     },
-    
-    alertasEnProceso() {
-      return this.inProgressReports;
+
+    alertasEnReparacion() {
+      return this.alertas.filter(alert => alert.estado_reparacion === '2').length
     },
-    
+
     alertasResueltas() {
-      return this.generatedReports;
-    },
-    
-    alertasCriticas() {
-      return Array.isArray(this.alertas) 
-        ? this.alertas.filter(alerta => this.isAlertaCritica(alerta)).length 
-        : 0;
+      return this.alertas.filter(alert => alert.estado_reparacion === '5').length
     },
 
-    // Opciones para el filtro de tipos de alerta
-    tipoAlertaOptions() {
-      const options = [{ text: 'Todos los tipos', value: null }];
-      
-      if (Array.isArray(this.tiposAlerta)) {
-        this.tiposAlerta.forEach(tipo => {
-          options.push({
-            text: tipo.nombre || tipo.tipo_alerta || `Tipo ${tipo.id}`,
-            value: tipo.id
-          });
-        });
-      }
-      
-      return options;
-    },
-
-    // Opciones para el filtro de herramientas
+    // Opciones para los selects
     herramientaOptions() {
-      const options = [{ text: 'Todas las herramientas', value: null }];
-      
-      if (Array.isArray(this.herramientas)) {
-        this.herramientas.forEach(herramienta => {
-          options.push({
-            text: herramienta.nombre || `Herramienta ${herramienta.id}`,
-            value: herramienta.id
-          });
-        });
-      }
-      
-      return options;
+      return this.herramientas
     },
 
-    // Opciones para el filtro de prioridades
+    tipoAlertaOptions() {
+      return this.tiposAlertas
+    },
+
+    usuarioOptions() {
+      return this.usuarios.map(user => ({
+        ...user,
+        nombre_completo: `${user.nombre} ${user.apellido}`
+      }))
+    },
+
     prioridadOptions() {
-      const options = [{ text: 'Todas las prioridades', value: null }];
-      
-      if (Array.isArray(this.prioridades)) {
-        this.prioridades.forEach(prioridad => {
-          options.push({
-            text: prioridad.nombre || `Prioridad ${prioridad.id}`,
-            value: prioridad.id
-          });
-        });
-      }
-      
-      return options;
+      return [
+        { id: '1', text: 'Muy Baja' },
+        { id: '2', text: 'Baja' },
+        { id: '3', text: 'Media' },
+        { id: '4', text: 'Alta' },
+        { id: '5', text: 'Muy Alta' },
+        { id: '6', text: 'Crítica' }
+      ]
     },
 
-    // Contadores de filtros activos
-    hasActiveFilters() {
-      return this.tipoAlertaFilter !== null ||
-             this.prioridadFilter !== null ||
-             this.herramientaFilter !== null ||
-             this.dateRange.start !== '' ||
-             this.dateRange.end !== '' ||
-             this.searchQuery !== '' ||
-             !Object.values(this.statusFilters).every(val => val === true);
-    },
-    
-    activeFiltersCount() {
-      let count = 0;
-      if (this.tipoAlertaFilter !== null) count++;
-      if (this.prioridadFilter !== null) count++;
-      if (this.herramientaFilter !== null) count++;
-      if (this.dateRange.start !== '') count++;
-      if (this.dateRange.end !== '') count++;
-      if (this.searchQuery !== '') count++;
-      if (!Object.values(this.statusFilters).every(val => val === true)) count++;
-      return count;
-    },
-
-    // Para compatibilidad con el template de reportes
-    filteredReports() {
-      return this.filteredAlertas;
-    },
-
-    // Método auxiliar para calcular días desde detección
-    diasDesdeDeteccion() {
-      return (fecha) => {
-        if (!fecha) return 0;
-        const ahora = new Date();
-        const fechaLimite = new Date(fecha);
-        const diferencia = Math.floor((ahora - fechaLimite) / (1000 * 60 * 60 * 24));
-        return diferencia;
-      };
-    }
-  },
-
-  methods: {
-    // Métodos de carga de datos
-    async loadAlertas() {
-      try {
-        this.loading = true;
-        
-        const response = await axios.get('/api/AlertaReparacion', {
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
-        });
-        
-        let alertas = Array.isArray(response.data) ? response.data : [];
-        
-        // Enriquecer alertas con nombres de relaciones
-        alertas = await this.enrichAlertasData(alertas);
-        
-        this.alertas = alertas;
-        
-        console.log('Alertas cargadas:', alertas);
-        
-      } catch (error) {
-        console.error('Error cargando alertas:', error);
-        this.showToast('Error al cargar alertas de reparación', 'error');
-        this.alertas = [];
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    // Enriquecer datos de alertas con nombres de las relaciones
-    async enrichAlertasData(alertas) {
-      return alertas.map(alerta => ({
-        ...alerta,
-        tipo_alerta_nombre: this.getTipoAlertaNombre(alerta.tipo_alerta_id),
-        herramienta_nombre: this.getHerramientaNombre(alerta.herramienta_id),
-        prioridad_nombre: this.getPrioridadNombre(alerta.prioridad_id),
-        estado_nombre: this.getEstadoNombre(alerta.estado_reparacion)
-      }));
-    },
-    
-    async loadTiposAlerta() {
-      try {
-        const response = await axios.get('/api/Tipos_Alertas', {
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
-        });
-        
-        this.tiposAlerta = Array.isArray(response.data) ? response.data : [];
-        
-      } catch (error) {
-        console.error('Error cargando tipos de alerta:', error);
-        this.showToast('Error al cargar tipos de alerta', 'error');
-        this.tiposAlerta = [];
-      }
-    },
-
-    // Cargar herramientas
-    async loadHerramientas() {
-      try {
-        const response = await axios.get('/api/Herramienta', {
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
-        });
-        
-        this.herramientas = Array.isArray(response.data) ? response.data : [];
-        
-      } catch (error) {
-        console.error('Error cargando herramientas:', error);
-        this.herramientas = [];
-      }
-    },
-
-    // Cargar prioridades desde API
-    async loadPrioridades() {
-      try {
-        const response = await axios.get('/api/Prioridades', {
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
-        });
-        
-        this.prioridades = Array.isArray(response.data) ? response.data : [];
-        
-      } catch (error) {
-        console.error('Error cargando prioridades:', error);
-        this.prioridades = [];
-      }
-    },
-
-    // Método para refrescar datos
-    async refreshData() {
-      try {
-        await Promise.all([
-          this.loadTiposAlerta(),
-          this.loadHerramientas(),
-          this.loadPrioridades()
-        ]);
-        
-        // Cargar alertas después para poder enriquecer los datos
-        await this.loadAlertas();
-      } catch (error) {
-        console.error('Error en refreshData:', error);
-        // Intentar cargar alertas aunque fallen las otras APIs
-        await this.loadAlertas();
-      }
-    },
-
-    // Alias para compatibilidad con template de reportes
-    async loadReports() {
-      return this.loadAlertas();
-    },
-    
-    // Métodos de UI
-    toggleFilters() {
-      this.showFilters = !this.showFilters;
-    },
-    
-    applyFilters() {
-      this.showToast('Filtros aplicados', 'success');
-    },
-    
-    resetFilters() {
-      this.tipoAlertaFilter = null;
-      this.prioridadFilter = null;
-      this.herramientaFilter = null;
-      this.searchQuery = '';
-      this.dateRange = { start: '', end: '' };
-      this.statusFilters = {
-        '0': true,
-        '1': true,
-        '2': true
-      };
-      this.showToast('Filtros restablecidos', 'success');
-    },
-    
-    // Métodos de acciones
-    viewAlerta(alerta) {
-      this.selectedAlerta = { ...alerta };
-      console.log('Viendo alerta:', alerta);
-    },
-
-    viewReport(report) {
-      return this.viewAlerta(report);
-    },
-
-    downloadReport(report) {
-      console.log('Funcionalidad de descarga no implementada para alertas');
-      this.showToast('Función de descarga no disponible para alertas', 'warning');
-    },
-
-    generateReport(report) {
-      console.log('Funcionalidad de generación no implementada para alertas');
-      this.showToast('Función de generación no disponible para alertas', 'warning');
-    },
-
-    async resolverAlerta(alertaId, resuelto_por) {
-      try {
-        const response = await axios.put(`/api/AlertaReparacion/${alertaId}`, {
-          estado_reparacion: '1', // 1 = Resuelta
-          fecha_resolucion: new Date().toISOString(),
-          resuelta_por: resuelto_por
-        }, {
-          headers: {
-            'Authorization': `Bearer ${this.getAuthToken()}`
-          }
-        });
-        
-        // Actualizar la alerta en la lista local
-        const index = this.alertas.findIndex(a => a.id === alertaId);
-        if (index !== -1) {
-          this.alertas[index] = { ...this.alertas[index], ...response.data };
-        }
-        
-        this.showToast('Alerta resuelta exitosamente', 'success');
-        
-      } catch (error) {
-        console.error('Error resolviendo alerta:', error);
-        this.showToast('Error al resolver alerta', 'error');
-      }
-    },
-
-    async deleteAlerta(alertaId) {
-      if (confirm('¿Estás seguro de que deseas eliminar esta alerta?')) {
-        try {
-          await axios.delete(`/api/AlertaReparacion/${alertaId}`, {
-            headers: {
-              'Authorization': `Bearer ${this.getAuthToken()}`
-            }
-          });
-          
-          this.alertas = this.alertas.filter(a => a.id !== alertaId);
-          this.showToast('Alerta eliminada', 'success');
-          
-        } catch (error) {
-          console.error('Error eliminando alerta:', error);
-          this.showToast('Error al eliminar alerta', 'error');
-        }
-      }
-    },
-
-    deleteReport(reportId) {
-      return this.deleteAlerta(reportId);
-    },
-    
-    // Métodos de formato y helpers
-    formatStatus(estado) {
-      const estados = {
-        '0': 'Pendiente',
-        '1': 'Resuelta', 
-        '2': 'En Proceso'
-      };
-      return estados[estado?.toString()] || `Estado ${estado}`;
-    },
-    
-    statusClass(estado) {
-      return {
-        '0': 'badge-warning',   // Pendiente
-        '1': 'badge-success',   // Resuelta
-        '2': 'badge-info'       // En Proceso
-      }[estado?.toString()] || 'badge-secondary';
-    },
-    
-    formatPriority(prioridad) {
-      return this.getPrioridadNombre(prioridad) || `Prioridad ${prioridad}`;
-    },
-    
-    priorityClass(prioridad) {
-      return {
-        '1': 'badge-secondary', // Baja
-        '2': 'badge-info',      // Media
-        '3': 'badge-warning',   // Alta
-        '4': 'badge-danger'     // Crítica
-      }[prioridad?.toString()] || 'badge-light';
-    },
-
-    formatReportType(tipo) {
-      return this.getTipoAlertaNombre(tipo) || `Tipo ${tipo}`;
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return '';
-      try {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      } catch (error) {
-        return dateString;
-      }
-    },
-    
-    formatDateOnly(dateString) {
-      if (!dateString) return '';
-      try {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        });
-      } catch (error) {
-        return dateString;
-      }
-    },
-
-    // Días desde detección
-    diasDesdeDeteccion(fecha) {
-      if (!fecha) return 0;
-      const ahora = new Date();
-      const fechaLimite = new Date(fecha);
-      const diferencia = Math.floor((ahora - fechaLimite) / (1000 * 60 * 60 * 24));
-      return diferencia;
-    },
-
-    // Verificar si una alerta es crítica
-    isAlertaCritica(alerta) {
-      return (alerta.prioridad_id == 4 && alerta.estado_reparacion !== '1') ||
-             (this.isVencida(alerta.fecha_limite, alerta.estado_reparacion));
-    },
-
-    isVencida(fechaLimite, estado) {
-      if (estado === '1') return false; // Si está resuelta, no está vencida
-      if (!fechaLimite) return false;
-      
-      const now = new Date();
-      const limite = new Date(fechaLimite);
-      return now > limite;
-    },
-    
-    // Métodos para obtener nombres de las relaciones
-    getTipoAlertaNombre(tipoId) {
-      const tipo = this.tiposAlerta.find(t => t.id == tipoId);
-      return tipo ? (tipo.nombre || tipo.tipo_alerta) : null;
-    },
-
-    getHerramientaNombre(herramientaId) {
-      const herramienta = this.herramientas.find(h => h.id == herramientaId);
-      return herramienta ? herramienta.nombre : null;
-    },
-
-    getPrioridadNombre(prioridadId) {
-      const prioridad = this.prioridades.find(p => p.id == prioridadId);
-      return prioridad ? prioridad.nombre : null;
-    },
-
-    getEstadoNombre(estado) {
-      return this.formatStatus(estado);
-    },
-    
-    // Método para exportar
-    exportToCSV() {
-      try {
-        if (this.$refs.vueGoodTable && this.filteredAlertas.length > 0) {
-          const fileName = `alertas_reparacion_${new Date().toISOString().split('T')[0]}.csv`;
-          this.$refs.vueGoodTable.exportCsv(fileName);
-          this.showToast('Tabla exportada exitosamente', 'success');
-        } else {
-          this.showToast('No hay datos para exportar', 'warning');
-        }
-      } catch (error) {
-        console.error('Error exportando CSV:', error);
-        this.showToast('Error al exportar tabla', 'error');
-      }
-    },
-    
-    // Helper para obtener token de auth
-    getAuthToken() {
-      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
-    },
-    
-    // Helper para mostrar notificaciones
-    showToast(message, type = 'success') {
-      console.log(`${type.toUpperCase()}: ${message}`);
-      
-      if (type === 'error') {
-        console.error(message);
-      } else {
-        console.info(message);
-      }
+    estadoOptions() {
+      return [
+        { id: '1', text: 'Pendiente' },
+        { id: '2', text: 'En Progreso' },
+        { id: '3', text: 'En Revisión' },
+        { id: '4', text: 'Pausado' },
+        { id: '5', text: 'Resuelto' }
+      ]
     }
   },
 
   async mounted() {
-    try {
-      await this.refreshData();
-    } catch (error) {
-      console.error('Error en mounted:', error);
-      this.alertas = [];
-      this.tiposAlerta = [];
-      this.herramientas = [];
-      this.prioridades = [];
+    await this.loadData()
+  },
+
+  methods: {
+    // Regla de validación
+    required(value) {
+      return !!value || 'Este campo es obligatorio'
+    },
+
+    // Método helper para mostrar notificaciones
+    showToast(message, color = 'info') {
+      if (this.$va && this.$va.toast) {
+        this.$va.toast({
+          message,
+          color
+        })
+      } else {
+        console.log(`[${color.toUpperCase()}] ${message}`)
+      }
+    },
+
+    async loadData() {
+      this.loading = true
+      try {
+        await Promise.all([
+          this.loadAlertas(),
+          this.loadHerramientas(),
+          this.loadTiposAlertas(),
+          this.loadUsuarios()
+        ])
+      } catch (error) {
+        console.error('Error cargando datos:', error)
+        this.showToast('Error al cargar los datos', 'danger')
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadAlertas() {
+      try {
+        this.alertas = await api.get('/AlertaReparacion')
+      } catch (error) {
+        console.error('Error cargando alertas:', error)
+        this.showToast(`Error al cargar las alertas: ${error.message}`, 'danger')
+      }
+    },
+
+    async loadHerramientas() {
+      try {
+        this.herramientas = await api.get('/Herramienta')
+      } catch (error) {
+        console.error('Error cargando herramientas:', error)
+        this.showToast(`Error al cargar las herramientas: ${error.message}`, 'danger')
+      }
+    },
+
+    async loadTiposAlertas() {
+      try {
+        this.tiposAlertas = await api.get('/Tipos_Alertas')
+      } catch (error) {
+        console.error('Error cargando tipos de alertas:', error)
+        this.showToast(`Error al cargar los tipos de alertas: ${error.message}`, 'danger')
+      }
+    },
+
+    async loadUsuarios() {
+      try {
+        this.usuarios = await api.get('/usuario')
+      } catch (error) {
+        console.error('Error cargando usuarios:', error)
+        this.showToast(`Error al cargar los usuarios: ${error.message}`, 'danger')
+      }
+    },
+
+    // Métodos de acciones de la tabla
+    viewAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.showViewModal = true
+    },
+
+    editAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.isEditing = true
+      this.populateForm(alert)
+      this.showEditModal = true
+    },
+
+    editCurrentAlert() {
+      this.showViewModal = false
+      this.editAlert(this.selectedAlert)
+    },
+
+    confirmDeleteAlert(alertId) {
+      this.alertToDelete = alertId
+      this.showDeleteModal = true
+    },
+
+    // Métodos del formulario
+    populateForm(alert) {
+      this.alertForm = {
+        id: alert.id,
+        herramienta_id: alert.herramienta_id,
+        tipo_alerta_id: alert.tipo_alerta_id,
+        prioridad_id: alert.prioridad_id,
+        estado_reparacion: alert.estado_reparacion,
+        fecha_generacion: alert.fecha_generacion ? alert.fecha_generacion.split('T')[0] : '',
+        fecha_limite: alert.fecha_limite ? alert.fecha_limite.split('T')[0] : '',
+        fecha_resolucion: alert.fecha_resolucion ? alert.fecha_resolucion.split('T')[0] : '',
+        resuelta_por: alert.resuelta_por,
+        descripcion: alert.descripcion || '',
+        observaciones: alert.observaciones || ''
+      }
+    },
+
+    resetForm() {
+      this.alertForm = {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
+      }
+    },
+
+    cancelEdit() {
+      this.showEditModal = false
+      this.isEditing = false
+      this.selectedAlert = null
+      this.resetForm()
+    },
+
+    async saveAlert() {
+      if (!this.$refs.alertForm.validate()) {
+        this.showToast('Por favor, complete todos los campos requeridos', 'warning')
+        return
+      }
+
+      this.saving = true
+      try {
+        const alertData = { ...this.alertForm }
+        
+        // Convertir fechas al formato correcto
+        if (alertData.fecha_generacion) {
+          alertData.fecha_generacion = new Date(alertData.fecha_generacion).toISOString()
+        }
+        if (alertData.fecha_limite) {
+          alertData.fecha_limite = new Date(alertData.fecha_limite).toISOString()
+        }
+        if (alertData.fecha_resolucion) {
+          alertData.fecha_resolucion = new Date(alertData.fecha_resolucion).toISOString()
+        }
+
+        if (this.isEditing) {
+          // Actualizar alerta existente
+          await api.put(`/AlertaReparacion/${alertData.id}`, alertData)
+          
+          // Actualizar en la lista local
+          const index = this.alertas.findIndex(a => a.id === alertData.id)
+          if (index !== -1) {
+            this.alertas[index] = { ...this.alertas[index], ...alertData }
+          }
+          
+          this.showToast('Alerta actualizada correctamente', 'success')
+        } else {
+          // Crear nueva alerta
+          const newAlert = await api.post('/AlertaReparacion', alertData)
+          this.alertas.unshift(newAlert)
+          this.showToast('Alerta creada correctamente', 'success')
+        }
+
+        this.cancelEdit()
+      } catch (error) {
+        console.error('Error guardando alerta:', error)
+        this.showToast('Error al guardar la alerta', 'danger')
+      } finally {
+        this.saving = false
+      }
+    },
+
+    async deleteAlert() {
+      if (!this.alertToDelete) return
+
+      this.deleting = true
+      try {
+        await api.delete(`/AlertaReparacion/${this.alertToDelete}`)
+        
+        // Remover de la lista local
+        this.alertas = this.alertas.filter(alert => alert.id !== this.alertToDelete)
+        
+        this.showToast('Alerta eliminada correctamente', 'success')
+        this.showDeleteModal = false
+        this.alertToDelete = null
+      } catch (error) {
+        console.error('Error eliminando alerta:', error)
+        this.showToast('Error al eliminar la alerta', 'danger')
+      } finally {
+        this.deleting = false
+      }
+    },
+
+    // Métodos de formateo y helpers
+    getUsuarioNombre(id) {
+      if (!id) return '-'
+      const usuario = this.usuarios.find(u => u.id === id)
+      return usuario ? `${usuario.nombre} ${usuario.apellido}` : `Usuario ${id}`
+    },
+
+    getTipoAlerta(id) {
+      const tipo = this.tiposAlertas.find(t => t.id === id)
+      return tipo ? tipo.nombre_alertas : `Tipo ${id}`
+    },
+
+    getTipoAlertaClass(id) {
+      const classes = {
+        '1': 'badge-warning',
+        '2': 'badge-danger', 
+        '3': 'badge-info',
+        '4': 'badge-primary',
+        '5': 'badge-secondary',
+        '6': 'badge-dark'
+      }
+      return classes[id] || 'badge-light'
+    },
+
+    getHerramientaNombre(id) {
+      const herramienta = this.herramientas.find(h => h.id === id)
+      return herramienta ? herramienta.nombre : `Herramienta ${id}`
+    },
+
+    getEstadoText(estado) {
+      const estados = {
+        '1': 'Pendiente',
+        '2': 'En Progreso',
+        '3': 'En Revisión',
+        '4': 'Pausado',
+        '5': 'Resuelto'
+      }
+      return estados[estado] || `Estado ${estado}`
+    },
+
+    getEstadoClass(estado) {
+      const classes = {
+        '1': 'badge-warning',
+        '2': 'badge-info',
+        '3': 'badge-primary',
+        '4': 'badge-secondary',
+        '5': 'badge-success'
+      }
+      return classes[estado] || 'badge-secondary'
+    },
+
+    getPrioridadText(prioridad) {
+      const prioridades = {
+        '1': 'Muy Baja',
+        '2': 'Baja',
+        '3': 'Media',
+        '4': 'Alta',
+        '5': 'Muy Alta',
+        '6': 'Crítica'
+      }
+      return prioridades[prioridad] || `Prioridad ${prioridad}`
+    },
+
+    getPrioridadClass(prioridad) {
+      const classes = {
+        '1': 'badge-light',
+        '2': 'badge-info',
+        '3': 'badge-warning',
+        '4': 'badge-danger',
+        '5': 'badge-danger',
+        '6': 'badge-dark'
+      }
+      return classes[prioridad] || 'badge-secondary'
+    },
+
+    formatDate(date) {
+      if (!date) return '-'
+      try {
+        return new Date(date).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        console.error('Error formateando fecha:', error)
+        return date
+      }
+    },
+
+    getDaysLeft(fechaLimite) {
+      if (!fechaLimite) return ''
+      try {
+        const today = new Date()
+        const limite = new Date(fechaLimite)
+        const diffTime = limite - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) return `Vencido hace ${Math.abs(diffDays)} días`
+        if (diffDays === 0) return 'Vence hoy'
+        if (diffDays === 1) return 'Vence mañana'
+        return `${diffDays} días restantes`
+      } catch (error) {
+        console.error('Error calculando días restantes:', error)
+        return ''
+      }
+    },
+
+    getDaysLeftClass(fechaLimite) {
+      if (!fechaLimite) return ''
+      try {
+        const today = new Date()
+        const limite = new Date(fechaLimite)
+        const diffTime = limite - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) return 'text-danger'
+        if (diffDays <= 2) return 'text-warning'
+        return 'text-success'
+      } catch (error) {
+        console.error('Error obteniendo clase de días restantes:', error)
+        return ''
+      }
+    },
+
+    // Método para exportar a CSV
+    exportToCSV() {
+      try {
+        const headers = ['ID', 'Herramienta', 'Tipo', 'Fecha Generación', 'Fecha Límite', 'Estado', 'Prioridad', 'Descripción']
+        const data = this.alertas.map(alert => [
+          alert.id,
+          this.getHerramientaNombre(alert.herramienta_id),
+          this.getTipoAlerta(alert.tipo_alerta_id),
+          this.formatDate(alert.fecha_generacion),
+          this.formatDate(alert.fecha_limite),
+          this.getEstadoText(alert.estado_reparacion),
+          this.getPrioridadText(alert.prioridad_id),
+          alert.descripcion || ''
+        ])
+
+        let csvContent = "data:text/csv;charset=utf-8,"
+        csvContent += headers.join(",") + "\n"
+        data.forEach(row => {
+          csvContent += row.map(field => `"${field}"`).join(",") + "\n"
+        })
+
+        const encodedUri = encodeURI(csvContent)
+        const link = document.createElement("a")
+        link.setAttribute("href", encodedUri)
+        link.setAttribute("download", `alertas_reparacion_${new Date().toISOString().split('T')[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        this.showToast('Alertas exportadas a CSV exitosamente', 'success')
+      } catch (error) {
+        console.error('Error exportando CSV:', error)
+        this.showToast('Error al exportar las alertas', 'danger')
+      }
+    },
+
+    // Método para manejar el watch del showNewAlertModal
+    handleNewAlertModal() {
+      if (this.showNewAlertModal) {
+        this.isEditing = false
+        this.resetForm()
+        this.showEditModal = true
+        this.showNewAlertModal = false
+      }
     }
   },
-  
-  beforeUnmount() {
-    // Limpiar cualquier interval o timeout si los tienes
+
+  watch: {
+    showNewAlertModal(newVal) {
+      if (newVal) {
+        this.handleNewAlertModal()
+      }
+    },
+
+    // Watch para actualizar campos cuando cambia el estado
+    'alertForm.estado_reparacion'(newVal) {
+      if (newVal === '5') { // Si es "Resuelto"
+        if (!this.alertForm.fecha_resolucion) {
+          this.alertForm.fecha_resolucion = new Date().toISOString().split('T')[0]
+        }
+      } else {
+        this.alertForm.fecha_resolucion = null
+        this.alertForm.resuelta_por = null
+      }
+    }
+  }
+}*/
+
+import api from '@/api.js'
+
+export default {
+  name: 'AlertaReparacion',
+  data() {
+    return {
+      loading: false,
+      saving: false,
+      deleting: false,
+      searchQuery: '',
+      showNewAlertModal: false,
+      showViewModal: false,
+      showEditModal: false,
+      showDeleteModal: false,
+      selectedAlert: null,
+      isEditing: false,
+      alertToDelete: null,
+      alertas: [],
+      herramientas: [],
+      tiposAlertas: [],
+      usuarios: [],
+      
+      // Filtros adicionales
+      filters: {
+        estado: '',
+        prioridad: '',
+        herramienta: '',
+        tipo_alerta: '',
+        fecha_desde: '',
+        fecha_hasta: ''
+      },
+
+      // Paginación
+      currentPage: 1,
+      itemsPerPage: 10,
+      
+      // Formulario para nueva/editar alerta
+      alertForm: {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
+      },
+
+      // Validaciones del formulario
+      formRules: {
+        herramienta_id: [
+          { required: true, message: 'La herramienta es obligatoria' }
+        ],
+        tipo_alerta_id: [
+          { required: true, message: 'El tipo de alerta es obligatorio' }
+        ],
+        prioridad_id: [
+          { required: true, message: 'La prioridad es obligatoria' }
+        ],
+        descripcion: [
+          { required: true, message: 'La descripción es obligatoria' },
+          { min: 10, message: 'La descripción debe tener al menos 10 caracteres' }
+        ],
+        fecha_limite: [
+          { required: true, message: 'La fecha límite es obligatoria' }
+        ]
+      },
+
+      tableColumns: [
+        {
+          label: 'ID',
+          field: 'id',
+          type: 'number',
+          width: '80px',
+          sortable: true
+        },
+        {
+          label: 'Herramienta',
+          field: 'herramienta_nombre',
+          sortable: true
+        },
+        {
+          label: 'Tipo de Alerta',
+          field: 'tipo_alerta_nombre',
+          sortable: true
+        },
+        {
+          label: 'Fecha Generación',
+          field: 'fecha_generacion_formatted',
+          sortable: true
+        },
+        {
+          label: 'Fecha Límite',
+          field: 'fecha_limite_formatted',
+          sortable: true
+        },
+        {
+          label: 'Prioridad',
+          field: 'prioridad_texto',
+          sortable: true
+        },
+        {
+          label: 'Estado',
+          field: 'estado_texto',
+          sortable: true
+        },
+        {
+          label: 'Días Restantes',
+          field: 'dias_restantes',
+          sortable: true
+        },
+        {
+          label: 'Acciones',
+          field: 'actions',
+          sortable: false,
+          width: '180px'
+        }
+      ]
+    }
+  },
+
+  computed: {
+    filteredAlertas() {
+      let filtered = [...this.alertas]
+
+      // Filtro por búsqueda de texto
+      if (this.searchQuery.trim()) {
+        const query = this.searchQuery.toLowerCase()
+        filtered = filtered.filter(alert => 
+          alert.descripcion?.toLowerCase().includes(query) ||
+          this.getHerramientaNombre(alert.herramienta_id).toLowerCase().includes(query) ||
+          this.getTipoAlerta(alert.tipo_alerta_id).toLowerCase().includes(query)
+        )
+      }
+
+      // Aplicar filtros adicionales
+      if (this.filters.estado) {
+        filtered = filtered.filter(alert => alert.estado_reparacion === this.filters.estado)
+      }
+
+      if (this.filters.prioridad) {
+        filtered = filtered.filter(alert => alert.prioridad_id === this.filters.prioridad)
+      }
+
+      if (this.filters.herramienta) {
+        filtered = filtered.filter(alert => alert.herramienta_id === parseInt(this.filters.herramienta))
+      }
+
+      if (this.filters.tipo_alerta) {
+        filtered = filtered.filter(alert => alert.tipo_alerta_id === parseInt(this.filters.tipo_alerta))
+      }
+
+      if (this.filters.fecha_desde) {
+        filtered = filtered.filter(alert => 
+          new Date(alert.fecha_generacion) >= new Date(this.filters.fecha_desde)
+        )
+      }
+
+      if (this.filters.fecha_hasta) {
+        filtered = filtered.filter(alert => 
+          new Date(alert.fecha_generacion) <= new Date(this.filters.fecha_hasta)
+        )
+      }
+
+      // Enriquecer datos para la tabla
+      return filtered.map(alert => ({
+        ...alert,
+        herramienta_nombre: this.getHerramientaNombre(alert.herramienta_id),
+        tipo_alerta_nombre: this.getTipoAlerta(alert.tipo_alerta_id),
+        prioridad_texto: this.getPrioridadText(alert.prioridad_id),
+        estado_texto: this.getEstadoText(alert.estado_reparacion),
+        fecha_generacion_formatted: this.formatDate(alert.fecha_generacion),
+        fecha_limite_formatted: this.formatDate(alert.fecha_limite),
+        fecha_resolucion_formatted: this.formatDate(alert.fecha_resolucion),
+        dias_restantes: this.getDaysLeft(alert.fecha_limite),
+        dias_restantes_class: this.getDaysLeftClass(alert.fecha_limite),
+        estado_class: this.getEstadoClass(alert.estado_reparacion),
+        prioridad_class: this.getPrioridadClass(alert.prioridad_id)
+      }))
+    },
+
+    paginatedAlertas() {
+      const start = (this.currentPage - 1) * this.itemsPerPage
+      const end = start + this.itemsPerPage
+      return this.filteredAlertas.slice(start, end)
+    },
+
+    totalPages() {
+      return Math.ceil(this.filteredAlertas.length / this.itemsPerPage)
+    },
+
+    // Estadísticas
+    totalAlertas() {
+      return this.alertas.length
+    },
+
+    alertasPendientes() {
+      return this.alertas.filter(alert => alert.estado_reparacion === '1').length
+    },
+
+    alertasEnReparacion() {
+      return this.alertas.filter(alert => alert.estado_reparacion === '2').length
+    },
+
+    alertasResueltas() {
+      return this.alertas.filter(alert => alert.estado_reparacion === '5').length
+    },
+
+    alertasVencidas() {
+      return this.alertas.filter(alert => {
+        if (!alert.fecha_limite || alert.estado_reparacion === '5') return false
+        return new Date(alert.fecha_limite) < new Date()
+      }).length
+    },
+
+    alertasCriticas() {
+      return this.alertas.filter(alert => 
+        alert.prioridad_id === '6' && alert.estado_reparacion !== '5'
+      ).length
+    },
+
+    // Opciones para los selects
+    herramientaOptions() {
+      return this.herramientas.map(h => ({
+        value: h.id,
+        text: h.nombre
+      }))
+    },
+
+    tipoAlertaOptions() {
+      return this.tiposAlertas.map(t => ({
+        value: t.id,
+        text: t.nombre_alertas
+      }))
+    },
+
+    usuarioOptions() {
+      return this.usuarios.map(user => ({
+        value: user.id,
+        text: `${user.nombre} ${user.apellido}`,
+        nombre_completo: `${user.nombre} ${user.apellido}`
+      }))
+    },
+
+    prioridadOptions() {
+      return [
+        { value: '1', text: 'Muy Baja' },
+        { value: '2', text: 'Baja' },
+        { value: '3', text: 'Media' },
+        { value: '4', text: 'Alta' },
+        { value: '5', text: 'Muy Alta' },
+        { value: '6', text: 'Crítica' }
+      ]
+    },
+
+    estadoOptions() {
+      return [
+        { value: '1', text: 'Pendiente' },
+        { value: '2', text: 'En Progreso' },
+        { value: '3', text: 'En Revisión' },
+        { value: '4', text: 'Pausado' },
+        { value: '5', text: 'Resuelto' }
+      ]
+    }
+  },
+
+  async mounted() {
+    await this.initializeComponent()
+  },
+
+  methods: {
+    async initializeComponent() {
+      await this.loadData()
+      this.setupEventListeners()
+    },
+
+    setupEventListeners() {
+      // Aquí puedes agregar listeners para eventos específicos
+      console.log('Componente AlertaReparacion inicializado correctamente')
+    },
+
+    // Método helper para mostrar notificaciones
+    showToast(message, type = 'info') {
+      if (this.$toast) {
+        this.$toast[type](message)
+      } else if (this.$va && this.$va.toast) {
+        this.$va.toast({
+          message,
+          color: type === 'error' ? 'danger' : type
+        })
+      } else {
+        console.log(`[${type.toUpperCase()}] ${message}`)
+      }
+    },
+
+    // Carga de datos
+    async loadData() {
+      this.loading = true
+      try {
+        const promises = [
+          this.loadAlertas(),
+          this.loadHerramientas(),
+          this.loadTiposAlertas(),
+          this.loadUsuarios()
+        ]
+
+        await Promise.allSettled(promises)
+      } catch (error) {
+        console.error('Error cargando datos:', error)
+        this.showToast('Error al cargar los datos', 'error')
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadAlertas() {
+      try {
+        const response = await api.get('/AlertaReparacion')
+        this.alertas = Array.isArray(response) ? response : []
+      } catch (error) {
+        console.error('Error cargando alertas:', error)
+        this.showToast(`Error al cargar las alertas: ${error.message}`, 'error')
+        this.alertas = []
+      }
+    },
+
+    async loadHerramientas() {
+      try {
+        const response = await api.get('/Herramienta')
+        this.herramientas = Array.isArray(response) ? response : []
+      } catch (error) {
+        console.error('Error cargando herramientas:', error)
+        this.showToast(`Error al cargar las herramientas: ${error.message}`, 'error')
+        this.herramientas = []
+      }
+    },
+
+    async loadTiposAlertas() {
+      try {
+        const response = await api.get('/Tipos_Alertas')
+        this.tiposAlertas = Array.isArray(response) ? response : []
+      } catch (error) {
+        console.error('Error cargando tipos de alertas:', error)
+        this.showToast(`Error al cargar los tipos de alertas: ${error.message}`, 'error')
+        this.tiposAlertas = []
+      }
+    },
+
+    async loadUsuarios() {
+      try {
+        const response = await api.get('/usuario')
+        this.usuarios = Array.isArray(response) ? response : []
+      } catch (error) {
+        console.error('Error cargando usuarios:', error)
+        this.showToast(`Error al cargar los usuarios: ${error.message}`, 'error')
+        this.usuarios = []
+      }
+    },
+
+    // Métodos para buscar alertas específicas
+    async searchAlertaById(id) {
+      try {
+        return await api.get(`/AlertaReparacion/${id}`)
+      } catch (error) {
+        console.error('Error buscando alerta por ID:', error)
+        throw error
+      }
+    },
+
+    async searchAlertaByDescription(descripcion) {
+      try {
+        return await api.get(`/AlertaReparacion/descripcion/${encodeURIComponent(descripcion)}`)
+      } catch (error) {
+        console.error('Error buscando alerta por descripción:', error)
+        throw error
+      }
+    },
+
+    // Métodos de acciones de la tabla
+    viewAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.showViewModal = true
+    },
+
+    editAlert(alert) {
+      this.selectedAlert = { ...alert }
+      this.isEditing = true
+      this.populateForm(alert)
+      this.showEditModal = true
+    },
+
+    editCurrentAlert() {
+      this.showViewModal = false
+      this.editAlert(this.selectedAlert)
+    },
+
+    duplicateAlert(alert) {
+      const duplicatedAlert = { ...alert }
+      delete duplicatedAlert.id
+      duplicatedAlert.fecha_generacion = new Date().toISOString().split('T')[0]
+      duplicatedAlert.descripcion = `COPIA: ${duplicatedAlert.descripcion}`
+      
+      this.isEditing = false
+      this.populateForm(duplicatedAlert)
+      this.showEditModal = true
+    },
+
+    confirmDeleteAlert(alertId) {
+      this.alertToDelete = alertId
+      this.showDeleteModal = true
+    },
+
+    // Métodos del formulario
+    openNewAlertModal() {
+      this.isEditing = false
+      this.resetForm()
+      this.showEditModal = true
+    },
+
+    populateForm(alert) {
+      this.alertForm = {
+        id: alert.id,
+        herramienta_id: alert.herramienta_id,
+        tipo_alerta_id: alert.tipo_alerta_id,
+        prioridad_id: alert.prioridad_id,
+        estado_reparacion: alert.estado_reparacion,
+        fecha_generacion: alert.fecha_generacion ? alert.fecha_generacion.split('T')[0] : '',
+        fecha_limite: alert.fecha_limite ? alert.fecha_limite.split('T')[0] : '',
+        fecha_resolucion: alert.fecha_resolucion ? alert.fecha_resolucion.split('T')[0] : '',
+        resuelta_por: alert.resuelta_por,
+        descripcion: alert.descripcion || '',
+        observaciones: alert.observaciones || ''
+      }
+    },
+
+    resetForm() {
+      this.alertForm = {
+        herramienta_id: null,
+        tipo_alerta_id: null,
+        prioridad_id: null,
+        estado_reparacion: '1',
+        fecha_generacion: new Date().toISOString().split('T')[0],
+        fecha_limite: null,
+        fecha_resolucion: null,
+        resuelta_por: null,
+        descripcion: '',
+        observaciones: ''
+      }
+    },
+
+    cancelEdit() {
+      this.showEditModal = false
+      this.isEditing = false
+      this.selectedAlert = null
+      this.resetForm()
+    },
+
+    async saveAlert() {
+      // Validar formulario
+      if (!this.validateForm()) {
+        this.showToast('Por favor, complete todos los campos requeridos correctamente', 'warning')
+        return
+      }
+
+      this.saving = true
+      try {
+        const alertData = this.prepareAlertData()
+
+        if (this.isEditing) {
+          await this.updateAlert(alertData)
+        } else {
+          await this.createAlert(alertData)
+        }
+
+        this.cancelEdit()
+      } catch (error) {
+        console.error('Error guardando alerta:', error)
+        this.showToast(`Error al guardar la alerta: ${error.message}`, 'error')
+      } finally {
+        this.saving = false
+      }
+    },
+
+    validateForm() {
+      return !!(
+        this.alertForm.herramienta_id &&
+        this.alertForm.tipo_alerta_id &&
+        this.alertForm.prioridad_id &&
+        this.alertForm.descripcion &&
+        this.alertForm.descripcion.length >= 10 &&
+        this.alertForm.fecha_limite
+      )
+    },
+
+    prepareAlertData() {
+      const alertData = { ...this.alertForm }
+      
+      // Convertir fechas al formato DATEONLY (YYYY-MM-DD) que espera la DB
+      if (alertData.fecha_generacion) {
+        alertData.fecha_generacion = alertData.fecha_generacion
+      }
+      if (alertData.fecha_limite) {
+        alertData.fecha_limite = alertData.fecha_limite
+      }
+      if (alertData.fecha_resolucion) {
+        alertData.fecha_resolucion = alertData.fecha_resolucion
+      }
+
+      // Convertir IDs a números
+      alertData.herramienta_id = parseInt(alertData.herramienta_id)
+      alertData.tipo_alerta_id = parseInt(alertData.tipo_alerta_id)
+      alertData.prioridad_id = parseInt(alertData.prioridad_id)
+      if (alertData.resuelta_por) {
+        alertData.resuelta_por = parseInt(alertData.resuelta_por)
+      }
+
+      return alertData
+    },
+
+    async createAlert(alertData) {
+      const newAlert = await api.post('/AlertaReparacion', alertData)
+      this.alertas.unshift(newAlert)
+      this.showToast('Alerta creada correctamente', 'success')
+    },
+
+    async updateAlert(alertData) {
+      const updatedAlert = await api.put(`/AlertaReparacion/${alertData.id}`, alertData)
+      
+      const index = this.alertas.findIndex(a => a.id === alertData.id)
+      if (index !== -1) {
+        this.alertas.splice(index, 1, updatedAlert)
+      }
+      
+      this.showToast('Alerta actualizada correctamente', 'success')
+    },
+
+    async deleteAlert() {
+      if (!this.alertToDelete) return
+
+      this.deleting = true
+      try {
+        await api.delete(`/AlertaReparacion/${this.alertToDelete}`)
+        
+        this.alertas = this.alertas.filter(alert => alert.id !== this.alertToDelete)
+        
+        this.showToast('Alerta eliminada correctamente', 'success')
+        this.showDeleteModal = false
+        this.alertToDelete = null
+      } catch (error) {
+        console.error('Error eliminando alerta:', error)
+        this.showToast(`Error al eliminar la alerta: ${error.message}`, 'error')
+      } finally {
+        this.deleting = false
+      }
+    },
+
+    // Métodos de formateo y helpers
+    getUsuarioNombre(id) {
+      if (!id) return '-'
+      const usuario = this.usuarios.find(u => u.id === id)
+      return usuario ? `${usuario.nombre} ${usuario.apellido}` : `Usuario ${id}`
+    },
+
+    getTipoAlerta(id) {
+      if (!id) return '-'
+      const tipo = this.tiposAlertas.find(t => t.id === id)
+      return tipo ? tipo.nombre_alertas : `Tipo ${id}`
+    },
+
+    getTipoAlertaClass(id) {
+      const classes = {
+        '1': 'badge-warning',
+        '2': 'badge-danger', 
+        '3': 'badge-info',
+        '4': 'badge-primary',
+        '5': 'badge-secondary',
+        '6': 'badge-dark'
+      }
+      return classes[id] || 'badge-light'
+    },
+
+    getHerramientaNombre(id) {
+      if (!id) return '-'
+      const herramienta = this.herramientas.find(h => h.id === id)
+      return herramienta ? herramienta.nombre : `Herramienta ${id}`
+    },
+
+    getEstadoText(estado) {
+      const estados = {
+        '1': 'Pendiente',
+        '2': 'En Progreso',
+        '3': 'En Revisión',
+        '4': 'Pausado',
+        '5': 'Resuelto'
+      }
+      return estados[estado] || `Estado ${estado}`
+    },
+
+    getEstadoClass(estado) {
+      const classes = {
+        '1': 'badge-warning',
+        '2': 'badge-info',
+        '3': 'badge-primary',
+        '4': 'badge-secondary',
+        '5': 'badge-success'
+      }
+      return classes[estado] || 'badge-secondary'
+    },
+
+    getPrioridadText(prioridad) {
+      const prioridades = {
+        '1': 'Muy Baja',
+        '2': 'Baja',
+        '3': 'Media',
+        '4': 'Alta',
+        '5': 'Muy Alta',
+        '6': 'Crítica'
+      }
+      return prioridades[prioridad] || `Prioridad ${prioridad}`
+    },
+
+    getPrioridadClass(prioridad) {
+      const classes = {
+        '1': 'badge-light',
+        '2': 'badge-info',
+        '3': 'badge-warning',
+        '4': 'badge-danger',
+        '5': 'badge-danger',
+        '6': 'badge-dark'
+      }
+      return classes[prioridad] || 'badge-secondary'
+    },
+
+    formatDate(date) {
+      if (!date) return '-'
+      try {
+        // Para fechas DATEONLY de Sequelize, no necesitamos conversión de zona horaria
+        const dateObj = new Date(date + 'T00:00:00')
+        return dateObj.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      } catch (error) {
+        console.error('Error formateando fecha:', error)
+        return date
+      }
+    },
+
+    formatDateShort(date) {
+      if (!date) return '-'
+      try {
+        const dateObj = new Date(date + 'T00:00:00')
+        return dateObj.toLocaleDateString('es-ES')
+      } catch (error) {
+        return date
+      }
+    },
+
+    getDaysLeft(fechaLimite) {
+      if (!fechaLimite) return ''
+      try {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const limite = new Date(fechaLimite)
+        limite.setHours(0, 0, 0, 0)
+        
+        const diffTime = limite - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) return `Vencido (${Math.abs(diffDays)}d)`
+        if (diffDays === 0) return 'Vence hoy'
+        if (diffDays === 1) return 'Mañana'
+        return `${diffDays} días`
+      } catch (error) {
+        console.error('Error calculando días restantes:', error)
+        return ''
+      }
+    },
+
+    getDaysLeftClass(fechaLimite) {
+      if (!fechaLimite) return ''
+      try {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const limite = new Date(fechaLimite)
+        limite.setHours(0, 0, 0, 0)
+        
+        const diffTime = limite - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) return 'text-danger fw-bold'
+        if (diffDays <= 2) return 'text-warning fw-bold'
+        if (diffDays <= 7) return 'text-info'
+        return 'text-success'
+      } catch (error) {
+        return ''
+      }
+    },
+
+    // Métodos de filtrado y búsqueda
+    clearFilters() {
+      this.filters = {
+        estado: '',
+        prioridad: '',
+        herramienta: '',
+        tipo_alerta: '',
+        fecha_desde: '',
+        fecha_hasta: ''
+      }
+      this.searchQuery = ''
+      this.currentPage = 1
+    },
+
+    applyQuickFilter(filterType, value) {
+      this.clearFilters()
+      this.filters[filterType] = value
+    },
+
+    // Paginación
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++
+      }
+    },
+
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--
+      }
+    },
+
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page
+      }
+    },
+
+    // Método para exportar a CSV
+    exportToCSV() {
+      try {
+        const headers = [
+          'ID', 'Herramienta', 'Tipo de Alerta', 'Prioridad', 'Estado',
+          'Fecha Generación', 'Fecha Límite', 'Fecha Resolución',
+          'Resuelta Por', 'Descripción', 'Observaciones'
+        ]
+        
+        const data = this.filteredAlertas.map(alert => [
+          alert.id,
+          this.getHerramientaNombre(alert.herramienta_id),
+          this.getTipoAlerta(alert.tipo_alerta_id),
+          this.getPrioridadText(alert.prioridad_id),
+          this.getEstadoText(alert.estado_reparacion),
+          this.formatDateShort(alert.fecha_generacion),
+          this.formatDateShort(alert.fecha_limite),
+          this.formatDateShort(alert.fecha_resolucion),
+          this.getUsuarioNombre(alert.resuelta_por),
+          alert.descripcion || '',
+          alert.observaciones || ''
+        ])
+
+        const csvContent = this.generateCSV(headers, data)
+        this.downloadCSV(csvContent, `alertas_reparacion_${new Date().toISOString().split('T')[0]}.csv`)
+        
+        this.showToast('Alertas exportadas a CSV exitosamente', 'success')
+      } catch (error) {
+        console.error('Error exportando CSV:', error)
+        this.showToast('Error al exportar las alertas', 'error')
+      }
+    },
+
+    generateCSV(headers, data) {
+      let csvContent = "data:text/csv;charset=utf-8,"
+      csvContent += headers.join(",") + "\n"
+      
+      data.forEach(row => {
+        const escapedRow = row.map(field => {
+          const stringField = String(field || '').replace(/"/g, '""')
+          return `"${stringField}"`
+        })
+        csvContent += escapedRow.join(",") + "\n"
+      })
+      
+      return csvContent
+    },
+
+    downloadCSV(csvContent, filename) {
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement("a")
+      link.setAttribute("href", encodedUri)
+      link.setAttribute("download", filename)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
+
+    // Método para refrescar datos
+    async refreshData() {
+      await this.loadData()
+      this.showToast('Datos actualizados correctamente', 'success')
+    },
+
+    // Método para manejar errores de la API
+    handleApiError(error, action = 'realizar la operación') {
+      console.error(`Error al ${action}:`, error)
+      
+      let message = `Error al ${action}`
+      if (error.response && error.response.data && error.response.data.message) {
+        message += `: ${error.response.data.message}`
+      } else if (error.message) {
+        message += `: ${error.message}`
+      }
+      
+      this.showToast(message, 'error')
+    }
+  },
+
+  watch: {
+    showNewAlertModal(newVal) {
+      if (newVal) {
+        this.openNewAlertModal()
+        this.showNewAlertModal = false
+      }
+    },
+
+    // Watch para actualizar campos cuando cambia el estado
+    'alertForm.estado_reparacion'(newVal) {
+      if (newVal === '5') { // Si es "Resuelto"
+        if (!this.alertForm.fecha_resolucion) {
+          this.alertForm.fecha_resolucion = new Date().toISOString().split('T')[0]
+        }
+      } else {
+        this.alertForm.fecha_resolucion = null
+        this.alertForm.resuelta_por = null
+      }
+    },
+
+    // Reset página cuando cambian los filtros
+    searchQuery() {
+      this.currentPage = 1
+    },
+
+    filters: {
+      handler() {
+        this.currentPage = 1
+      },
+      deep: true
+    }
   }
 }
