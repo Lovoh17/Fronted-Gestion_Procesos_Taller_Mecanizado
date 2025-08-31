@@ -45,6 +45,8 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     initializeAuth() {
+      console.log('🔄 [AuthStore] Inicializando autenticación...')
+      
       // Inicializar el store desde localStorage al cargar la aplicación
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
       const token = localStorage.getItem('authToken')
@@ -94,24 +96,47 @@ export const useAuthStore = defineStore('auth', {
             this.user.fecha_fin_contrato = localStorage.getItem('fechaFinContrato')
           }
 
-          console.log('🔐 [AuthStore] Usuario inicializado desde localStorage:', this.user)
+          console.log('✅ [AuthStore] Usuario inicializado desde localStorage:', this.user)
         }
+      } else {
+        console.log('❌ [AuthStore] No hay datos de autenticación válidos')
       }
     },
 
     setUser(userData, token) {
-      this.user = userData
+      console.log('🔄 [AuthStore] Estableciendo nuevo usuario...')
+      
+      // Limpiar datos anteriores
+      this.clearUserData()
+      
+      // Establecer nuevos datos
+      this.user = {
+        ...userData,
+        puesto_id: userData.puesto_id ? parseInt(userData.puesto_id) : null,
+        departamento_id: userData.departamento_id ? parseInt(userData.departamento_id) : null,
+        nivel_jerarquico: userData.nivel_jerarquico ? parseInt(userData.nivel_jerarquico) : null
+      }
       this.isAuthenticated = true
       this.token = token
       
-      console.log('🔐 [AuthStore] Usuario establecido:', userData)
+      console.log('✅ [AuthStore] Usuario establecido:', this.user)
+      console.log('📋 [AuthStore] Puesto ID:', this.user.puesto_id)
     },
 
-    logout() {
-      // Limpiar el store
+    clearUserData() {
+      // Limpiar datos internos del store
       this.user = null
       this.isAuthenticated = false
       this.token = null
+      
+      console.log('🧹 [AuthStore] Datos internos limpiados')
+    },
+
+    logout() {
+      console.log('🚪 [AuthStore] Cerrando sesión...')
+      
+      // Limpiar el store
+      this.clearUserData()
 
       // Limpiar localStorage
       const keysToRemove = [
@@ -133,7 +158,7 @@ export const useAuthStore = defineStore('auth', {
 
       keysToRemove.forEach(key => localStorage.removeItem(key))
       
-      console.log('🔐 [AuthStore] Usuario desconectado')
+      console.log('✅ [AuthStore] Usuario desconectado y localStorage limpiado')
     }
   }
 })

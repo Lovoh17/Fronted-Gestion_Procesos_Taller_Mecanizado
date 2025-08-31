@@ -1,10 +1,10 @@
 <template>
   <div class="holy-grail-app">
-    <TopBar />
-    
+    <TopBar v-if="shouldShowTopBar" />
+
     <div class="content-wrapper">
-      <component :is="currentSidebar" v-if="authStore.isAuthenticated && currentSidebar" />
-      <main class="main-content">
+      <component :is="currentSidebar" v-if="shouldShowSidebar" />
+      <main class="main-content" :class="{ 'no-sidebar': !shouldShowSidebar }">
         <div class="content-container">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
@@ -32,46 +32,60 @@ import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
 const authStore = useAuthStore();
 const route = useRoute();
 
-// Computed property para determinar qué sidebar mostrar según el puesto_id
+// Computed para determinar si mostrar TopBar
+const shouldShowTopBar = computed(() => {
+  // Ocultar en rutas con layout 'empty' o rutas públicas específicas
+  if (route.meta?.layout === 'empty') return false
+  if (route.path === '/login' || route.path === '/') return false
+  
+  return authStore.isAuthenticated
+})
+
+// Computed para determinar si mostrar Sidebar
+const shouldShowSidebar = computed(() => {
+  // No mostrar sidebar si no está autenticado
+  if (!authStore.isAuthenticated) return false
+  
+  // No mostrar en rutas con layout 'empty'
+  if (route.meta?.layout === 'empty') return false
+  
+  // No mostrar en rutas específicas
+  const noSidebarRoutes = ['/login', '/', '/unauthorized', '/not-found']
+  if (noSidebarRoutes.includes(route.path)) return false
+  
+  return true
+})
+
+// Computed para determinar qué sidebar mostrar según el puesto_id
 const currentSidebar = computed(() => {
-  console.log('📋 [App.vue] Evaluando sidebar...');
-  
-  if (!authStore.isAuthenticated) {
-    console.log('📋 [App.vue] Usuario no autenticado');
+  console.log('🔋 [App.vue] Evaluando sidebar...');
+
+  // Si no debe mostrar sidebar, retornar null
+  if (!shouldShowSidebar.value) {
+    console.log('🔋 [App.vue] No debe mostrar sidebar');
     return null;
   }
 
-  // Verificar si hay datos de usuario
+  // Si no hay usuario, retornar null
   if (!authStore.user) {
-    console.log('📋 [App.vue] No hay datos de usuario');
+    console.log('🔋 [App.vue] No hay datos de usuario en el store');
     return null;
   }
 
-  // Obtener puesto_id desde diferentes fuentes posibles
-  let puestoId;
-  
-  if (authStore.user.puesto_id) {
-    puestoId = parseInt(authStore.user.puesto_id);
-  } else {
-    // Fallback: intentar obtener desde localStorage
-    const storedPuestoId = localStorage.getItem('userPuesto');
-    if (storedPuestoId) {
-      puestoId = parseInt(storedPuestoId);
-      console.log('📋 [App.vue] Puesto ID obtenido desde localStorage:', puestoId);
-    }
-  }
+  // Obtener puesto_id del getter reactivo del store
+  const puestoId = authStore.userPuestoId;
+  const userRole = authStore.userRole;
 
-  const userRole = authStore.userRole || authStore.user.role;
-  
-  console.log('📋 [App.vue] Usuario:', authStore.user);
-  console.log('📋 [App.vue] Puesto ID:', puestoId, '(tipo:', typeof puestoId, ')');
-  console.log('📋 [App.vue] Rol del usuario:', userRole);
-  
-  // Si no hay puesto_id, intentar mapear por role como fallback
+  console.log('🔋 [App.vue] Usuario completo:', authStore.user);
+  console.log('🔋 [App.vue] Puesto ID (reactivo):', puestoId, '(tipo:', typeof puestoId, ')');
+  console.log('🔋 [App.vue] Rol del usuario:', userRole);
+  console.log('🔋 [App.vue] Ruta actual:', route.path);
+
+  // Si no hay puesto_id válido, intentar mapear por role como fallback
   if (!puestoId || isNaN(puestoId)) {
-    console.log('📋 [App.vue] ⚠️ No se encontró puesto_id válido, usando role como fallback');
-    
-    // Mapeo role -> puesto_id como fallback
+    console.log('🔋 [App.vue] ⚠️ No se encontró puesto_id válido, usando role como fallback');
+
+    // Mapeo role -> sidebar como fallback
     const roleToSidebar = {
       'jefe_taller': SideBar,
       'coordinador': SidebarCoordinator,
@@ -81,36 +95,39 @@ const currentSidebar = computed(() => {
 
     const fallbackSidebar = roleToSidebar[userRole];
     if (fallbackSidebar) {
-      console.log('📋 [App.vue] Sidebar seleccionado por role:', userRole);
+      console.log('🔋 [App.vue] Sidebar seleccionado por role:', userRole);
       return fallbackSidebar;
     }
+
+    // Si tampoco hay role válido, usar sidebar por defecto
+    console.log('🔋 [App.vue] ⚠️ No se encontró role válido, usando sidebar por defecto');
+    return SideBar;
   }
 
   let selectedSidebar;
-  
+
   switch (puestoId) {
     case 1: // Jefe de Taller
       selectedSidebar = SideBar;
-      console.log('📋 [App.vue] Sidebar seleccionado: Admin/Jefe de Taller (puesto_id: 1)');
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Admin/Jefe de Taller (puesto_id: 1)');
       break;
     case 2: // Coordinador
       selectedSidebar = SidebarCoordinator;
-      console.log('📋 [App.vue] Sidebar seleccionado: Coordinador (puesto_id: 2)');
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Coordinador (puesto_id: 2)');
       break;
     case 3: // Operario
       selectedSidebar = SidebarOperario;
-      console.log('📋 [App.vue] Sidebar seleccionado: Operario (puesto_id: 3)');
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Operario (puesto_id: 3)');
       break;
     case 4: // Técnico
       selectedSidebar = SidebarTecnico;
-      console.log('📋 [App.vue] Sidebar seleccionado: Técnico (puesto_id: 4)');
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Técnico (puesto_id: 4)');
       break;
     default:
       selectedSidebar = SideBar;
-      console.log('📋 [App.vue] Sidebar seleccionado: Por defecto (Admin)');
-      console.log('📋 [App.vue] ⚠️ Puesto ID no reconocido:', puestoId);
+      console.log('🔋 [App.vue] ⚠️ Puesto ID no reconocido:', puestoId, '- usando sidebar por defecto');
   }
-  
+
   return selectedSidebar;
 });
 </script>
@@ -132,16 +149,22 @@ const currentSidebar = computed(() => {
   overflow-y: auto;
 }
 
+.main-content.no-sidebar {
+  width: 100%;
+}
+
 .content-container {
   padding: 1rem 0rem;
 }
 
 /* Transiciones */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>

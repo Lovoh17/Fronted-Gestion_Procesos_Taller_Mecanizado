@@ -57,3 +57,10 @@ app.mount('#app')
 import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 authStore.initializeAuth()
+
+console.log('🚀 Aplicación iniciada')
+console.log('👤 Estado inicial de autenticación:', {
+  isAuthenticated: authStore.isAuthenticated,
+  user: authStore.user,
+  puestoId: authStore.userPuestoId
+})
