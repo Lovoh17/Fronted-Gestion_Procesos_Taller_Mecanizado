@@ -167,8 +167,6 @@
                       <va-button size="small" preset="plain" color="primary" @click="editAlert(props.row)" icon="edit"
                         class="mr-1" title="Editar"></va-button>
 
-                      <va-button size="small" preset="plain" color="danger" @click="confirmDeleteAlert(props.row.id)"
-                        icon="delete" title="Eliminar"></va-button>
                     </div>
                   </span>
 

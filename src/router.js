@@ -125,14 +125,14 @@ const routes = [
     meta: { public: true }
   },
   {
-    path: '/pedidos/nuevo',
+    path: '/coordinator/new',
     name: 'new-order',
-    component: () => import('./components/VistasCoordinador/WorkOrderModal.vue'),
+    component: () => import('@/components/VistasCoordinador/NewWorkOrder.vue'),
     meta: { public: true }
   },
   {
     path: '/asignaciones',
-    name: 'new-order',
+    name: 'new-asignacion',
     component: () => import('./components/Asiganciones.vue'),
     meta: { public: true }
   },

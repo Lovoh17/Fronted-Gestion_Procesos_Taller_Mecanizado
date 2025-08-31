@@ -267,7 +267,7 @@ export default {
     },
     
     nuevoPedido() {
-      this.$router.push('/pedidos/nuevo')
+      this.$router.push('/coordinator/new')
     },
     
     verDetalles(pedido) {

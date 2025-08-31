@@ -11,7 +11,7 @@
       <!-- Loading indicator -->
       <div v-if="loadingCatalogs" class="loading-section">
         <div class="loading-spinner"></div>
-        <p>Cargando información...</p>
+        <p>Cargando infrmación...</p>
       </div>
 
       <!-- ERROR SECTION -->
