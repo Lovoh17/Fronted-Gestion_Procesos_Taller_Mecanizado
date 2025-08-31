@@ -5,35 +5,54 @@
         <span class="material-icons sidebar-logo-icon">factory</span>
         <span v-if="!isCollapsed" class="logo-text">UNIVO<span> Admin</span></span>
       </a>
+      <div class="sidebar-collapse-control" @click="toggleSidebar">
+        <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
+      </div>
     </div>
     
-    <nav class="sidebar-nav">
-      <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
-      <router-link 
-        v-for="(item, index) in navItems" 
-        :key="index" 
-        :to="item.path" 
-        class="nav-item" 
-        :class="{ active: isRouteActive(item.path) }"
-        @click="setActiveItem(index)"
-        :title="isCollapsed ? item.text : ''"
-      >
-        <span class="material-icons icon-wrapper">{{ item.icon }}</span>
-        <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-        <span 
-          v-if="!isCollapsed && item.badge !== null && item.badge > 0" 
-          class="nav-badge"
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.path" 
+          class="nav-item" 
+          :class="{ active: isRouteActive(item.path) }"
+          @click="setActiveItem(index)"
+          :title="isCollapsed ? item.text : ''"
         >
-          {{ item.badge }}
-        </span>
-      </router-link>
-    </nav>
-    
-    <div class="sidebar-footer" v-if="!isCollapsed">
-      <va-button class="logout-btn" @click="handleLogout">
-        <span class="material-icons">logout</span>
-        <span>Cerrar Sesión</span>
-      </va-button>
+          <span class="material-icons icon-wrapper">{{ item.icon }}</span>
+          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
+          <span 
+            v-if="!isCollapsed && item.badge !== null && item.badge > 0" 
+            class="nav-badge"
+            :class="{
+              'badge-danger': item.badge > 0 && item.badgeType === 'danger',
+              'badge-warning': item.badge > 0 && item.badgeType === 'warning',
+              'badge-success': item.badge > 0 && item.badgeType === 'success'
+            }"
+          >
+            {{ item.badge }}
+          </span>
+          <span v-if="isCollapsed && item.badge !== null && item.badge > 0" class="collapsed-badge">{{ item.badge }}</span>
+        </router-link>
+      </nav>
+      
+      <div class="sidebar-footer" v-if="!isCollapsed">
+        <!-- Información del usuario desde el store -->
+        <div class="user-info" v-if="authStore.isAuthenticated">
+          <div class="user-name">{{ authStore.userName || 'Usuario' }}</div>
+          <div class="user-role">{{ authStore.userRole || 'Sin rol' }}</div>
+        </div>
+
+        <button class="logout-btn" @click="handleLogout">
+          <span class="material-icons">logout</span>
+          Cerrar Sesión
+        </button>
+
+        <div class="company-brand">UNIVO INDUSTRIAL</div>
+      </div>
     </div>
   </aside>
 </template>
@@ -57,61 +76,73 @@ export default {
         icon: 'dashboard',
         text: 'Panel Principal',
         path: '/admin-dashboard',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'inventory_2',
         text: 'Gestión Inventario',
         path: '/inventory',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'miscellaneous_services',
         text: 'Departamentos',
         path: '/admin/departments',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'account_balance',
         text: 'Transacciones',
         path: '/admin/transacciones',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'handyman',
         text: 'Herramientas',
         path: '/herramientas',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'local_shipping',
         text: 'Ordenes',
         path: '/admin/orders',
-        badge: null
+        badge: 5,
+        badgeType: 'warning'
       },
       {
         icon: 'groups',
         text: 'Usuarios',
         path: '/admin/users',
-        badge: null
+        badge: null,
+        badgeType: null
+      },
+      {
+        icon: 'assessment',
+        text: 'Reportes',
+        path: '/admin/reports',
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'tune',
         text: 'Configuración',
         path: '/settings',
-        badge: null
+        badge: null,
+        badgeType: null
       },
       {
         icon: 'people',
         text: 'RRHH',
         path: '/rrhh',
-        badge: null
+        badge: null,
+        badgeType: null
       }
     ])
-    
-    const userName = computed(() => {
-      return authStore.user?.name || authStore.user?.username || 'Administrador'
-    })
 
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
@@ -119,8 +150,7 @@ export default {
     
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
-      // Guardar preferencia en localStorage
-      localStorage.setItem('sidebarCollapsed', isCollapsed.value)
+      localStorage.setItem('adminSidebarCollapsed', isCollapsed.value)
     }
     
     const setActiveItem = (index) => {
@@ -129,16 +159,26 @@ export default {
     
     const handleLogout = async () => {
       try {
-        await authStore.logout()
-        router.push('/')
+        console.log('🚪 [AdminSidebar] Iniciando proceso de logout...')
+
+        // Usar el método logout del store que ya implementaste
+        authStore.logout()
+
+        console.log('✅ [AdminSidebar] Logout completado, redirigiendo...')
+
+        // Redirigir al login o página principal
+        await router.push('/')
+
       } catch (error) {
-        console.error('Error al cerrar sesión:', error)
+        console.error('❌ [AdminSidebar] Error durante el logout:', error)
+        // Aún así intentar redirigir
+        await router.push('/')
       }
     }
     
     // Cargar estado inicial del sidebar
     const loadSidebarState = () => {
-      const savedState = localStorage.getItem('sidebarCollapsed')
+      const savedState = localStorage.getItem('adminSidebarCollapsed')
       if (savedState !== null) {
         isCollapsed.value = savedState === 'true'
       }
@@ -151,7 +191,7 @@ export default {
       isCollapsed,
       activeItem,
       navItems,
-      userName,
+      authStore,
       isRouteActive,
       toggleSidebar,
       setActiveItem,
@@ -173,27 +213,23 @@ export default {
   transition: var(--transition);
   z-index: 1000;
   box-shadow: var(--shadow-dark);
-  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar.collapsed {
-  width: 80px;
+  width: 70px;
 }
 
 .sidebar-header {
-  padding: 1.8rem 1.5rem;
+  padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 80px;
-}
-
-.sidebar.collapsed .sidebar-header {
-  padding: 1.8rem 0;
-  justify-content: center;
 }
 
 .sidebar-logo {
@@ -206,6 +242,7 @@ export default {
   transition: var(--transition);
   cursor: pointer;
   white-space: nowrap;
+  gap: 12px;
 }
 
 .sidebar-logo:hover {
@@ -218,8 +255,7 @@ export default {
 }
 
 .sidebar-logo-icon {
-  font-size: 2rem;
-  margin-right: 0.8rem;
+  font-size: 28px;
   color: var(--industrial-yellow);
   background: rgba(221, 170, 17, 0.1);
   padding: 8px;
@@ -227,13 +263,13 @@ export default {
   transition: var(--transition);
 }
 
-.sidebar.collapsed .sidebar-logo-icon {
-  margin-right: 0;
-}
-
 .logo-text {
-  opacity: 1;
-  transition: opacity 0.3s ease;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logo-text span {
@@ -241,16 +277,29 @@ export default {
   font-weight: 700;
 }
 
-.sidebar.collapsed .logo-text {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
+.sidebar-collapse-control {
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-collapse-control:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-content {
+  padding: 20px 0 0 0;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-nav {
-  padding: 1.5rem 0;
   flex-grow: 1;
-  overflow-x: hidden;
 }
 
 .nav-title {
@@ -259,24 +308,15 @@ export default {
   text-transform: uppercase;
   color: var(--gray-light);
   letter-spacing: 1.5px;
-  margin-top: 0.5rem;
+  margin-bottom: 15px;
   font-weight: 600;
   white-space: nowrap;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .nav-title {
-  opacity: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 0.9rem 1.8rem;
+  padding: 12px 20px;
   color: var(--metal-light);
   text-decoration: none;
   transition: var(--transition);
@@ -285,11 +325,12 @@ export default {
   border-radius: 8px;
   white-space: nowrap;
   cursor: pointer;
+  gap: 12px;
 }
 
 .sidebar.collapsed .nav-item {
   justify-content: center;
-  padding: 1rem;
+  padding: 12px;
   margin: 0.3rem 0;
 }
 
@@ -319,111 +360,122 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 20px;
   color: var(--gray-lighter);
-  min-width: 24px;
+  min-width: 20px;
   transition: var(--transition);
   flex-shrink: 0;
 }
 
-.sidebar.collapsed .icon-wrapper {
-  font-size: 1.6rem;
-}
-
 .nav-text {
-  font-size: 0.95rem;
+  font-size: 13px;
   font-weight: 500;
   color: var(--gray-lighter);
-  margin-left: 1rem;
-  opacity: 1;
-  transition: opacity 0.3s ease;
+  flex: 1;
+  white-space: nowrap;
   overflow: hidden;
-}
-
-.sidebar.collapsed .nav-text {
-  opacity: 0;
-  width: 0;
-  margin-left: 0;
+  text-overflow: ellipsis;
 }
 
 .nav-badge {
-  margin-left: auto;
-  background-color: var(--danger);
+  background-color: #dc3545;
   color: white;
   border-radius: 10px;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .nav-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  margin-left: 0;
-  padding: 0.15rem 0.4rem;
-}
-
-.sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: auto;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .sidebar-footer {
-  opacity: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  border-top: none;
-}
-
-.user-info {
-  margin-bottom: 1rem;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 18px;
   text-align: center;
 }
 
+.nav-badge.badge-warning {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.nav-badge.badge-success {
+  background-color: #28a745;
+}
+
+.collapsed-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
 .user-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--gray-light);
-  margin-bottom: 0.2rem;
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
-  font-size: 0.75rem;
-  color: var(--industrial-yellow);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-btn {
   display: flex;
   align-items: center;
+  gap: 8px;
   width: 100%;
-  padding: 0.8rem 1rem;
-  background: rgba(231, 76, 60, 0.1);
+  padding: 10px;
+  background-color: rgba(231, 76, 60, 0.1);
   border: 1px solid rgba(231, 76, 60, 0.3);
   border-radius: 8px;
-  color: var(--danger);
-  font-size: 0.9rem;
+  color: #e74c3c;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition);
+  margin-bottom: 15px;
 }
 
 .logout-btn:hover {
-  background: rgba(231, 76, 60, 0.2);
+  background-color: rgba(231, 76, 60, 0.2);
   transform: translateY(-2px);
 }
 
-.logout-btn .material-icons {
-  margin-right: 0.8rem;
-  font-size: 1.2rem;
+.company-brand {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tooltip para iconos cuando está colapsado */
@@ -465,21 +517,21 @@ export default {
 }
 
 /* Scrollbar personalizado */
-.sidebar::-webkit-scrollbar {
-  width: 6px;
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
 }
 
-.sidebar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.sidebar::-webkit-scrollbar-thumb {
+.sidebar-content::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(221, 170, 17, 0.5);
+  border-radius: 2px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(221, 170, 17, 0.7);
 }
 
 /* Responsive */
