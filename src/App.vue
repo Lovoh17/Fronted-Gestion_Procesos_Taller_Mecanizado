@@ -4,7 +4,6 @@
 
     <div class="content-wrapper">
       <component :is="currentSidebar" v-if="authStore.isAuthenticated && currentSidebar" />
-
       <main class="main-content">
         <div class="content-container">
           <router-view v-slot="{ Component }">
@@ -33,89 +32,29 @@ import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
 const authStore = useAuthStore();
 const route = useRoute();
 
-// Mapeo de roles a componentes
-const roleSidebars = {
-  admin: SideBar,
-  coordinator: SidebarCoordinator,
-  operator: SidebarOperario,
-  technician: SidebarTecnico
-};
-
-// Función para determinar el rol basándose en la ruta
-const getRoleFromRoute = (currentPath) => {
-  // Rutas de administrador
-  if (currentPath.startsWith('/admin') ||
-    currentPath === '/admin-dashboard' ||
-    currentPath === '/inventory' ||
-    currentPath === '/herramientas') {
-    return 'admin';
-  }
-
-  // Rutas de coordinador
-  if (currentPath.startsWith('/coordinator') ||
-    currentPath === '/dashboard-coordinador' ||
-    currentPath === '/control-calidad') {
-    return 'coordinator';
-  }
-
-  // Rutas de operario
-  if (currentPath.startsWith('/operator') ||
-    currentPath === '/dashboard-operario' ||
-    currentPath.startsWith('/operario')) {
-    return 'operator';
-  }
-
-  // Rutas de técnico
-  if (currentPath.startsWith('/technician') ||
-    currentPath === '/tech-dashboard' ||
-    currentPath.startsWith('/tech')) {
-    return 'technician';
-  }
-
-  // Rutas públicas o sin rol específico
-  return null;
-};
-
+// Computed property para determinar qué sidebar mostrar según el puesto_id
 const currentSidebar = computed(() => {
-  // Si no está autenticado, no mostrar sidebar
-  if (!authStore.isAuthenticated) {
+  if (!authStore.isAuthenticated || !authStore.user) {
     return null;
   }
 
-  const currentPath = route.path;
-
-  // Primero intentar obtener el rol desde el store de autenticación
-  let userRole = authStore.user?.role || authStore.userRole;
-
-  // Si no hay rol en el store, determinar por la ruta
-  if (!userRole) {
-    userRole = getRoleFromRoute(currentPath);
+  const puestoId = authStore.user.puesto_id;
+  console.log('Puesto ID:', puestoId); // Depuración para verificar el puesto_id
+  switch (puestoId) {
+    case 1: // Jefe de Taller
+      return SideBar; // Sidebar principal para jefe de taller
+    case 2: // Coordinador
+      return SidebarCoordinator;
+    case 3: // Operario
+      return SidebarOperario;
+    case 4: // Técnico
+      return SidebarTecnico;
+    default:
+      // Si no hay un puesto_id reconocido, mostrar sidebar por defecto
+      return SideBar;
   }
-
-  // Verificar que el rol coincida con la ruta (opcional, para validación)
-  const routeRole = getRoleFromRoute(currentPath);
-  if (routeRole && userRole !== routeRole) {
-    console.warn('⚠️ El rol del usuario no coincide con la ruta:', {
-      userRole,
-      routeRole,
-      currentPath
-    });
-    // Puedes decidir si usar el rol del usuario o el de la ruta
-    // En este caso, usaremos el de la ruta
-    userRole = routeRole;
-  }
-
-  console.log('🔄 Current role:', userRole, 'for path:', currentPath);
-
-  const sidebar = roleSidebars[userRole];
-
-  if (!sidebar) {
-    console.warn('⚠️ Rol no reconocido:', userRole);
-    return null;
-  }
-
-  return sidebar;
 });
+
 </script>
 
 <style scoped>

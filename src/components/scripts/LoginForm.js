@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { mockUsers } from '@/mock/users'
 // import { useAuthStore } from '@/stores/auth'
 
 export default {
@@ -53,58 +54,55 @@ export default {
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1500))
 
-        // Mock authentication logic for development
-        if (username.value === 'admin' && password.value === 'admin123') {
-          // Simulate admin login
-          localStorage.setItem('userRole', 'admin')
-          localStorage.setItem('userName', username.value)
+        // Find user in mock data
+        const userCredentials = mockUsers.find(user => 
+          user.username === username.value && user.password === password.value
+        )
+
+        if (userCredentials) {
+          // Successful login
+          const { user, token } = userCredentials
+          
+          // Store authentication data
+          localStorage.setItem('userRole', user.role)
+          localStorage.setItem('userName', user.name)
+          localStorage.setItem('userEmail', user.email)
+          localStorage.setItem('userId', user.id.toString())
           localStorage.setItem('isAuthenticated', 'true')
+          localStorage.setItem('authToken', token)
+          localStorage.setItem('userAvatar', user.avatar || '')
+          localStorage.setItem('userDepartamento', user.departamento_id?.toString() || '')
+          localStorage.setItem('userPuesto', user.puesto_id?.toString() || '')
+          localStorage.setItem('nivelJerarquico', user.nivel_jerarquico?.toString() || '')
+          localStorage.setItem('esSupervisor', user.es_supervisor ? 'true' : 'false')
+          
+          if (user.especialidades) {
+            localStorage.setItem('userEspecialidades', JSON.stringify(user.especialidades))
+          }
           
           if (rememberMe.value) {
             localStorage.setItem('rememberedUser', username.value)
           }
           
-          console.log('Admin login successful')
-          router.push('/admin-dashboard')
+          console.log(`${user.role} login successful for ${user.name}`)
           
-        } else if (username.value === 'coordinador' && password.value === 'coord123') {
-          // Simulate coordinator login
-          localStorage.setItem('userRole', 'coordinator')
-          localStorage.setItem('userName', username.value)
-          localStorage.setItem('isAuthenticated', 'true')
-          
-          if (rememberMe.value) {
-            localStorage.setItem('rememberedUser', username.value)
+          // Redirect based on role
+          switch (user.role) {
+            case 'jefe_taller':
+              router.push('/admin-dashboard')
+              break
+            case 'coordinador':
+              router.push('/dashboard-coordinador')
+              break
+            case 'operario':
+              router.push('/dashboard-operario')
+              break
+            case 'tecnico':
+              router.push('/tech-dashboard')
+              break
+            default:
+              router.push('/dashboard')
           }
-          
-          console.log('Coordinator login successful')
-          router.push('/dashboard-coordinador')
-          
-        } else if (username.value === 'operario' && password.value === 'oper123') {
-          // Simulate operator login
-          localStorage.setItem('userRole', 'operator')
-          localStorage.setItem('userName', username.value)
-          localStorage.setItem('isAuthenticated', 'true')
-          
-          if (rememberMe.value) {
-            localStorage.setItem('rememberedUser', username.value)
-          }
-          
-          console.log('Operator login successful')
-          router.push('/dashboard-operario')
-          
-        } else if (username.value === 'tecnico' && password.value === 'tech123') {
-          // Simulate technician login
-          localStorage.setItem('userRole', 'technician')
-          localStorage.setItem('userName', username.value)
-          localStorage.setItem('isAuthenticated', 'true')
-          
-          if (rememberMe.value) {
-            localStorage.setItem('rememberedUser', username.value)
-          }
-          
-          console.log('Technician login successful')
-          router.push('/tech-dashboard')
           
         } else {
           // Invalid credentials
@@ -122,16 +120,16 @@ export default {
         // Redirect based on role
         const userRole = authStore.user?.role
         switch (userRole) {
-          case 'admin':
+          case 'jefe_taller':
             router.push('/admin-dashboard')
             break
-          case 'coordinator':
+          case 'coordinador':
             router.push('/dashboard-coordinador')
             break
-          case 'operator':
+          case 'operario':
             router.push('/dashboard-operario')
             break
-          case 'technician':
+          case 'tecnico':
             router.push('/tech-dashboard')
             break
           default:
@@ -190,13 +188,29 @@ export default {
       }
     }
 
-    // Demo/Development utilities
+    // Demo/Development utilities - Updated with new mock credentials
     const fillDemoCredentials = (role) => {
       const demoCredentials = {
-        admin: { username: 'admin', password: 'admin123' },
-        coordinator: { username: 'coordinador', password: 'coord123' },
-        operator: { username: 'operario', password: 'oper123' },
-        technician: { username: 'tecnico', password: 'tech123' }
+        jefe_taller: { 
+          username: 'jefeTaller@taller.com', 
+          password: 'jefe123',
+          displayName: 'Isabel Moreno - Jefe de Taller'
+        },
+        coordinador: { 
+          username: 'coordinador@taller.com', 
+          password: 'coord123',
+          displayName: 'Jorge López - Coordinador'
+        },
+        operario: { 
+          username: 'operario@taller.com', 
+          password: 'oper123',
+          displayName: 'Roberto Sánchez - Operario'
+        },
+        tecnico: { 
+          username: 'tecnico@taller.com', 
+          password: 'tech123',
+          displayName: 'Carlos Martín - Técnico'
+        }
       }
 
       const credentials = demoCredentials[role]
@@ -204,13 +218,37 @@ export default {
         username.value = credentials.username
         password.value = credentials.password
         validateForm()
-        console.log(`Demo credentials loaded for ${role}`)
+        console.log(`Demo credentials loaded for ${credentials.displayName}`)
       }
+    }
+
+    // Get available demo users for quick access
+    const getDemoUsers = () => {
+      return mockUsers.map(mockUser => ({
+        role: mockUser.user.role,
+        name: mockUser.user.name,
+        username: mockUser.username,
+        displayRole: getRoleDisplayName(mockUser.user.role),
+        avatar: mockUser.user.avatar,
+        departamento: mockUser.user.departamento_id,
+        essupervisor: mockUser.user.es_supervisor,
+        especialidades: mockUser.user.especialidades
+      }))
+    }
+
+    const getRoleDisplayName = (role) => {
+      const roleNames = {
+        jefe_taller: 'Jefe de Taller',
+        coordinador: 'Coordinador',
+        operario: 'Operario',
+        tecnico: 'Técnico'
+      }
+      return roleNames[role] || role
     }
 
     const getQuickAccessLinks = () => {
       return {
-        admin: [
+        jefe_taller: [
           { path: '/admin-dashboard', label: 'Dashboard Admin', icon: 'fas fa-tachometer-alt' },
           { path: '/admin/users', label: 'Usuarios', icon: 'fas fa-users' },
           { path: '/admin/departments', label: 'Departamentos', icon: 'fas fa-building' },
@@ -218,7 +256,7 @@ export default {
           { path: '/admin/reports', label: 'Reportes', icon: 'fas fa-chart-bar' },
           { path: '/admin/transacciones', label: 'Transacciones', icon: 'fas fa-exchange-alt' }
         ],
-        coordinator: [
+        coordinador: [
           { path: '/dashboard-coordinador', label: 'Dashboard Coordinador', icon: 'fas fa-clipboard-list' },
           { path: '/control-calidad', label: 'Control de Calidad', icon: 'fas fa-check-circle' },
           { path: '/coordinator/planning', label: 'Planificación', icon: 'fas fa-calendar' },
@@ -227,12 +265,12 @@ export default {
           { path: '/coordinator/movimientos', label: 'Movimientos', icon: 'fas fa-arrows-alt' },
           { path: '/coordinator/planos-tools', label: 'Planos y Herramientas', icon: 'fas fa-tools' }
         ],
-        operator: [
+        operario: [
           { path: '/dashboard-operario', label: 'Dashboard Operario', icon: 'fas fa-user-hard-hat' },
           { path: '/operario/trabajos', label: 'Trabajos', icon: 'fas fa-hammer' },
           { path: '/operario/reportes', label: 'Reportes', icon: 'fas fa-file-alt' }
         ],
-        technician: [
+        tecnico: [
           { path: '/tech-dashboard', label: 'Dashboard Técnico', icon: 'fas fa-cogs' },
           { path: '/tech/schedule', label: 'Programación', icon: 'fas fa-calendar-alt' }
         ],
@@ -263,7 +301,8 @@ export default {
 
     // Initialize component
     const initialize = () => {
-      console.log('LoginForm initialized')
+      console.log('LoginForm initialized with mock users')
+      console.log('Available users:', getDemoUsers())
       loadRememberedUser()
       
       // Add keyboard event listener
@@ -308,6 +347,8 @@ export default {
       watchFormChanges,
       fillDemoCredentials,
       getQuickAccessLinks,
+      getDemoUsers,
+      getRoleDisplayName,
       
       // Lifecycle methods
       initialize,
