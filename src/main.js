@@ -52,6 +52,8 @@ app.component('LoadingSpinner', LoadingSpinner)
 // Monta la aplicación
 app.mount('#app')
 
-
-
-
+// DESPUÉS de montar la app, inicializar el store de autenticación
+// Esto debe hacerse después del mount para asegurar que Pinia esté completamente configurado
+import { useAuthStore } from '@/stores/auth'
+const authStore = useAuthStore()
+authStore.initializeAuth()

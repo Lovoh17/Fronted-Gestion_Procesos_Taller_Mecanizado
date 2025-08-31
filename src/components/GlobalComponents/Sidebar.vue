@@ -1,33 +1,17 @@
 <template>
-  <VaSidebar 
-    v-model="isCollapsed"
-    :width="sidebarWidth"
-    :minimized-width="minimizedWidth"
-    color="primary"
-    class="univo-sidebar"
-  >
+  <VaSidebar v-model="isCollapsed" :width="sidebarWidth" :minimized-width="minimizedWidth" color="primary"
+    class="univo-sidebar">
     <!-- Header -->
     <template #header>
       <VaSidebarItem class="sidebar-header">
         <div class="sidebar-logo" @click="toggleSidebar">
-          <VaIcon 
-            name="factory" 
-            size="2rem"
-            color="warning"
-            class="sidebar-logo-icon"
-          />
+          <VaIcon name="factory" size="2rem" color="warning" class="sidebar-logo-icon" />
           <div v-if="!isCollapsed" class="logo-text">
-            UNIVO<span class="logo-accent">Industrial</span>
+            UNIVO<span class="logo-accent">Industrial *admin </span>
           </div>
         </div>
-        <VaButton 
-          preset="plain"
-          :icon="isCollapsed ? 'menu' : 'chevron_left'"
-          color="secondary"
-          size="small"
-          class="collapse-button"
-          @click="toggleSidebar"
-        />
+        <VaButton preset="plain" :icon="isCollapsed ? 'menu' : 'chevron_left'" color="secondary" size="small"
+          class="collapse-button" @click="toggleSidebar" />
       </VaSidebarItem>
     </template>
 
@@ -37,33 +21,19 @@
         <VaSidebarItemTitle v-if="!isCollapsed" class="nav-title">
           MENÚ PRINCIPAL
         </VaSidebarItemTitle>
-        
-        <VaSidebarItem
-          v-for="(item, index) in navItems"
-          :key="index"
-          :to="item.path"
-          :active="isRouteActive(item.path)"
-          class="nav-item"
-          @click="setActiveItem(index)"
-        >
+
+        <VaSidebarItem v-for="(item, index) in navItems" :key="index" :to="item.path" :active="isRouteActive(item.path)"
+          class="nav-item" @click="setActiveItem(index)">
           <template #icon>
-            <VaIcon 
-              :name="item.icon" 
-              size="1.4rem"
-              class="nav-icon"
-            />
+            <VaIcon :name="item.icon" size="1.4rem" class="nav-icon" />
           </template>
-          
+
           <template #default>
             <span class="nav-text">{{ item.text }}</span>
           </template>
-          
+
           <template #append v-if="item.badge && item.badge > 0">
-            <VaBadge 
-              :text="item.badge.toString()"
-              color="danger"
-              class="nav-badge"
-            />
+            <VaBadge :text="item.badge.toString()" color="danger" class="nav-badge" />
           </template>
         </VaSidebarItem>
       </VaSidebarItemGroup>
@@ -87,76 +57,76 @@ export default {
     const route = useRoute()
     const isCollapsed = ref(false)
     const activeItem = ref(0)
-    
+
     const navItems = ref([
-      { 
-        icon: 'dashboard', 
-        text: 'Panel Principal', 
+      {
+        icon: 'dashboard',
+        text: 'Panel Principal',
         path: '/admin-dashboard',
-        badge: null 
+        badge: null
       },
-      { 
-        icon: 'inventory_2',  
-        text: 'Gestión Inventario', 
+      {
+        icon: 'inventory_2',
+        text: 'Gestión Inventario',
         path: '/inventory',
         badge: null
       },
-      { 
-          icon: 'miscellaneous_services', 
-          text: 'Departamentos', 
-          path: '/admin/departments',
-          badge: null
-        },
-        { 
-        icon: 'account_balance', 
-        text: 'Transacciones', 
-        path: '/admin/transacciones',
-        badge: null 
+      {
+        icon: 'miscellaneous_services',
+        text: 'Departamentos',
+        path: '/admin/departments',
+        badge: null
       },
-      { 
-        icon: 'handyman', 
+      {
+        icon: 'account_balance',
+        text: 'Transacciones',
+        path: '/admin/transacciones',
+        badge: null
+      },
+      {
+        icon: 'handyman',
         text: 'Herramientas',
         path: '/herramientas',
-        badge: null 
+        badge: null
       },
-      { 
-        icon: 'local_shipping', 
-        text: 'Ordenes', 
+      {
+        icon: 'local_shipping',
+        text: 'Ordenes',
         path: '/admin/orders',
-        badge: null 
+        badge: null
       },
-      { 
-        icon: 'groups', 
-        text: 'Usuarios', 
+      {
+        icon: 'groups',
+        text: 'Usuarios',
         path: '/admin/users',
-        badge: null 
+        badge: null
       },
-      { 
-        icon: 'tune', 
-        text: 'Configuración', 
+      {
+        icon: 'tune',
+        text: 'Configuración',
         path: '/settings',
-        badge: null 
+        badge: null
       }
     ])
-    
+
     // Computed properties para las dimensiones del sidebar
     const sidebarWidth = computed(() => '240px')
     const minimizedWidth = computed(() => '80px')
-    
+
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
     }
-    
+
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
       // Guardar preferencia en localStorage
       localStorage.setItem('sidebarCollapsed', isCollapsed.value)
     }
-    
+
     const setActiveItem = (index) => {
       activeItem.value = index
     }
-    
+
     // Cargar estado inicial del sidebar
     const loadSidebarState = () => {
       const savedState = localStorage.getItem('sidebarCollapsed')
@@ -164,10 +134,10 @@ export default {
         isCollapsed.value = savedState === 'true'
       }
     }
-    
+
     // Cargar estado al iniciar
     loadSidebarState()
-    
+
     return {
       isCollapsed,
       activeItem,
@@ -294,7 +264,7 @@ export default {
   .univo-sidebar {
     transform: translateX(-100%);
   }
-  
+
   .univo-sidebar:not(.va-sidebar--minimized) {
     transform: translateX(0);
     width: 280px;

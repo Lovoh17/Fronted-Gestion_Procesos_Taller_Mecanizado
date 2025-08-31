@@ -3,7 +3,7 @@
     <div class="sidebar-header">
       <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
         <span class="material-icons sidebar-logo-icon">factory</span>
-        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial</span></span>
+        <span v-if="!isCollapsed" class="logo-text">UNIVO<span>Industrial *coord</span></span>
       </a>
     </div>
     

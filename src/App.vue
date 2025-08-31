@@ -1,7 +1,7 @@
 <template>
   <div class="holy-grail-app">
     <TopBar />
-
+    
     <div class="content-wrapper">
       <component :is="currentSidebar" v-if="authStore.isAuthenticated && currentSidebar" />
       <main class="main-content">
@@ -34,27 +34,85 @@ const route = useRoute();
 
 // Computed property para determinar qué sidebar mostrar según el puesto_id
 const currentSidebar = computed(() => {
-  if (!authStore.isAuthenticated || !authStore.user) {
+  console.log('📋 [App.vue] Evaluando sidebar...');
+  
+  if (!authStore.isAuthenticated) {
+    console.log('📋 [App.vue] Usuario no autenticado');
     return null;
   }
 
-  const puestoId = authStore.user.puesto_id;
-  console.log('Puesto ID:', puestoId); // Depuración para verificar el puesto_id
+  // Verificar si hay datos de usuario
+  if (!authStore.user) {
+    console.log('📋 [App.vue] No hay datos de usuario');
+    return null;
+  }
+
+  // Obtener puesto_id desde diferentes fuentes posibles
+  let puestoId;
+  
+  if (authStore.user.puesto_id) {
+    puestoId = parseInt(authStore.user.puesto_id);
+  } else {
+    // Fallback: intentar obtener desde localStorage
+    const storedPuestoId = localStorage.getItem('userPuesto');
+    if (storedPuestoId) {
+      puestoId = parseInt(storedPuestoId);
+      console.log('📋 [App.vue] Puesto ID obtenido desde localStorage:', puestoId);
+    }
+  }
+
+  const userRole = authStore.userRole || authStore.user.role;
+  
+  console.log('📋 [App.vue] Usuario:', authStore.user);
+  console.log('📋 [App.vue] Puesto ID:', puestoId, '(tipo:', typeof puestoId, ')');
+  console.log('📋 [App.vue] Rol del usuario:', userRole);
+  
+  // Si no hay puesto_id, intentar mapear por role como fallback
+  if (!puestoId || isNaN(puestoId)) {
+    console.log('📋 [App.vue] ⚠️ No se encontró puesto_id válido, usando role como fallback');
+    
+    // Mapeo role -> puesto_id como fallback
+    const roleToSidebar = {
+      'jefe_taller': SideBar,
+      'coordinador': SidebarCoordinator,
+      'operario': SidebarOperario,
+      'tecnico': SidebarTecnico
+    };
+
+    const fallbackSidebar = roleToSidebar[userRole];
+    if (fallbackSidebar) {
+      console.log('📋 [App.vue] Sidebar seleccionado por role:', userRole);
+      return fallbackSidebar;
+    }
+  }
+
+  let selectedSidebar;
+  
   switch (puestoId) {
     case 1: // Jefe de Taller
-      return SideBar; // Sidebar principal para jefe de taller
+      selectedSidebar = SideBar;
+      console.log('📋 [App.vue] Sidebar seleccionado: Admin/Jefe de Taller (puesto_id: 1)');
+      break;
     case 2: // Coordinador
-      return SidebarCoordinator;
+      selectedSidebar = SidebarCoordinator;
+      console.log('📋 [App.vue] Sidebar seleccionado: Coordinador (puesto_id: 2)');
+      break;
     case 3: // Operario
-      return SidebarOperario;
+      selectedSidebar = SidebarOperario;
+      console.log('📋 [App.vue] Sidebar seleccionado: Operario (puesto_id: 3)');
+      break;
     case 4: // Técnico
-      return SidebarTecnico;
+      selectedSidebar = SidebarTecnico;
+      console.log('📋 [App.vue] Sidebar seleccionado: Técnico (puesto_id: 4)');
+      break;
     default:
-      // Si no hay un puesto_id reconocido, mostrar sidebar por defecto
-      return SideBar;
+      selectedSidebar = SideBar;
+      console.log('📋 [App.vue] Sidebar seleccionado: Por defecto (Admin)');
+      console.log('📋 [App.vue] ⚠️ Puesto ID no reconocido:', puestoId);
   }
+  
+  return selectedSidebar;
 });
-
 </script>
 
 <style scoped>
@@ -79,13 +137,11 @@ const currentSidebar = computed(() => {
 }
 
 /* Transiciones */
-.fade-enter-active,
-.fade-leave-active {
+.fade-enter-active, .fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 </style>

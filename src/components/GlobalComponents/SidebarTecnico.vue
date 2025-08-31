@@ -9,43 +9,33 @@
         <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
       </div>
     </div>
-    
+
     <div class="sidebar-content">
       <nav class="sidebar-nav">
         <div class="nav-title" v-if="!isCollapsed">PANEL TÉCNICO</div>
-        <router-link 
-          v-for="(item, index) in navItems" 
-          :key="index" 
-          :to="item.path" 
-          class="nav-item" 
-          :class="{ active: isRouteActive(item.path) }"
-          @click="setActiveItem(index)"
-          :title="isCollapsed ? item.text : ''"
-        >
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.path" class="nav-item"
+          :class="{ active: isRouteActive(item.path) }" @click="setActiveItem(index)"
+          :title="isCollapsed ? item.text : ''">
           <span class="material-icons icon-wrapper">{{ item.icon }}</span>
           <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-          <span 
-            v-if="!isCollapsed && item.badge !== null" 
-            class="nav-badge"
-            :class="{ 
-              'badge-danger': item.badge > 0 && item.badgeType === 'danger',
-              'badge-warning': item.badge > 0 && item.badgeType === 'warning',
-              'badge-success': item.badge > 0 && item.badgeType === 'success'
-            }"
-          >
+          <span v-if="!isCollapsed && item.badge !== null" class="nav-badge" :class="{
+            'badge-danger': item.badge > 0 && item.badgeType === 'danger',
+            'badge-warning': item.badge > 0 && item.badgeType === 'warning',
+            'badge-success': item.badge > 0 && item.badgeType === 'success'
+          }">
             {{ item.badge > 0 ? item.badge : '' }}
           </span>
           <span v-if="isCollapsed && item.badge !== null" class="collapsed-badge">{{ item.badge }}</span>
         </router-link>
       </nav>
-      
+
       <div class="sidebar-footer" v-if="!isCollapsed">
-        <va-button class="logout-btn" @click="logout"    >
-        
+        <va-button class="logout-btn" @click="logout">
+
           <span class="material-icons">logout</span>
           Cerrar Sesión
-        
-      </va-button>
+
+        </va-button>
         <div class="company-brand">UNIVO INDUSTRIAL</div>
       </div>
     </div>
@@ -64,53 +54,53 @@ export default {
     const authStore = useAuthStore()
     const isCollapsed = ref(false)
     const activeItem = ref(0)
-    
+
     // Datos del usuario (pueden venir del store de autenticación)
     const userName = ref('Operario de Producción')
     const userRole = ref('Operario')
-    
+
     const navItems = ref([
-      { 
-        icon: 'dashboard', 
-        text: 'Panel Principal', 
+      {
+        icon: 'dashboard',
+        text: 'Panel Principal',
         path: '/tech-dashboard',
         badge: null,
         badgeType: null
       },
-      { 
-        icon: 'schedule', 
-        text: 'Programación', 
+      {
+        icon: 'schedule',
+        text: 'Programación',
         path: '/tech/schedule',
         badge: null,
         badgeType: null
       },
-      { 
-        icon: 'settings', 
-        text: 'Configuración', 
+      {
+        icon: 'settings',
+        text: 'Configuración',
         path: '/tech/settings',
         badge: null,
         badgeType: null
       }
     ])
-    
+
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
     }
-    
+
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
       localStorage.setItem('techSidebarCollapsed', isCollapsed.value)
     }
-    
+
     const setActiveItem = (index) => {
       activeItem.value = index
     }
-    
+
     const logout = () => {
       authStore.logout()
       router.push('/')
     }
-    
+
     // Cargar estado inicial del sidebar
     const loadSidebarState = () => {
       const savedState = localStorage.getItem('techSidebarCollapsed')
@@ -118,10 +108,10 @@ export default {
         isCollapsed.value = savedState === 'true'
       }
     }
-    
+
     // Cargar estado al iniciar
     loadSidebarState()
-    
+
     return {
       isCollapsed,
       activeItem,
@@ -355,7 +345,7 @@ export default {
   .sidebar {
     transform: translateX(-100%);
   }
-  
+
   .sidebar.show {
     transform: translateX(0);
   }

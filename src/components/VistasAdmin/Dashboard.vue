@@ -1,7 +1,5 @@
 <template>
   <div class="dashboard-layout">
-    <Sidebar :role="'admin'" />
-
     <!-- Contenido Principal del Dashboard -->
     <main class="dashboard-main">
       <!-- Header del Dashboard usando EstiloBase -->
