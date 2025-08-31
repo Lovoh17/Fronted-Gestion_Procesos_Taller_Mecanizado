@@ -1,170 +1,189 @@
 <template>
-  <VaSidebar 
-    v-model="isCollapsed"
-    :width="sidebarWidth"
-    :minimized-width="minimizedWidth"
-    color="primary"
-    class="univo-sidebar"
-  >
-    <!-- Header -->
-    <template #header>
-      <VaSidebarItem class="sidebar-header">
-        <div class="sidebar-logo" @click="toggleSidebar">
-          <VaIcon 
-            name="factory" 
-            size="2rem"
-            color="warning"
-            class="sidebar-logo-icon"
-          />
-          <div v-if="!isCollapsed" class="logo-text">
-            UNIVO<span class="logo-accent">Industrial</span>
-          </div>
-        </div>
-        <VaButton 
-          preset="plain"
-          :icon="isCollapsed ? 'menu' : 'chevron_left'"
-          color="secondary"
-          size="small"
-          class="collapse-button"
-          @click="toggleSidebar"
-        />
-      </VaSidebarItem>
-    </template>
-
-    <!-- Content -->
-    <template #content>
-      <VaSidebarItemGroup>
-        <VaSidebarItemTitle v-if="!isCollapsed" class="nav-title">
-          MENÚ PRINCIPAL
-        </VaSidebarItemTitle>
-        
-        <VaSidebarItem
-          v-for="(item, index) in navItems"
-          :key="index"
-          :to="item.path"
-          :active="isRouteActive(item.path)"
-          class="nav-item"
+  <aside class="sidebar" :class="{ collapsed: isCollapsed }">
+    <div class="sidebar-header">
+      <a href="#" class="sidebar-logo" @click.prevent="toggleSidebar">
+        <span class="material-icons sidebar-logo-icon">factory</span>
+        <span v-if="!isCollapsed" class="logo-text">UNIVO<span> Admin</span></span>
+      </a>
+      <div class="sidebar-collapse-control" @click="toggleSidebar">
+        <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
+      </div>
+    </div>
+    
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <div class="nav-title" v-if="!isCollapsed">MENÚ PRINCIPAL</div>
+        <router-link 
+          v-for="(item, index) in navItems" 
+          :key="index" 
+          :to="item.path" 
+          class="nav-item" 
+          :class="{ active: isRouteActive(item.path) }"
           @click="setActiveItem(index)"
+          :title="isCollapsed ? item.text : ''"
         >
-          <template #icon>
-            <VaIcon 
-              :name="item.icon" 
-              size="1.4rem"
-              class="nav-icon"
-            />
-          </template>
-          
-          <template #default>
-            <span class="nav-text">{{ item.text }}</span>
-          </template>
-          
-          <template #append v-if="item.badge && item.badge > 0">
-            <VaBadge 
-              :text="item.badge.toString()"
-              color="danger"
-              class="nav-badge"
-            />
-          </template>
-        </VaSidebarItem>
-      </VaSidebarItemGroup>
-    </template>
+          <span class="material-icons icon-wrapper">{{ item.icon }}</span>
+          <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
+          <span 
+            v-if="!isCollapsed && item.badge !== null && item.badge > 0" 
+            class="nav-badge"
+            :class="{
+              'badge-danger': item.badge > 0 && item.badgeType === 'danger',
+              'badge-warning': item.badge > 0 && item.badgeType === 'warning',
+              'badge-success': item.badge > 0 && item.badgeType === 'success'
+            }"
+          >
+            {{ item.badge }}
+          </span>
+          <span v-if="isCollapsed && item.badge !== null && item.badge > 0" class="collapsed-badge">{{ item.badge }}</span>
+        </router-link>
+      </nav>
+      
+      <div class="sidebar-footer" v-if="!isCollapsed">
+        <!-- Información del usuario desde el store -->
+        <div class="user-info" v-if="authStore.isAuthenticated">
+          <div class="user-name">{{ authStore.userName || 'Usuario' }}</div>
+          <div class="user-role">{{ authStore.userRole || 'Sin rol' }}</div>
+        </div>
 
-    <!-- Footer -->
-    <template #footer>
-      <VaSidebarItem v-if="!isCollapsed" class="sidebar-footer">
+        <button class="logout-btn" @click="handleLogout">
+          <span class="material-icons">logout</span>
+          Cerrar Sesión
+        </button>
+
         <div class="company-brand">UNIVO INDUSTRIAL</div>
-      </VaSidebarItem>
-    </template>
-  </VaSidebar>
+      </div>
+    </div>
+  </aside>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
+  name: 'AdminSidebar',
   setup() {
     const route = useRoute()
+    const router = useRouter()
+    const authStore = useAuthStore()
     const isCollapsed = ref(false)
     const activeItem = ref(0)
     
     const navItems = ref([
-      { 
-        icon: 'dashboard', 
-        text: 'Panel Principal', 
+      {
+        icon: 'dashboard',
+        text: 'Panel Principal',
         path: '/admin-dashboard',
-        badge: null 
+        badge: null,
+        badgeType: null
       },
-      { 
-        icon: 'inventory_2',  
-        text: 'Gestión Inventario', 
+      {
+        icon: 'inventory_2',
+        text: 'Gestión Inventario',
         path: '/inventory',
-        badge: null
+        badge: null,
+        badgeType: null
       },
-      { 
-          icon: 'miscellaneous_services', 
-          text: 'Departamentos', 
-          path: '/admin/departments',
-          badge: null
-        },
-        { 
-        icon: 'account_balance', 
-        text: 'Transacciones', 
+      {
+        icon: 'miscellaneous_services',
+        text: 'Departamentos',
+        path: '/admin/departments',
+        badge: null,
+        badgeType: null
+      },
+      {
+        icon: 'account_balance',
+        text: 'Transacciones',
         path: '/admin/transacciones',
-        badge: null 
+        badge: null,
+        badgeType: null
       },
-      { 
-        icon: 'handyman', 
+      {
+        icon: 'handyman',
         text: 'Herramientas',
         path: '/herramientas',
-        badge: null 
+        badge: null,
+        badgeType: null
       },
-      { 
-        icon: 'local_shipping', 
-        text: 'Ordenes', 
+      {
+        icon: 'local_shipping',
+        text: 'Ordenes',
         path: '/admin/orders',
-        badge: null 
+        badge: 5,
+        badgeType: 'warning'
       },
-      { 
-        icon: 'groups', 
-        text: 'Usuarios', 
+      {
+        icon: 'groups',
+        text: 'Usuarios',
         path: '/admin/users',
-        badge: null 
+        badge: null,
+        badgeType: null
       },
-      { 
-        icon: 'tune', 
-        text: 'Configuración', 
+      {
+        icon: 'assessment',
+        text: 'Reportes',
+        path: '/admin/reports',
+        badge: null,
+        badgeType: null
+      },
+      {
+        icon: 'tune',
+        text: 'Configuración',
         path: '/settings',
-        badge: null 
+        badge: null,
+        badgeType: null
+      },
+      {
+        icon: 'people',
+        text: 'RRHH',
+        path: '/rrhh',
+        badge: null,
+        badgeType: null
       }
     ])
-    
-    // Computed properties para las dimensiones del sidebar
-    const sidebarWidth = computed(() => '240px')
-    const minimizedWidth = computed(() => '80px')
-    
+
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
     }
     
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
-      // Guardar preferencia en localStorage
-      localStorage.setItem('sidebarCollapsed', isCollapsed.value)
+      localStorage.setItem('adminSidebarCollapsed', isCollapsed.value)
     }
     
     const setActiveItem = (index) => {
       activeItem.value = index
     }
     
+    const handleLogout = async () => {
+      try {
+        console.log('🚪 [AdminSidebar] Iniciando proceso de logout...')
+
+        // Usar el método logout del store que ya implementaste
+        authStore.logout()
+
+        console.log('✅ [AdminSidebar] Logout completado, redirigiendo...')
+
+        // Redirigir al login o página principal
+        await router.push('/')
+
+      } catch (error) {
+        console.error('❌ [AdminSidebar] Error durante el logout:', error)
+        // Aún así intentar redirigir
+        await router.push('/')
+      }
+    }
+    
     // Cargar estado inicial del sidebar
     const loadSidebarState = () => {
-      const savedState = localStorage.getItem('sidebarCollapsed')
+      const savedState = localStorage.getItem('adminSidebarCollapsed')
       if (savedState !== null) {
         isCollapsed.value = savedState === 'true'
       }
     }
-    
+
     // Cargar estado al iniciar
     loadSidebarState()
     
@@ -172,38 +191,58 @@ export default {
       isCollapsed,
       activeItem,
       navItems,
-      sidebarWidth,
-      minimizedWidth,
+      authStore,
       isRouteActive,
       toggleSidebar,
-      setActiveItem
+      setActiveItem,
+      handleLogout
     }
   }
 }
 </script>
 
 <style scoped>
-.univo-sidebar {
-  background: linear-gradient(180deg, var(--univo-primary-dark), var(--univo-primary-dark));
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--univo-primary-dark) 0%, var(--univo-primary-dark) 100%);
+  color: var(--metal-light);
+  position: fixed;
+  top: 0;
+  left: 0;
+  transition: var(--transition);
+  z-index: 1000;
   box-shadow: var(--shadow-dark);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar.collapsed {
+  width: 70px;
 }
 
 .sidebar-header {
-  padding: 1.8rem 1.5rem;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   min-height: 80px;
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
-  cursor: pointer;
+  color: var(--gray-light);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
   transition: var(--transition);
-  color: var(--metal-light);
+  cursor: pointer;
+  white-space: nowrap;
+  gap: 12px;
 }
 
 .sidebar-logo:hover {
@@ -211,93 +250,312 @@ export default {
   transform: translateX(3px);
 }
 
+.sidebar.collapsed .sidebar-logo:hover {
+  transform: translateX(0);
+}
+
 .sidebar-logo-icon {
+  font-size: 28px;
+  color: var(--industrial-yellow);
   background: rgba(221, 170, 17, 0.1);
   padding: 8px;
   border-radius: 12px;
-  margin-right: 0.8rem;
+  transition: var(--transition);
 }
 
 .logo-text {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--metal-light);
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.logo-accent {
+.logo-text span {
   color: var(--industrial-yellow);
   font-weight: 700;
 }
 
-.collapse-button {
-  color: var(--metal-light);
+.sidebar-collapse-control {
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-collapse-control:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-content {
+  padding: 20px 0 0 0;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-nav {
+  flex-grow: 1;
 }
 
 .nav-title {
-  color: var(--gray-light);
+  padding: 0.8rem 1.8rem;
   font-size: 0.75rem;
   text-transform: uppercase;
+  color: var(--gray-light);
   letter-spacing: 1.5px;
+  margin-bottom: 15px;
   font-weight: 600;
-  padding: 0.8rem 0;
-  margin-top: 1rem;
+  white-space: nowrap;
 }
 
 .nav-item {
-  margin: 0.3rem 0;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: var(--metal-light);
+  text-decoration: none;
   transition: var(--transition);
+  position: relative;
+  margin: 0.3rem 0.5rem;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 12px;
+  margin: 0.3rem 0;
 }
 
 .nav-item:hover {
   background: rgba(221, 170, 17, 0.1);
+  color: var(--industrial-yellow);
   transform: translateX(5px);
+}
+
+.sidebar.collapsed .nav-item:hover {
+  transform: translateX(0);
 }
 
 .nav-item.active {
   background: rgba(52, 152, 219, 0.2);
+  color: var(--industrial-yellow);
   border-left: 4px solid var(--industrial-yellow);
   font-weight: 500;
 }
 
-.nav-icon {
+.sidebar.collapsed .nav-item.active {
+  border-left: none;
+  border-right: 4px solid var(--industrial-yellow);
+}
+
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
   color: var(--gray-lighter);
+  min-width: 20px;
+  transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .nav-text {
-  font-size: 0.95rem;
+  font-size: 13px;
   font-weight: 500;
   color: var(--gray-lighter);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-badge {
-  background-color: var(--danger);
+  background-color: #dc3545;
   color: white;
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-badge.badge-warning {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.nav-badge.badge-success {
+  background-color: #28a745;
+}
+
+.collapsed-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
 .sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: auto;
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.user-name {
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 8px;
+  color: #e74c3c;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 15px;
+}
+
+.logout-btn:hover {
+  background-color: rgba(231, 76, 60, 0.2);
+  transform: translateY(-2px);
 }
 
 .company-brand {
-  font-size: 0.8rem;
-  color: var(--gray-medium);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
   text-align: center;
+  font-weight: bold;
   letter-spacing: 1px;
-  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tooltip para iconos cuando está colapsado */
+.sidebar.collapsed .nav-item {
+  position: relative;
+}
+
+.sidebar.collapsed .nav-item:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 80px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--univo-primary-dark);
+  color: var(--gray-light);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1001;
+  box-shadow: var(--shadow-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .nav-item:hover::before {
+  content: '';
+  position: absolute;
+  left: 72px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 8px solid var(--univo-primary-dark);
+  z-index: 1001;
+}
+
+/* Scrollbar personalizado */
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: rgba(221, 170, 17, 0.5);
+  border-radius: 2px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(221, 170, 17, 0.7);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .univo-sidebar {
+  .sidebar {
     transform: translateX(-100%);
   }
   
-  .univo-sidebar:not(.va-sidebar--minimized) {
+  .sidebar.collapsed {
+    transform: translateX(0);
+  }
+  
+  .sidebar:not(.collapsed) {
     transform: translateX(0);
     width: 280px;
   }
+}
+
+/* Animaciones suaves */
+* {
+  box-sizing: border-box;
+}
+
+.sidebar * {
+  transition: var(--transition);
 }
 </style>

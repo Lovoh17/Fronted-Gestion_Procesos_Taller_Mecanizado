@@ -9,43 +9,38 @@
         <i class="material-icons">{{ isCollapsed ? 'menu' : 'chevron_left' }}</i>
       </div>
     </div>
-    
+
     <div class="sidebar-content">
       <nav class="sidebar-nav">
         <div class="nav-title" v-if="!isCollapsed">PANEL TÉCNICO</div>
-        <router-link 
-          v-for="(item, index) in navItems" 
-          :key="index" 
-          :to="item.path" 
-          class="nav-item" 
-          :class="{ active: isRouteActive(item.path) }"
-          @click="setActiveItem(index)"
-          :title="isCollapsed ? item.text : ''"
-        >
+        <router-link v-for="(item, index) in navItems" :key="index" :to="item.path" class="nav-item"
+          :class="{ active: isRouteActive(item.path) }" @click="setActiveItem(index)"
+          :title="isCollapsed ? item.text : ''">
           <span class="material-icons icon-wrapper">{{ item.icon }}</span>
           <span v-if="!isCollapsed" class="nav-text">{{ item.text }}</span>
-          <span 
-            v-if="!isCollapsed && item.badge !== null" 
-            class="nav-badge"
-            :class="{ 
-              'badge-danger': item.badge > 0 && item.badgeType === 'danger',
-              'badge-warning': item.badge > 0 && item.badgeType === 'warning',
-              'badge-success': item.badge > 0 && item.badgeType === 'success'
-            }"
-          >
+          <span v-if="!isCollapsed && item.badge !== null" class="nav-badge" :class="{
+            'badge-danger': item.badge > 0 && item.badgeType === 'danger',
+            'badge-warning': item.badge > 0 && item.badgeType === 'warning',
+            'badge-success': item.badge > 0 && item.badgeType === 'success'
+          }">
             {{ item.badge > 0 ? item.badge : '' }}
           </span>
           <span v-if="isCollapsed && item.badge !== null" class="collapsed-badge">{{ item.badge }}</span>
         </router-link>
       </nav>
-      
+
       <div class="sidebar-footer" v-if="!isCollapsed">
-        <va-button class="logout-btn" @click="logout"    >
-        
+        <!-- Información del usuario desde el store -->
+        <div class="user-info" v-if="authStore.isAuthenticated">
+          <div class="user-name">{{ authStore.userName || 'Usuario' }}</div>
+          <div class="user-role">{{ authStore.userRole || 'Sin rol' }}</div>
+        </div>
+
+        <button class="logout-btn" @click="handleLogout">
           <span class="material-icons">logout</span>
           Cerrar Sesión
-        
-      </va-button>
+        </button>
+
         <div class="company-brand">UNIVO INDUSTRIAL</div>
       </div>
     </div>
@@ -58,59 +53,84 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 export default {
+  name: 'TechSidebar',
   setup() {
     const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
     const isCollapsed = ref(false)
     const activeItem = ref(0)
-    
-    // Datos del usuario (pueden venir del store de autenticación)
-    const userName = ref('Operario de Producción')
-    const userRole = ref('Operario')
-    
+
     const navItems = ref([
-      { 
-        icon: 'dashboard', 
-        text: 'Panel Principal', 
+      {
+        icon: 'dashboard',
+        text: 'Panel Principal',
         path: '/tech-dashboard',
         badge: null,
         badgeType: null
       },
-      { 
-        icon: 'schedule', 
-        text: 'Programación', 
+      {
+        icon: 'schedule',
+        text: 'Programación',
         path: '/tech/schedule',
         badge: null,
         badgeType: null
       },
-      { 
-        icon: 'settings', 
-        text: 'Configuración', 
+      {
+        icon: 'build',
+        text: 'Mantenimiento',
+        path: '/tech/maintenance',
+        badge: 3,
+        badgeType: 'danger'
+      },
+      {
+        icon: 'assessment',
+        text: 'Reportes',
+        path: '/tech/reports',
+        badge: null,
+        badgeType: null
+      },
+      {
+        icon: 'settings',
+        text: 'Configuración',
         path: '/tech/settings',
         badge: null,
         badgeType: null
       }
     ])
-    
+
     const isRouteActive = (path) => {
       return route.path.startsWith(path)
     }
-    
+
     const toggleSidebar = () => {
       isCollapsed.value = !isCollapsed.value
       localStorage.setItem('techSidebarCollapsed', isCollapsed.value)
     }
-    
+
     const setActiveItem = (index) => {
       activeItem.value = index
     }
-    
-    const logout = () => {
-      authStore.logout()
-      router.push('/')
+
+    const handleLogout = async () => {
+      try {
+        console.log('🚪 [TechSidebar] Iniciando proceso de logout...')
+
+        // Usar el método logout del store que ya implementaste
+        authStore.logout()
+
+        console.log('✅ [TechSidebar] Logout completado, redirigiendo...')
+
+        // Redirigir al login o página principal
+        await router.push('/')
+
+      } catch (error) {
+        console.error('❌ [TechSidebar] Error durante el logout:', error)
+        // Aún así intentar redirigir
+        await router.push('/')
+      }
     }
-    
+
     // Cargar estado inicial del sidebar
     const loadSidebarState = () => {
       const savedState = localStorage.getItem('techSidebarCollapsed')
@@ -118,20 +138,19 @@ export default {
         isCollapsed.value = savedState === 'true'
       }
     }
-    
+
     // Cargar estado al iniciar
     loadSidebarState()
-    
+
     return {
       isCollapsed,
       activeItem,
       navItems,
-      userName,
-      userRole,
+      authStore,
       isRouteActive,
       toggleSidebar,
       setActiveItem,
-      logout
+      handleLogout
     }
   }
 }
@@ -148,6 +167,7 @@ export default {
   transition: all 0.3s ease;
   z-index: 1000;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-x: hidden;
 }
 
 .sidebar.collapsed {
@@ -176,9 +196,12 @@ export default {
 }
 
 .logo-text {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logo-text span {
@@ -199,9 +222,10 @@ export default {
 }
 
 .sidebar-content {
-  padding: 20px 0;
+  padding: 20px 0 0 0;
   height: calc(100vh - 80px);
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -224,6 +248,8 @@ export default {
   transition: all 0.2s ease;
   position: relative;
   gap: 12px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .nav-item:hover {
@@ -243,8 +269,11 @@ export default {
 }
 
 .nav-text {
-  font-size: 14px;
+  font-size: 13px;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-badge {
@@ -287,22 +316,32 @@ export default {
   margin-top: auto;
   padding: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
+
 }
 
 .user-info {
+  background-color: rgba(255, 255, 255, 0.2);
+
   margin-bottom: 15px;
 }
 
 .user-name {
   color: white;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-btn {
@@ -317,7 +356,11 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-bottom: 15px;
+  margin-bottom: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logout-btn:hover {
@@ -326,10 +369,15 @@ export default {
 
 .company-brand {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
   font-weight: bold;
   letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 15px;
+  padding-bottom: 0;
 }
 
 /* Scrollbar personalizado */
@@ -355,7 +403,7 @@ export default {
   .sidebar {
     transform: translateX(-100%);
   }
-  
+
   .sidebar.show {
     transform: translateX(0);
   }
