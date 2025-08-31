@@ -60,7 +60,6 @@ const routes = [
     meta: { 
       requiresAuth: true,
       allowedPuestos: [1, 2, 3, 4],
-      layout: 'empty'
     }
   },
   {
@@ -70,7 +69,6 @@ const routes = [
     meta: { 
       requiresAuth: true,
       allowedPuestos: [1], // Solo admin
-      layout: 'empty'
     }
   },
 
