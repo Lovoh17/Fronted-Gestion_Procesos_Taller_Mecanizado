@@ -1,11 +1,12 @@
 <template>
   <div class="holy-grail-app">
-    <TopBar />
+    <TopBar v-if="shouldShowTopBar" />
 
     <div class="content-wrapper">
-      <component :is="currentSidebar" v-if="authStore.isAuthenticated && currentSidebar" />
+      <!-- Sidebar unificado - usa currentSidebar para todos los usuarios -->
+      <component :is="currentSidebar" v-if="shouldShowSidebar && currentSidebar" />
 
-      <main class="main-content">
+      <main class="main-content" :class="{ 'no-sidebar': !shouldShowSidebar }">
         <div class="content-container">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
@@ -24,8 +25,8 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import TopBar from '@/components/GlobalComponents/TopBar.vue';
 
-// Importación estándar de los sidebars
-import SideBar from '@/components/GlobalComponents/Sidebar.vue';
+// Importación estándar de los sidebars - verificar nombres exactos
+import AdminSidebar from '@/components/GlobalComponents/Sidebar.vue';
 import SidebarCoordinator from '@/components/GlobalComponents/SidebarCoordinador.vue';
 import SidebarOperario from '@/components/GlobalComponents/SidebarOperario.vue';
 import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
@@ -33,88 +34,126 @@ import SidebarTecnico from '@/components/GlobalComponents/SidebarTecnico.vue';
 const authStore = useAuthStore();
 const route = useRoute();
 
-// Mapeo de roles a componentes
-const roleSidebars = {
-  admin: SideBar,
-  coordinator: SidebarCoordinator,
-  operator: SidebarOperario,
-  technician: SidebarTecnico
-};
+// Computed para determinar si mostrar TopBar
+const shouldShowTopBar = computed(() => {
+  // Ocultar en rutas con layout 'empty' o rutas públicas específicas
+  if (route.meta?.layout === 'empty') return false
+  if (route.path === '/login' || route.path === '/') return false
 
-// Función para determinar el rol basándose en la ruta
-const getRoleFromRoute = (currentPath) => {
-  // Rutas de administrador
-  if (currentPath.startsWith('/admin') ||
-    currentPath === '/admin-dashboard' ||
-    currentPath === '/inventory' ||
-    currentPath === '/herramientas') {
-    return 'admin';
-  }
+  return authStore.isAuthenticated
+})
 
-  // Rutas de coordinador
-  if (currentPath.startsWith('/coordinator') ||
-    currentPath === '/dashboard-coordinador' ||
-    currentPath === '/control-calidad') {
-    return 'coordinator';
-  }
+// Computed para determinar si mostrar Sidebar
+const shouldShowSidebar = computed(() => {
+  console.log('🔍 [App.vue] Evaluando shouldShowSidebar...')
+  console.log('🔍 [App.vue] isAuthenticated:', authStore.isAuthenticated)
+  console.log('🔍 [App.vue] route.path:', route.path)
+  console.log('🔍 [App.vue] route.meta:', route.meta)
+  console.log('🔍 [App.vue] route.name:', route.name)
 
-  // Rutas de operario
-  if (currentPath.startsWith('/operator') ||
-    currentPath === '/dashboard-operario' ||
-    currentPath.startsWith('/operario')) {
-    return 'operator';
-  }
-
-  // Rutas de técnico
-  if (currentPath.startsWith('/technician') ||
-    currentPath === '/tech-dashboard' ||
-    currentPath.startsWith('/tech')) {
-    return 'technician';
-  }
-
-  // Rutas públicas o sin rol específico
-  return null;
-};
-
-const currentSidebar = computed(() => {
-  // Si no está autenticado, no mostrar sidebar
+  // No mostrar sidebar si no está autenticado
   if (!authStore.isAuthenticated) {
+    console.log('🔍 [App.vue] ❌ No mostrar - usuario no autenticado')
+    return false
+  }
+
+  // No mostrar en rutas con layout 'empty'
+  if (route.meta?.layout === 'empty') {
+    console.log('🔍 [App.vue] ❌ No mostrar - layout empty detectado')
+    return false
+  }
+
+  // No mostrar en rutas específicas
+  const noSidebarRoutes = ['/login', '/', '/unauthorized', '/not-found']
+  if (noSidebarRoutes.includes(route.path)) {
+    console.log('🔍 [App.vue] ❌ No mostrar - ruta en lista negra:', route.path)
+    return false
+  }
+
+  console.log('🔍 [App.vue] ✅ Mostrar sidebar - condiciones generales cumplidas')
+  return true
+})
+
+// Computed para determinar qué sidebar mostrar según el puesto_id
+const currentSidebar = computed(() => {
+  console.log('🔋 [App.vue] Evaluando sidebar...');
+  console.log('🔋 [App.vue] shouldShowSidebar:', shouldShowSidebar.value);
+
+  // Si no debe mostrar sidebar, retornar null
+  if (!shouldShowSidebar.value) {
+    console.log('🔋 [App.vue] ❌ No debe mostrar sidebar según shouldShowSidebar');
     return null;
   }
 
-  const currentPath = route.path;
-
-  // Primero intentar obtener el rol desde el store de autenticación
-  let userRole = authStore.user?.role || authStore.userRole;
-
-  // Si no hay rol en el store, determinar por la ruta
-  if (!userRole) {
-    userRole = getRoleFromRoute(currentPath);
-  }
-
-  // Verificar que el rol coincida con la ruta (opcional, para validación)
-  const routeRole = getRoleFromRoute(currentPath);
-  if (routeRole && userRole !== routeRole) {
-    console.warn('⚠️ El rol del usuario no coincide con la ruta:', {
-      userRole,
-      routeRole,
-      currentPath
-    });
-    // Puedes decidir si usar el rol del usuario o el de la ruta
-    // En este caso, usaremos el de la ruta
-    userRole = routeRole;
-  }
-
-  console.log('🔄 Current role:', userRole, 'for path:', currentPath);
-
-  const sidebar = roleSidebars[userRole];
-
-  if (!sidebar) {
-    console.warn('⚠️ Rol no reconocido:', userRole);
+  // Si no hay usuario, retornar null
+  if (!authStore.user) {
+    console.log('🔋 [App.vue] ❌ No hay datos de usuario en el store');
     return null;
   }
 
-  return sidebar;
+  // Obtener puesto_id del getter reactivo del store
+  const puestoId = authStore.userPuestoId;
+  const userRole = authStore.userRole;
+
+  console.log('🔋 [App.vue] Usuario completo:', authStore.user);
+  console.log('🔋 [App.vue] Puesto ID (reactivo):', puestoId, '(tipo:', typeof puestoId, ')');
+  console.log('🔋 [App.vue] Rol del usuario:', userRole);
+  console.log('🔋 [App.vue] Ruta actual:', route.path);
+
+  // Si no hay puesto_id válido, intentar mapear por role como fallback
+  if (!puestoId || isNaN(puestoId)) {
+    console.log('🔋 [App.vue] ⚠️ No se encontró puesto_id válido, usando role como fallback');
+
+    // Mapeo role -> sidebar como fallback
+    const roleToSidebar = {
+      'jefe_taller': AdminSidebar,
+      'coordinador': SidebarCoordinator,
+      'operario': SidebarOperario,
+      'tecnico': SidebarTecnico
+    };
+
+    const fallbackSidebar = roleToSidebar[userRole];
+    if (fallbackSidebar) {
+      console.log('🔋 [App.vue] Sidebar seleccionado por role:', userRole);
+      return fallbackSidebar;
+    }
+
+    // Si tampoco hay role válido, usar sidebar por defecto
+    console.log('🔋 [App.vue] ⚠️ No se encontró role válido, usando sidebar por defecto');
+    return AdminSidebar;
+  }
+
+  let selectedSidebar;
+
+  switch (puestoId) {
+    case 1: // Jefe de Taller
+      selectedSidebar = AdminSidebar;
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Admin/Jefe de Taller (puesto_id: 1)');
+      console.log('🔋 [App.vue] 📦 Componente AdminSidebar:', AdminSidebar);
+      break;
+    case 2: // Coordinador
+      selectedSidebar = SidebarCoordinator;
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Coordinador (puesto_id: 2)');
+      console.log('🔋 [App.vue] 📦 Componente SidebarCoordinator:', SidebarCoordinator);
+      break;
+    case 3: // Operario
+      selectedSidebar = SidebarOperario;
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Operario (puesto_id: 3)');
+      console.log('🔋 [App.vue] 📦 Componente SidebarOperario:', SidebarOperario);
+      break;
+    case 4: // Técnico
+      selectedSidebar = SidebarTecnico;
+      console.log('🔋 [App.vue] ✅ Sidebar seleccionado: Técnico (puesto_id: 4)');
+      console.log('🔋 [App.vue] 📦 Componente SidebarTecnico:', SidebarTecnico);
+      break;
+    default:
+      selectedSidebar = AdminSidebar;
+      console.log('🔋 [App.vue] ⚠️ Puesto ID no reconocido:', puestoId, '- usando sidebar por defecto');
+      console.log('🔋 [App.vue] 📦 Componente por defecto:', AdminSidebar);
+  }
+
+  console.log('🔋 [App.vue] 🎯 RESULTADO FINAL - Sidebar a renderizar:', selectedSidebar);
+  return selectedSidebar;
 });
 </script>
 
@@ -133,6 +172,10 @@ const currentSidebar = computed(() => {
 .main-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.main-content.no-sidebar {
+  width: 100%;
 }
 
 .content-container {

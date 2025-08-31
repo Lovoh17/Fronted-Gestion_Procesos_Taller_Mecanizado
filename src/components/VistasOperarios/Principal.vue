@@ -13,7 +13,7 @@
           </div>
         </div>
         <div class="header-actions">
-          <va-button @click="loadDashboard" :disabled="loading" color="#003366" icon="sync-alt" :loading="loading">
+          <va-button @click="loadDashboard" :disabled="loading" color="#003366" icon="sync" :loading="loading">
             {{ loading ? 'Actualizando...' : 'Actualizar' }}
           </va-button>
         </div>

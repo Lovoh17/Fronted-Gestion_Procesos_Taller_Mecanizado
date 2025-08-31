@@ -1,7 +1,5 @@
 <template>
   <div class="dashboard-layout">
-    <Sidebar :role="'admin'" />
-
     <!-- Contenido Principal del Dashboard -->
     <main class="dashboard-main">
       <!-- Header del Dashboard usando EstiloBase -->
@@ -12,7 +10,7 @@
               <i class="fas fa-tachometer-alt"></i>
             </div>
             <div class="header-text">
-              <h1 class="header-title">Dashboard Administrativo</h1>
+              <h1 class="header-title">Dashboard Administrativo/</h1>
               <p class="header-subtitle">Panel de control y gestión del taller de mecanizado</p>
             </div>
           </div>
@@ -202,6 +200,7 @@
 </template>
 
 <script>
+
 import { ref, onMounted, computed, nextTick } from 'vue'
 import Chart from 'chart.js/auto'
 import api from '@/api'

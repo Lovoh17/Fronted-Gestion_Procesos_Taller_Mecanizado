@@ -1,164 +1,164 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+// stores/auth.js
+import { defineStore } from 'pinia'
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null);
-  const token = ref(null);
-  const loading = ref(false);
-  const error = ref(null);
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    user: null,
+    isAuthenticated: false,
+    token: null
+  }),
 
-  // Computed properties útiles
-  const isAuthenticated = computed(() => {
-    const auth = !!token.value;
-    console.log('🔐 isAuthenticated:', auth);
-    return auth;
-  });
-
-  const userRole = computed(() => {
-    if (!user.value) {
-      console.log('🎯 No user, no role');
-      return null;
-    }
-
-    // Primero intentar usar el role directo si existe
-    if (user.value.role) {
-      console.log('🎯 Using direct role:', user.value.role);
-      return user.value.role;
-    }
-
-    // Fallback: convertir puesto_id a rol
-    const puestoId = parseInt(user.value.puesto_id);
-    let role;
-    switch (puestoId) {
-      case 1: role = 'admin'; break;
-      case 2: role = 'coordinator'; break;
-      case 3: role = 'operator'; break;
-      case 4: role = 'technician'; break;
-      default: role = 'user';
-    }
-
-    console.log('🎯 User role calculated:', role, 'from puesto_id:', user.value.puesto_id);
-    return role;
-  });
-
-  const isAdmin = computed(() => userRole.value === 'admin');
-  const isCoordinator = computed(() => userRole.value === 'coordinator');
-  const isOperator = computed(() => userRole.value === 'operator');
-  const isTechnician = computed(() => userRole.value === 'technician');
-
-  const login = async ({ username, password, email }) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      console.log('🔐 Iniciando login...');
-      console.log('📧 Email/Username:', email || username);
-      console.log('🔑 Password length:', password ? password.length : 0);
-
-      const loginData = {
-        email: email || username,
-        password
-      };
-
-
-      console.log('📤 Enviando datos de login:', { ...loginData, password: '***' });
-
-      // Cambiar a la URL completa de tu backend https://gestionprocesostallermecanizado-production.up.railway.app
-      const response = await fetch('http://localhost:3000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(loginData)
-      });
-
-      console.log('📥 Response status:', response.status);
-      const data = await response.json();
-      console.log('📦 Response data:', data);
-
-      if (response.ok && data.success) {
-        console.log('✅ Login exitoso!');
-        
-        // Almacenar datos del usuario y token
-        user.value = data.data.usuario;
-        token.value = data.data.token;
-
-        // Guardar en localStorage para persistencia
-        localStorage.setItem('authToken', data.data.token);
-        localStorage.setItem('authUser', JSON.stringify(data.data.usuario));
-
-        console.log('🎯 Rol detectado:', userRole.value);
-        return true;
-      } else {
-        throw new Error(data.message || 'Error en el login');
+  getters: {
+    userRole: (state) => state.user?.role || localStorage.getItem('userRole'),
+    userName: (state) => state.user?.name || localStorage.getItem('userName'),
+    userEmail: (state) => state.user?.email || localStorage.getItem('userEmail'),
+    userId: (state) => state.user?.id || localStorage.getItem('userId'),
+    userPuestoId: (state) => {
+      if (state.user?.puesto_id) {
+        return parseInt(state.user.puesto_id)
       }
-    } catch (error) {
-      console.error('💥 Error en login:', error);
-      error.value = error.message;
-      throw error;
-    } finally {
-      loading.value = false;
-      console.log('🏁 Login process finished');
-    }
-  };
-
-  const logout = () => {
-    console.log('🚪 Cerrando sesión...');
-    console.log('👤 Usuario actual:', user.value?.name || user.value?.nombre || 'N/A');
-
-    user.value = null;
-    token.value = null;
-    error.value = null;
-
-    // Limpiar localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-
-    console.log('✅ Sesión cerrada correctamente');
-  };
-
-  // Función para restaurar sesión desde localStorage
-  const restoreSession = () => {
-    console.log('🔄 Intentando restaurar sesión...');
-    try {
-      const savedToken = localStorage.getItem('authToken');
-      const savedUser = localStorage.getItem('authUser');
-
-      console.log('💾 Token guardado:', savedToken ? 'SÍ' : 'NO');
-      console.log('💾 Usuario guardado:', savedUser ? 'SÍ' : 'NO');
-
-      if (savedToken && savedUser) {
-        token.value = savedToken;
-        user.value = JSON.parse(savedUser);
-
-        console.log('✅ Sesión restaurada exitosamente');
-        console.log('👤 Usuario restaurado:', user.value);
-        console.log('🎯 Rol detectado:', userRole.value);
-
-        return true;
-      } else {
-        console.log('❌ No hay sesión guardada');
+      const stored = localStorage.getItem('userPuesto')
+      return stored ? parseInt(stored) : null
+    },
+    userDepartamentoId: (state) => {
+      if (state.user?.departamento_id) {
+        return parseInt(state.user.departamento_id)
       }
-    } catch (error) {
-      console.error('💥 Error al restaurar sesión:', error);
-      logout();
+      const stored = localStorage.getItem('userDepartamento')
+      return stored ? parseInt(stored) : null
+    },
+    nivelJerarquico: (state) => {
+      if (state.user?.nivel_jerarquico) {
+        return parseInt(state.user.nivel_jerarquico)
+      }
+      const stored = localStorage.getItem('nivelJerarquico')
+      return stored ? parseInt(stored) : null
+    },
+    esSupervisor: (state) => {
+      if (state.user?.es_supervisor !== undefined) {
+        return state.user.es_supervisor
+      }
+      const stored = localStorage.getItem('esSupervisor')
+      return stored === 'true'
     }
-    return false;
-  };
+  },
 
-  return {
-    user,
-    token,
-    loading,
-    error,
-    isAuthenticated,
-    userRole,
-    isAdmin,
-    isCoordinator,
-    isOperator,
-    isTechnician,
-    login,
-    logout,
-    restoreSession
-  };
-});
+  actions: {
+    initializeAuth() {
+      console.log('🔄 [AuthStore] Inicializando autenticación...')
+      
+      // Inicializar el store desde localStorage al cargar la aplicación
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
+      const token = localStorage.getItem('authToken')
+
+      if (isAuthenticated && token) {
+        this.isAuthenticated = true
+        this.token = token
+
+        // Reconstruir el objeto user desde localStorage
+        const userRole = localStorage.getItem('userRole')
+        const userName = localStorage.getItem('userName')
+        const userEmail = localStorage.getItem('userEmail')
+        const userId = localStorage.getItem('userId')
+        const userPuesto = localStorage.getItem('userPuesto')
+        const userDepartamento = localStorage.getItem('userDepartamento')
+        const nivelJerarquico = localStorage.getItem('nivelJerarquico')
+        const esSupervisor = localStorage.getItem('esSupervisor') === 'true'
+        const userAvatar = localStorage.getItem('userAvatar')
+
+        if (userRole && userName && userEmail && userId) {
+          this.user = {
+            id: parseInt(userId),
+            name: userName,
+            email: userEmail,
+            role: userRole,
+            puesto_id: userPuesto ? parseInt(userPuesto) : null,
+            departamento_id: userDepartamento ? parseInt(userDepartamento) : null,
+            nivel_jerarquico: nivelJerarquico ? parseInt(nivelJerarquico) : null,
+            es_supervisor: esSupervisor,
+            avatar: userAvatar
+          }
+
+          // Agregar especialidades si existen
+          const especialidades = localStorage.getItem('userEspecialidades')
+          if (especialidades) {
+            try {
+              this.user.especialidades = JSON.parse(especialidades)
+            } catch (e) {
+              console.error('Error parsing especialidades:', e)
+            }
+          }
+
+          // Agregar datos de contrato temporal si existen
+          const contratoTemporal = localStorage.getItem('contratoTemporal') === 'true'
+          if (contratoTemporal) {
+            this.user.contrato_temporal = true
+            this.user.fecha_fin_contrato = localStorage.getItem('fechaFinContrato')
+          }
+
+          console.log('✅ [AuthStore] Usuario inicializado desde localStorage:', this.user)
+        }
+      } else {
+        console.log('❌ [AuthStore] No hay datos de autenticación válidos')
+      }
+    },
+
+    setUser(userData, token) {
+      console.log('🔄 [AuthStore] Estableciendo nuevo usuario...')
+      
+      // Limpiar datos anteriores
+      this.clearUserData()
+      
+      // Establecer nuevos datos
+      this.user = {
+        ...userData,
+        puesto_id: userData.puesto_id ? parseInt(userData.puesto_id) : null,
+        departamento_id: userData.departamento_id ? parseInt(userData.departamento_id) : null,
+        nivel_jerarquico: userData.nivel_jerarquico ? parseInt(userData.nivel_jerarquico) : null
+      }
+      this.isAuthenticated = true
+      this.token = token
+      
+      console.log('✅ [AuthStore] Usuario establecido:', this.user)
+      console.log('📋 [AuthStore] Puesto ID:', this.user.puesto_id)
+    },
+
+    clearUserData() {
+      // Limpiar datos internos del store
+      this.user = null
+      this.isAuthenticated = false
+      this.token = null
+      
+      console.log('🧹 [AuthStore] Datos internos limpiados')
+    },
+
+    logout() {
+      console.log('🚪 [AuthStore] Cerrando sesión...')
+      
+      // Limpiar el store
+      this.clearUserData()
+
+      // Limpiar localStorage
+      const keysToRemove = [
+        'isAuthenticated',
+        'authToken',
+        'userRole',
+        'userName',
+        'userEmail',
+        'userId',
+        'userPuesto',
+        'userDepartamento',
+        'nivelJerarquico',
+        'esSupervisor',
+        'userAvatar',
+        'userEspecialidades',
+        'contratoTemporal',
+        'fechaFinContrato'
+      ]
+
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
+      console.log('✅ [AuthStore] Usuario desconectado y localStorage limpiado')
+    }
+  }
+})
