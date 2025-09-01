@@ -59,7 +59,6 @@
           
           <div class="form-actions">
             <va-button type="button"  @click="close" color="secondary"   icon="spinner">
-        
               Cancelar
             </button>
             <button type="submit" class="btn btn-primary" :disabled="loading">
