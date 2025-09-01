@@ -5,14 +5,21 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      // Exclude CSS files from Vue processing
+      include: [/\.vue$/, /\.vue\?vue/],
+      template: {
+        transformAssetUrls: {
+          includeAbsolute: false,
+        },
+      },
+    }),
     vueDevTools(),
   ],
   server: {
     proxy: {
       '/api': {
-        //https://gestionprocesostallermecanizado-production.up.railway.app
-        target: 'https://gestionprocesostallermecanizado-production-d0de.up.railway.app', // URL de tu backend
+        target: 'https://gestionprocesostallermecanizado-production-d0de.up.railway.app',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false
@@ -20,16 +27,8 @@ export default defineConfig({
     },
     allowedHosts: ['fronted-gestionprocesostallermecanizado-production.up.railway.app'],
     fs: {
-      // Permitir acceso a archivos del proyecto
       strict: false,
-      allow: [
-        // Directorio del proyecto actual
-        '.',
-        // Directorio padre (por si acaso)
-        '..',
-        // node_modules local
-        './node_modules'
-      ]
+      allow: ['.', '..', './node_modules']
     }
   },
   resolve: {
@@ -37,4 +36,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // Add CSS configuration
+  css: {
+    preprocessorOptions: {
+      css: {
+        // Optional: global CSS imports
+        additionalData: `@import "@/assets/EstiloBase.css";`
+      }
+    }
+  }
 })
