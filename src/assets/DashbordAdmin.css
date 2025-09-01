@@ -20,11 +20,11 @@
   background: white;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  border-left: 4px solid;
   display: flex;
   align-items: center;
   gap: 1.5rem;
   transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid;
 }
 
 .stat-card:hover {
@@ -33,35 +33,39 @@
 }
 
 .stat-card.usuarios {
-  border-left-color: #3498db;
+  border-left-color: #1e293b;
+  /* Slate 800 */
 }
 
 .stat-card.pedidos {
-  border-left-color: #f39c12;
+  border-left-color: #7390b8;
+  /* Slate 600 */
 }
 
 .stat-card.herramientas {
-  border-left-color: #2ecc71;
+  border-left-color: #64748b;
+  /* Slate 500 */
 }
 
 .stat-card.disponibles {
-  border-left-color: #27ae60;
+  border-left-color: #0f172a;
+  /* Slate 900 */
 }
 
 .stat-card.usuarios .stat-icon {
-  background: #3498db;
+  background: #64748b;
 }
 
 .stat-card.pedidos .stat-icon {
-  background: #f39c12;
+  background: #64748b;
 }
 
 .stat-card.herramientas .stat-icon {
-  background: #2ecc71;
+  background: #64748b;
 }
 
 .stat-card.disponibles .stat-icon {
-  background: #27ae60;
+  background: #64748b;
 }
 
 .stat-icon {
@@ -72,7 +76,7 @@
   justify-content: center;
   font-size: 1.5rem;
   color: white;
-  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .stat-content {
@@ -82,14 +86,15 @@
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #1e293b;
   line-height: 1;
 }
 
 .stat-label {
   font-size: 1rem;
-  color: #7f8c8d;
+  color: #64748b;
   margin-top: 0.5rem;
+  font-weight: 500;
 }
 
 /* Charts Section */
@@ -106,19 +111,18 @@
 .chart-card {
   background: white;
   padding: 1.5rem;
-  border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
 .chart-header {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .chart-header h3 {
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: #1e293b;
   margin: 0;
   display: flex;
   align-items: center;
@@ -126,7 +130,7 @@
 }
 
 .chart-header i {
-  color: #3498db;
+  color: #475569;
 }
 
 .chart-container {
@@ -148,19 +152,18 @@
 .detail-card {
   background: white;
   padding: 1.5rem;
-  border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
 .detail-header {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .detail-header h3 {
   font-size: 1.1rem;
-  color: #2c3e50;
+  color: #1e293b;
   margin: 0;
   display: flex;
   align-items: center;
@@ -168,7 +171,7 @@
 }
 
 .detail-header i {
-  color: #3498db;
+  color: #475569;
 }
 
 .detail-content {
@@ -179,7 +182,7 @@
 
 .detail-item {
   padding: 1rem 0;
-  border-bottom: 1px solid #f8f9fa;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .detail-item:last-child {
@@ -196,24 +199,24 @@
 
 .detail-name {
   font-weight: 500;
-  color: #2c3e50;
+  color: #1e293b;
 }
 
 .detail-count {
-  color: #7f8c8d;
+  color: #64748b;
   font-size: 0.9rem;
 }
 
 .detail-bar {
   height: 6px;
-  background: #ecf0f1;
+  background: #f1f5f9;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3498db, #2980b9);
+  background: linear-gradient(90deg, #475569, #1e293b);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -225,22 +228,27 @@
   align-items: center;
   justify-content: center;
   height: 400px;
-  color: #7f8c8d;
+  color: #64748b;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #ecf0f1;
-  border-top: 4px solid #3498db;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #475569;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .global-error-container {
@@ -249,7 +257,7 @@
   align-items: center;
   justify-content: center;
   height: 400px;
-  color: #e74c3c;
+  color: #dc2626;
   text-align: center;
   padding: 2rem;
 }
@@ -261,16 +269,16 @@
 
 .global-error-container h3 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: #1e293b;
 }
 
 .global-error-container p {
   margin: 0 0 1.5rem 0;
-  color: #7f8c8d;
+  color: #64748b;
 }
 
 .retry-button {
-  background: #3498db;
+  background: #475569;
   color: white;
   border: none;
   border-radius: 6px;
@@ -284,7 +292,7 @@
 }
 
 .retry-button:hover {
-  background: #2980b9;
+  background: #334155;
 }
 
 /* Refresh Button */
@@ -297,34 +305,34 @@
   .dashboard-content {
     padding: 1rem;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .charts-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .stat-card {
     padding: 1.5rem;
   }
-  
+
   .stat-number {
     font-size: 2rem;
   }
-  
+
   .chart-card {
     padding: 1rem;
   }
-  
+
   .detail-card {
     padding: 1rem;
   }

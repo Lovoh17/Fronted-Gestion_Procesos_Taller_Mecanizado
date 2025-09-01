@@ -15,7 +15,7 @@
             </div>
           </div>
           <div class="header-actions">
-            <VaButton class="refresh-button" @click="refreshAllData" :disabled="globalLoading">
+            <VaButton class="refresh-button" color="#003366" @click="refreshAllData" :disabled="globalLoading">
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': globalLoading }"></i>
               Actualizar Dashboard
             </VaButton>
@@ -159,7 +159,7 @@
                 <div v-for="puesto in dashboardData.usuarios?.porPuesto || []" :key="puesto.puesto_id"
                   class="detail-item">
                   <div class="detail-info">
-                    <span class="detail-name">{{ puesto.puesto.nombre_puesto }}</span>
+                    <span class="detail-name">{{ puesto.puesto?.nombre_puesto || 'Puesto desconocido' }}</span>
                     <span class="detail-count">: {{ puesto.total }} usuarios</span>
                   </div>
                   <div class="detail-bar">
@@ -182,7 +182,7 @@
                 <div v-for="estado in dashboardData.pedidos?.porEstado || []" :key="estado.estado_id"
                   class="detail-item">
                   <div class="detail-info">
-                    <span class="detail-name">{{ estado.estados_pedido.nombre }}</span>
+                    <span class="detail-name">{{ estado.estado?.nombre || 'Estado desconocido' }}</span>
                     <span class="detail-count">: {{ estado.total }} pedidos</span>
                   </div>
                   <div class="detail-bar">
@@ -228,7 +228,7 @@ export default {
     // Computed para herramientas disponibles
     const herramientasDisponibles = computed(() => {
       const herramientas = dashboardData.value.herramientas?.porEstado || []
-      const disponibles = herramientas.find(h => h.estado_herramienta.nombre === 'Disponible')
+      const disponibles = herramientas.find(h => h.estado_herramienta?.nombre === 'Disponible')
       return disponibles ? parseInt(disponibles.total) : 0
     })
 
@@ -287,13 +287,15 @@ export default {
         usuariosPuestoChartInstance.destroy()
       }
 
-      const ctx = usuariosPuestoChart.value.getContext('2d')
+      const ctx = usuariosPuestoChart.value?.getContext('2d')
+      if (!ctx) return
+
       const data = dashboardData.value.usuarios?.porPuesto || []
 
       usuariosPuestoChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.map(item => item.puesto.nombre_puesto),
+          labels: data.map(item => item.puesto?.nombre_puesto || 'Desconocido'),
           datasets: [{
             label: 'Usuarios',
             data: data.map(item => parseInt(item.total)),
@@ -342,13 +344,15 @@ export default {
         pedidosEstadoChartInstance.destroy()
       }
 
-      const ctx = pedidosEstadoChart.value.getContext('2d')
+      const ctx = pedidosEstadoChart.value?.getContext('2d')
+      if (!ctx) return
+
       const data = dashboardData.value.pedidos?.porEstado || []
 
       pedidosEstadoChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: data.map(item => item.estados_pedido.nombre),
+          labels: data.map(item => item.estado?.nombre || 'Desconocido'),
           datasets: [{
             data: data.map(item => parseInt(item.total)),
             backgroundColor: [
@@ -380,13 +384,15 @@ export default {
         herramientasEstadoChartInstance.destroy()
       }
 
-      const ctx = herramientasEstadoChart.value.getContext('2d')
+      const ctx = herramientasEstadoChart.value?.getContext('2d')
+      if (!ctx) return
+
       const data = dashboardData.value.herramientas?.porEstado || []
 
       herramientasEstadoChartInstance = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: data.map(item => item.estado_herramienta.nombre),
+          labels: data.map(item => item.estado_herramienta?.nombre || 'Desconocido'),
           datasets: [{
             data: data.map(item => parseInt(item.total)),
             backgroundColor: [
@@ -419,7 +425,8 @@ export default {
         resumenGeneralChartInstance.destroy()
       }
 
-      const ctx = resumenGeneralChart.value.getContext('2d')
+      const ctx = resumenGeneralChart.value?.getContext('2d')
+      if (!ctx) return
 
       resumenGeneralChartInstance = new Chart(ctx, {
         type: 'doughnut',

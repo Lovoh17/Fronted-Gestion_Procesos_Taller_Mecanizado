@@ -211,8 +211,9 @@
       </main>
     </div>
 
-        <!-- Modal para Ver Detalles de Alerta - MEJORADO -->
-    <va-modal v-model="showViewModal" title="Detalles de la Alerta" size="large" :close-button="true" class="details-modal">
+    <!-- Modal para Ver Detalles de Alerta - MEJORADO -->
+    <va-modal v-model="showViewModal" title="Detalles de la Alerta" size="large" :close-button="true"
+      class="details-modal">
       <div v-if="selectedAlert" class="alert-details">
         <div class="details-header">
           <div class="alert-id">Alerta #{{ selectedAlert.id }}</div>
@@ -220,7 +221,7 @@
             {{ getEstadoText(selectedAlert.estado_reparacion) }}
           </div>
         </div>
-        
+
         <div class="details-grid">
           <div class="detail-card">
             <div class="detail-card-header">
@@ -238,7 +239,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="detail-card">
             <div class="detail-card-header">
               <i class="fas fa-exclamation-circle"></i>
@@ -253,7 +254,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="detail-card">
             <div class="detail-card-header">
               <i class="fas fa-flag"></i>
@@ -267,7 +268,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="detail-card">
             <div class="detail-card-header">
               <i class="fas fa-calendar"></i>
@@ -291,7 +292,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="detail-card" v-if="selectedAlert.resuelta_por">
             <div class="detail-card-header">
               <i class="fas fa-user-check"></i>
@@ -304,7 +305,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="description-section">
           <div class="section-title">
             <i class="fas fa-align-left"></i>
@@ -314,7 +315,7 @@
             <p>{{ selectedAlert.descripcion || 'Sin descripción' }}</p>
           </div>
         </div>
-        
+
         <div class="description-section" v-if="selectedAlert.observaciones">
           <div class="section-title">
             <i class="fas fa-sticky-note"></i>
@@ -325,7 +326,7 @@
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <div class="modal-actions">
           <va-button @click="showViewModal = false" preset="secondary" class="action-btn">
@@ -339,116 +340,77 @@
     </va-modal>
 
     <!-- Modal para Nueva/Editar Alerta - MEJORADO -->
-    <va-modal v-model="showEditModal" :title="isEditing ? 'Editar Alerta' : 'Nueva Alerta'" size="large" :close-button="true" class="edit-modal">
+    <va-modal v-model="showEditModal" :title="isEditing ? 'Editar Alerta' : 'Nueva Alerta'" size="large"
+      :close-button="true" class="edit-modal">
       <va-form ref="alertForm" @submit.prevent="saveAlert">
         <div class="form-grid">
           <div class="form-section">
             <h3 class="section-title"><i class="fas fa-info-circle"></i> Información Básica</h3>
-            
+
             <div class="form-group">
               <label class="form-label">Herramienta <span class="required">*</span></label>
-              <va-select
-                v-model="alertForm.herramienta_id"
-                :options="herramientaOptions"
-                placeholder="Seleccionar herramienta"
-                :rules="[required]"
-                text-by="nombre"
-                value-by="id"
-                class="form-input"
-              >
+              <va-select v-model="alertForm.herramienta_id" :options="herramientaOptions"
+                placeholder="Seleccionar herramienta" :rules="[required]" text-by="nombre" value-by="id"
+                class="form-input">
                 <template #prependInner>
                   <i class="fas fa-tools"></i>
                 </template>
               </va-select>
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Tipo de Alerta <span class="required">*</span></label>
-              <va-select
-                v-model="alertForm.tipo_alerta_id"
-                :options="tipoAlertaOptions"
-                placeholder="Seleccionar tipo"
-                :rules="[required]"
-                text-by="nombre_alertas"
-                value-by="id"
-                class="form-input"
-              >
+              <va-select v-model="alertForm.tipo_alerta_id" :options="tipoAlertaOptions" placeholder="Seleccionar tipo"
+                :rules="[required]" text-by="nombre_alertas" value-by="id" class="form-input">
                 <template #prependInner>
                   <i class="fas fa-exclamation-circle"></i>
                 </template>
               </va-select>
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Prioridad <span class="required">*</span></label>
-              <va-select
-                v-model="alertForm.prioridad_id"
-                :options="prioridadOptions"
-                placeholder="Seleccionar prioridad"
-                :rules="[required]"
-                class="form-input"
-              >
+              <va-select v-model="alertForm.prioridad_id" :options="prioridadOptions"
+                placeholder="Seleccionar prioridad" :rules="[required]" class="form-input">
                 <template #prependInner>
                   <i class="fas fa-flag"></i>
                 </template>
               </va-select>
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Estado <span class="required">*</span></label>
-              <va-select
-                v-model="alertForm.estado_reparacion"
-                :options="estadoOptions"
-                placeholder="Seleccionar estado"
-                :rules="[required]"
-                class="form-input"
-              >
+              <va-select v-model="alertForm.estado_reparacion" :options="estadoOptions" placeholder="Seleccionar estado"
+                :rules="[required]" class="form-input">
                 <template #prependInner>
                   <i class="fas fa-status"></i>
                 </template>
               </va-select>
             </div>
           </div>
-          
+
           <div class="form-section">
             <h3 class="section-title"><i class="fas fa-calendar-alt"></i> Fechas</h3>
-            
+
             <div class="form-group">
               <label class="form-label">Fecha de Generación <span class="required">*</span></label>
-              <va-date-input
-                v-model="alertForm.fecha_generacion"
-                :rules="[required]"
-                class="form-input"
-              />
+              <va-date-input v-model="alertForm.fecha_generacion" :rules="[required]" class="form-input" />
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Fecha Límite <span class="required">*</span></label>
-              <va-date-input
-                v-model="alertForm.fecha_limite"
-                :rules="[required]"
-                class="form-input"
-              />
+              <va-date-input v-model="alertForm.fecha_limite" :rules="[required]" class="form-input" />
             </div>
-            
+
             <div class="form-group" v-if="alertForm.estado_reparacion === '5'">
               <label class="form-label">Fecha de Resolución</label>
-              <va-date-input
-                v-model="alertForm.fecha_resolucion"
-                class="form-input"
-              />
+              <va-date-input v-model="alertForm.fecha_resolucion" class="form-input" />
             </div>
-            
+
             <div class="form-group" v-if="alertForm.estado_reparacion === '5'">
               <label class="form-label">Resuelta por</label>
-              <va-select
-                v-model="alertForm.resuelta_por"
-                :options="usuarioOptions"
-                placeholder="Seleccionar usuario"
-                text-by="nombre_completo"
-                value-by="id"
-                class="form-input"
-              >
+              <va-select v-model="alertForm.resuelta_por" :options="usuarioOptions" placeholder="Seleccionar usuario"
+                text-by="nombre_completo" value-by="id" class="form-input">
                 <template #prependInner>
                   <i class="fas fa-user"></i>
                 </template>
@@ -456,23 +418,18 @@
             </div>
           </div>
         </div>
-        
+
         <div class="form-section full-width">
           <h3 class="section-title"><i class="fas fa-align-left"></i> Descripción y Observaciones</h3>
-          
+
           <div class="form-group">
             <label class="form-label">Descripción <span class="required">*</span></label>
-            <va-textarea
-              v-model="alertForm.descripcion"
-              placeholder="Descripción detallada de la alerta"
-              :rules="[required]"
-              class="form-textarea"
-              :min-rows="3"
-            />
+            <va-textarea v-model="alertForm.descripcion" placeholder="Descripción detallada de la alerta"
+              :rules="[required]" class="form-textarea" :min-rows="3" />
           </div>
         </div>
       </va-form>
-      
+
       <template #footer>
         <div class="modal-actions">
           <va-button @click="cancelEdit" preset="secondary" class="action-btn">
@@ -490,4 +447,3 @@
 <style src="src/assets/EstiloBase.css" scoped></style>
 <style src="../VistasAdmin/ComponentesAdmin/styles/reportsStye.css" scoped></style>
 <script src="../VistasAdmin/ComponentesAdmin/Script/Reports.js"></script>
-
