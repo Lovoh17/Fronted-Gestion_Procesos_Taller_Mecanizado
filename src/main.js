@@ -3,10 +3,12 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import './assets/variables.css'
 import LoadingSpinner from './components/GlobalComponents/LoadingSpinner.vue'
-import '../src/assets/EstiloBase.css'
 
 import { createApp } from 'vue'
 import App from './App.vue'
+import './assets/EstiloBase.css'
+
+
 import router from './router'
 import { createPinia } from 'pinia'
 import { Chart, registerables } from 'chart.js'
