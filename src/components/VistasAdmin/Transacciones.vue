@@ -385,4 +385,4 @@ export { default } from './scripts/transacciones.js'
 </script>
 
 <style  src="@/assets/transacciones.css"></style>
-<style  src="./src/assets/EstiloBase.css"></style>
+

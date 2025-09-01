@@ -2,7 +2,7 @@
   <div class="dashboard-layout">
     <!-- Contenido Principal del Dashboard -->
     <main class="dashboard-main">
-      <!-- Header del Dashboard usando EstiloBase -->
+
       <div class="header-section">
         <div class="header-content">
           <div class="header-info">
@@ -480,5 +480,5 @@ export default {
 }
 </script>
 
-<style src="./src/assets/EstiloBase.css" ></style>
+
 <style src="src/assets/DashbordAdmin.css" ></style>

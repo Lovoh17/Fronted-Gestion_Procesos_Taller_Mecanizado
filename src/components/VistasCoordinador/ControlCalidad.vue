@@ -673,4 +673,3 @@
 </style>
 
 <style src="src/assets/ControlCalidad.css"></style>
-<style src="./src/assets/EstiloBase.css"></style>

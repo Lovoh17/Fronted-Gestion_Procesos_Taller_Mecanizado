@@ -108,6 +108,6 @@
   </div>
 </template>
 
-<style src="./src/assets/EstiloBase.css" ></style>
+
 <script src="./scripts/ProductionPlanning.js"></script>
 <style src="src/components/VistasCoordinador/styles/ProductionPlanning.css"></style>

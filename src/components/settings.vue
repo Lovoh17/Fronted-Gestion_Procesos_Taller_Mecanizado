@@ -66,7 +66,7 @@
 </template>
 
 <script src="./scripts/Settings.js"></script>
-<style src="./src/assets/EstiloBase.css"></style>
+
 <style src="../assets/settings.css" ></style>
 
 <style >

@@ -6,7 +6,6 @@ import LoadingSpinner from './components/GlobalComponents/LoadingSpinner.vue'
 
 import { createApp } from 'vue'
 import App from './App.vue'
-import './assets/EstiloBase.css'
 
 
 import router from './router'
