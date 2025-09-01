@@ -6,8 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   plugins: [
     vue({
-      // Exclude CSS files from Vue processing
-      include: [/\.vue$/, /\.vue\?vue/],
+      // Remover la configuración include que puede causar conflictos
       template: {
         transformAssetUrls: {
           includeAbsolute: false,
@@ -36,13 +35,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  // Add CSS configuration
+  // Configuración CSS simplificada
   css: {
-    preprocessorOptions: {
-      css: {
-        // Optional: global CSS imports
-        additionalData: `@import "@/assets/EstiloBase.css";`
-      }
-    }
+    // Remover preprocessorOptions para CSS plano
   }
 })
