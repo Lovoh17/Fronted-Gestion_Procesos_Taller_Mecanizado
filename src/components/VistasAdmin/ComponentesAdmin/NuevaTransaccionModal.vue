@@ -3,11 +3,8 @@
     <div class="modal-container">
       <div class="modal-header">
         <h3>Nueva Transacción</h3>
-        <va-button  @click="close"    icon="times">
-        
-          
-        
-      </va-button>
+        <va-button @click="close" icon="times">
+        </va-button>
       </div>
       
       <div class="modal-body">
@@ -58,18 +55,17 @@
           </div>
           
           <div class="form-actions">
-            <va-button type="button"  @click="close" color="secondary"   icon="spinner">
+            <va-button type="button" @click="close" color="secondary" icon="times">
               Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="loading">
+            </va-button>
+            <va-button type="submit" color="primary" :disabled="loading" icon="save">
               <span v-if="loading">
-                 Creando...
+                <i class="fas fa-spinner fa-spin"></i> Creando...
               </span>
               <span v-else>
-                <i class="fas fa-save"></i> Crear Transacción
+                Crear Transacción
               </span>
-            
-      </va-button>
+            </va-button>
           </div>
         </form>
       </div>
@@ -131,7 +127,7 @@ export default {
 }
 </script>
 
-<style >
+<style>
 .modal-overlay {
   position: fixed;
   top: 0;

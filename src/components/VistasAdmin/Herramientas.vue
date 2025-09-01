@@ -210,6 +210,6 @@
   </div>
 </template>
 
-<style src="@/assets/EstiloBase.css" ></style>
+<style src="/src/assets/EstiloBase.css" ></style>
 <script src="./scripts/Herramientas.js"></script>
 <style src="@/assets/Herramientas.css" ></style>

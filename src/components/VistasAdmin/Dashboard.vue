@@ -480,5 +480,5 @@ export default {
 }
 </script>
 
-<style src="@/assets/EstiloBase.css" ></style>
+<style src="/src/assets/EstiloBase.css" ></style>
 <style src="src/assets/DashbordAdmin.css" ></style>

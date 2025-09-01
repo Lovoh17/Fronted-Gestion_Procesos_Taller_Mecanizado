@@ -258,4 +258,4 @@ import HistorialMovimientosScript from './scripts/HistorialMovimientosScript.js'
 export default HistorialMovimientosScript;
 </script>
 <style src="./styles/ToolUsageHistoryView.css" ></style>
-<style src="src/assets/EstiloBase.css" ></style>
+<style src="/src/assets/EstiloBase.css" ></style>

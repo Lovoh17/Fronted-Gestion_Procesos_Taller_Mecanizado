@@ -288,4 +288,4 @@
 
 <script src="./scripts/ProductInventory.js"></script>
 <style src="src/assets/ProductInventory.css" ></style>
-<style src="src/assets/EstiloBase.css" ></style>
+<style src="/src/assets/EstiloBase.css" ></style>

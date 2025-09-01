@@ -1,0 +1,137 @@
+/* Estilos del header */
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  background: rgba(255, 255, 255, 0.98);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 70px;
+  height: 70px;
+  background: #003366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.8rem;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #003366, #003366);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Card */
+.card {
+  border: 1px solid rgba(8, 255, 21, 0.125);
+  border-radius: 0.25rem;
+  margin-bottom: 20px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Badges para tipos de usuario y estados */
+.badge {
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.badge-pendiente {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-en_proceso {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-completado {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-entregado {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .header-info {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-text {
+    align-items: center;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+}
