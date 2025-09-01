@@ -12,21 +12,50 @@ COPY index.html ./
 COPY src/ ./src/
 COPY public/ ./public/
 
-# Asegurar que el archivo CSS existe y es válido
-RUN if [ ! -f "src/assets/EstiloBase.css" ]; then \
-    echo "Creando archivo CSS básico..." && \
+# SOLUCIÓN CRÍTICA: Reemplazar completamente el archivo CSS problemático
+RUN echo "Reemplazando archivo CSS problemático..." && \
     mkdir -p src/assets && \
-    echo '/* Estilos base */ body { margin: 0; padding: 0; font-family: sans-serif; }' > src/assets/EstiloBase.css; \
-    fi
+    cat > src/assets/EstiloBase.css << 'EOL'
+/* Estilos base de la aplicación - Archivo limpio */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+}
 
-# Limpiar el archivo CSS de posibles problemas
-RUN if [ -f "src/assets/EstiloBase.css" ]; then \
-    echo "Limpiando archivo CSS..." && \
-    sed -i '/<style/d' src/assets/EstiloBase.css && \
-    sed -i '/<\/style/d' src/assets/EstiloBase.css && \
-    sed -i '/scoped/d' src/assets/EstiloBase.css && \
-    sed -i '/lang/d' src/assets/EstiloBase.css; \
-    fi
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+/* Eliminar cualquier mención de scoped, module, o etiquetas style */
+EOL
 
 RUN npm run build
 
