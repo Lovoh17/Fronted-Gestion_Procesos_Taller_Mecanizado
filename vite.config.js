@@ -6,7 +6,6 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   plugins: [
     vue({
-      // Remover la configuración include que puede causar conflictos
       template: {
         transformAssetUrls: {
           includeAbsolute: false,
@@ -35,8 +34,4 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  // Configuración CSS simplificada
-  css: {
-    // Remover preprocessorOptions para CSS plano
-  }
 })
