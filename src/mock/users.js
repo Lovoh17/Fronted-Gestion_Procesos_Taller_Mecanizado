@@ -5,13 +5,13 @@ export const mockUsers = [
     password: 'jefe123',
     user: {
       id: 10,
-      name: 'Isabel Moreno',
+      name: ' RafaelLino',
       email: 'jefeTaller@taller.com',
       role: 'jefe_taller',
       puesto_id: 1,
       nivel_jerarquico: 1,
       es_supervisor: true,
-      avatar: '/img/usuarios/isabel_moreno.jpg',
+      avatar: '../stores/images/Rafa Note 20 - 2025-08-15 03.37.46.jpg',
       especialidades: ['gestion', 'supervision', 'planificacion'],
       departamento_id: 1
     },
@@ -24,7 +24,7 @@ export const mockUsers = [
     password: 'coord123',
     user: {
       id: 5,
-      name: 'Jorge López',
+      name: ' Kevin Israel',
       email: 'coordinador@taller.com',
       role: 'coordinador',
       puesto_id: 2,
@@ -43,7 +43,7 @@ export const mockUsers = [
     password: 'oper123',
     user: {
       id: 1,
-      name: 'Roberto Sánchez',
+      name: 'Gabriel de la O',
       email: 'operario@taller.com',
       role: 'operario',
       puesto_id: 3,
@@ -62,7 +62,7 @@ export const mockUsers = [
     password: 'tech123',
     user: {
       id: 7,
-      name: 'Carlos Martín',
+      name: 'Arturo Esperanza',
       email: 'tecnico@taller.com',
       role: 'tecnico',
       puesto_id: 4,

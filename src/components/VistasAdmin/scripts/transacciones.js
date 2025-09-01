@@ -77,13 +77,61 @@ export default {
   },
 
   computed: {
+    // Para las tarjetas de resumen - totales generales (sin filtros)
+    totalIngresosGeneral() {
+      if (!this.transacciones || this.transacciones.length === 0) return 0;
+      
+      return this.transacciones
+        .filter(t => t.tipo === 'ingreso')
+        .reduce((sum, t) => {
+          const monto = parseFloat(t.monto_total || t.monto || 0);
+          return sum + (isNaN(monto) ? 0 : monto);
+        }, 0);
+    },
+
+    totalEgresosGeneral() {
+      if (!this.transacciones || this.transacciones.length === 0) return 0;
+      
+      return this.transacciones
+        .filter(t => t.tipo === 'egreso')
+        .reduce((sum, t) => {
+          const monto = parseFloat(t.monto_total || t.monto || 0);
+          return sum + (isNaN(monto) ? 0 : monto);
+        }, 0);
+    },
+
+    balanceTotalGeneral() {
+      return this.totalIngresosGeneral - this.totalEgresosGeneral;
+    },
+
+    ingresosCountGeneral() {
+      if (!this.transacciones) return 0;
+      return this.transacciones.filter(t => t.tipo === 'ingreso').length;
+    },
+
+    egresosCountGeneral() {
+      if (!this.transacciones) return 0;
+      return this.transacciones.filter(t => t.tipo === 'egreso').length;
+    },
+
+    transaccionesTotalCount() {
+      return this.transacciones ? this.transacciones.length : 0;
+    },
+
+    balanceClass() {
+      return this.balanceTotalGeneral >= 0 ? 'positive' : 'negative';
+    },
+
+    // Para los filtros - transacciones filtradas
     filteredTransacciones() {
+      if (!this.transacciones) return [];
+      
       return this.transacciones.filter(transaccion => {
         const matchesTipo = this.tipoFilter === 'todos' || transaccion.tipo === this.tipoFilter;
         const matchesCategoria = this.categoriaFilter === 'todos' || transaccion.categoria === this.categoriaFilter;
         const matchesFecha = (!this.fechaInicio || new Date(transaccion.fecha) >= new Date(this.fechaInicio)) &&
           (!this.fechaFin || new Date(transaccion.fecha) <= new Date(this.fechaFin));
-        const monto = transaccion.monto_total || transaccion.monto || 0;
+        const monto = parseFloat(transaccion.monto_total || transaccion.monto || 0);
         const matchesMonto = (!this.montoMin || monto >= this.montoMin) &&
           (!this.montoMax || monto <= this.montoMax);
         const matchesSearch = this.searchQuery === '' ||
@@ -97,8 +145,8 @@ export default {
         const bVal = b[this.sortField] || '';
 
         if (this.sortField === 'monto') {
-          const aMonto = a.monto_total || a.monto || 0;
-          const bMonto = b.monto_total || b.monto || 0;
+          const aMonto = parseFloat(a.monto_total || a.monto || 0);
+          const bMonto = parseFloat(b.monto_total || b.monto || 0);
           return (aMonto - bMonto) * modifier;
         }
 
@@ -106,6 +154,37 @@ export default {
         if (aVal > bVal) return 1 * modifier;
         return 0;
       });
+    },
+
+    // Para las transacciones filtradas - estadísticas
+    totalIngresos() {
+      return this.filteredTransacciones
+        .filter(t => t.tipo === 'ingreso')
+        .reduce((sum, t) => {
+          const monto = parseFloat(t.monto_total || t.monto || 0);
+          return sum + (isNaN(monto) ? 0 : monto);
+        }, 0);
+    },
+
+    totalEgresos() {
+      return this.filteredTransacciones
+        .filter(t => t.tipo === 'egreso')
+        .reduce((sum, t) => {
+          const monto = parseFloat(t.monto_total || t.monto || 0);
+          return sum + (isNaN(monto) ? 0 : monto);
+        }, 0);
+    },
+
+    balanceTotal() {
+      return this.totalIngresos - this.totalEgresos;
+    },
+
+    ingresosCount() {
+      return this.filteredTransacciones.filter(t => t.tipo === 'ingreso').length;
+    },
+
+    egresosCount() {
+      return this.filteredTransacciones.filter(t => t.tipo === 'egreso').length;
     },
 
     paginatedTransacciones() {
@@ -156,34 +235,6 @@ export default {
       return Math.min(this.currentPage * this.itemsPerPage, this.filteredTransacciones.length);
     },
 
-    totalIngresos() {
-      return this.filteredTransacciones
-        .filter(t => t.tipo === 'ingreso')
-        .reduce((sum, t) => sum + (t.monto_total || t.monto || 0), 0);
-    },
-
-    totalEgresos() {
-      return this.filteredTransacciones
-        .filter(t => t.tipo === 'egreso')
-        .reduce((sum, t) => sum + (t.monto_total || t.monto || 0), 0);
-    },
-
-    balanceTotal() {
-      return this.totalIngresos - this.totalEgresos;
-    },
-
-    balanceClass() {
-      return this.balanceTotal >= 0 ? 'positive' : 'negative';
-    },
-
-    ingresosCount() {
-      return this.filteredTransacciones.filter(t => t.tipo === 'ingreso').length;
-    },
-
-    egresosCount() {
-      return this.filteredTransacciones.filter(t => t.tipo === 'egreso').length;
-    },
-
     activeFiltersCount() {
       let count = 0;
       if (this.tipoFilter !== 'todos') count++;
@@ -203,16 +254,64 @@ export default {
       try {
         this.loading = true;
         const response = await axios.get('/api/Transaccion_Financiera');
+        
+        console.log('Datos recibidos:', response.data); // Debug
+        
+        // Mapear los datos a la estructura esperada
         this.transacciones = response.data.map(t => ({
           ...t,
-          fecha: t.fecha || new Date().toISOString().split('T')[0]
+          // Mapear los campos de la API a los campos esperados
+          fecha: t.fecha_transaccion || t.fecha || new Date().toISOString().split('T')[0],
+          descripcion: t.descripcion || '',
+          // Mapear tipo_transaccion_id a tipo (necesitas definir esta lógica según tu API)
+          tipo: this.mapTipoTransaccion(t.tipo_transaccion_id),
+          categoria: this.mapCategoria(t.departamento_id || t.categoria),
+          monto: parseFloat(t.monto_total || 0),
+          monto_total: parseFloat(t.monto_total || 0),
+          referencia: t.referencia_pago || t.referencia || '',
+          estado: t.estado_transaccion_id
         }));
+        
+        console.log('Transacciones procesadas:', this.transacciones); // Debug
+        console.log('Total ingresos calculado:', this.totalIngresosGeneral); // Debug
+        console.log('Total egresos calculado:', this.totalEgresosGeneral); // Debug
+        
       } catch (error) {
         console.error("Error cargando transacciones:", error);
         this.showToast('Error al cargar transacciones', 'error');
+        // En caso de error, asegurar que transacciones sea un array vacío
+        this.transacciones = [];
       } finally {
         this.loading = false;
       }
+    },
+
+    // Método para mapear tipo_transaccion_id a tipo
+    mapTipoTransaccion(tipoId) {
+      // Ajusta estos valores según tu base de datos
+      const tipoMap = {
+        '1': 'egreso',    // Ejemplo: tipo 1 = egreso
+        '2': 'ingreso',   // Ejemplo: tipo 2 = ingreso
+        '3': 'egreso',    // Ejemplo: tipo 3 = egreso
+        // Agregar más mapeos según necesites
+      };
+      
+      return tipoMap[tipoId] || 'egreso'; // Por defecto egreso si no se encuentra
+    },
+
+    // Método para mapear departamento_id a categoría
+    mapCategoria(departamentoId) {
+      // Ajusta estos valores según tu base de datos
+      const categoriaMap = {
+        '1': 'Ventas',
+        '2': 'Compras', 
+        '3': 'Servicios',
+        '4': 'Salarios',
+        '5': 'Impuestos',
+        // Agregar más mapeos según necesites
+      };
+      
+      return categoriaMap[departamentoId] || 'Otros';
     },
 
     async obtenerTransaccionPorId(id) {
@@ -315,7 +414,11 @@ export default {
 
           const index = this.transacciones.findIndex(t => t.id === transaccionData.id);
           if (index !== -1) {
-            this.transacciones[index] = transaccionActualizada;
+            this.transacciones[index] = {
+              ...transaccionActualizada,
+              monto: parseFloat(transaccionActualizada.monto || 0),
+              monto_total: parseFloat(transaccionActualizada.monto_total || transaccionActualizada.monto || 0)
+            };
           }
 
           this.showToast('Transacción actualizada correctamente', 'success');
@@ -330,7 +433,13 @@ export default {
       try {
         const transaccionCreada = await this.crearTransaccion(nuevaTransaccion);
 
-        this.transacciones.unshift(transaccionCreada);
+        const transaccionProcesada = {
+          ...transaccionCreada,
+          monto: parseFloat(transaccionCreada.monto || 0),
+          monto_total: parseFloat(transaccionCreada.monto_total || transaccionCreada.monto || 0)
+        };
+
+        this.transacciones.unshift(transaccionProcesada);
         this.showNuevaTransaccionModal = false;
         this.showToast('Nueva transacción creada correctamente', 'success');
       } catch (error) {

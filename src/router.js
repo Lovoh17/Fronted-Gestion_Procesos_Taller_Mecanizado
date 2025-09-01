@@ -161,18 +161,15 @@ const routes = [
     }
   },
   {
-    path: '/pedidos/nuevo',
-    name: 'new-order',
-    component: () => import('./components/VistasCoordinador/WorkOrderModal.vue'),
-    meta: { 
-      requiresAuth: true,
-      allowedPuestos: [2]
-    }
+    path: '/coordinator/new',
+    name: 'new-workorder',
+    component: () => import('@/components/VistasCoordinador/NewWorkOrder.vue'),
+    meta: { public: true }
   },
   {
     path: '/asignaciones',
-    name: 'asignaciones',
-    component: () => import('./components/Asiganciones.vue'),
+    name: 'new-order',
+    component: () => import('@/components/VistasCoordinador/ComponentesCoordinador/AsignacionTrabajosModal.vue'),
     meta: { 
       requiresAuth: true,
       allowedPuestos: [2]

@@ -158,7 +158,7 @@
                     </div>
                   </span>
 
-                  <!-- Columna de Acciones (simplificada) -->
+                  <!-- Columna de Acciones -->
                   <span v-else-if="props.column.field === 'actions'">
                     <div class="action-buttons">
                       <va-button size="small" preset="plain" color="info" @click="viewAlert(props.row)"
@@ -167,8 +167,6 @@
                       <va-button size="small" preset="plain" color="primary" @click="editAlert(props.row)" icon="edit"
                         class="mr-1" title="Editar"></va-button>
 
-                      <va-button size="small" preset="plain" color="danger" @click="deleteAlert(props.row.id)"
-                        icon="delete" title="Eliminar"></va-button>
                     </div>
                   </span>
 
@@ -213,379 +211,283 @@
       </main>
     </div>
 
-    <!-- Modal para nueva alerta (placeholder) -->
-    <!-- <NewAlertModal v-if="showNewAlertModal" @close="showNewAlertModal = false" @save="addAlert" /> -->
+        <!-- Modal para Ver Detalles de Alerta - MEJORADO -->
+    <va-modal v-model="showViewModal" title="Detalles de la Alerta" size="large" :close-button="true" class="details-modal">
+      <div v-if="selectedAlert" class="alert-details">
+        <div class="details-header">
+          <div class="alert-id">Alerta #{{ selectedAlert.id }}</div>
+          <div :class="['status-badge', getEstadoClass(selectedAlert.estado_reparacion)]">
+            {{ getEstadoText(selectedAlert.estado_reparacion) }}
+          </div>
+        </div>
+        
+        <div class="details-grid">
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <i class="fas fa-tools"></i>
+              <h3>Información de la Herramienta</h3>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-item">
+                <label>Herramienta:</label>
+                <span class="detail-value">{{ getHerramientaNombre(selectedAlert.herramienta_id) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>ID Herramienta:</label>
+                <span class="detail-value">{{ selectedAlert.herramienta_id }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <i class="fas fa-exclamation-circle"></i>
+              <h3>Tipo de Alerta</h3>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-item">
+                <span :class="['badge-type', getTipoAlertaClass(selectedAlert.tipo_alerta_id)]">
+                  <i class="fas fa-bell"></i>
+                  {{ getTipoAlerta(selectedAlert.tipo_alerta_id) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <i class="fas fa-flag"></i>
+              <h3>Prioridad</h3>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-item">
+                <span :class="['badge-priority', getPrioridadClass(selectedAlert.prioridad_id)]">
+                  {{ getPrioridadText(selectedAlert.prioridad_id) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <div class="detail-card-header">
+              <i class="fas fa-calendar"></i>
+              <h3>Fechas</h3>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-item">
+                <label>Generación:</label>
+                <span class="detail-value">{{ formatDate(selectedAlert.fecha_generacion) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>Límite:</label>
+                <span class="detail-value" :class="getDaysLeftClass(selectedAlert.fecha_limite)">
+                  {{ formatDate(selectedAlert.fecha_limite) }}
+                  <span class="days-left">{{ getDaysLeft(selectedAlert.fecha_limite) }}</span>
+                </span>
+              </div>
+              <div class="detail-item" v-if="selectedAlert.fecha_resolucion">
+                <label>Resolución:</label>
+                <span class="detail-value">{{ formatDate(selectedAlert.fecha_resolucion) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-card" v-if="selectedAlert.resuelta_por">
+            <div class="detail-card-header">
+              <i class="fas fa-user-check"></i>
+              <h3>Resuelta por</h3>
+            </div>
+            <div class="detail-card-body">
+              <div class="detail-item">
+                <span class="detail-value">{{ getUsuarioNombre(selectedAlert.resuelta_por) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="description-section">
+          <div class="section-title">
+            <i class="fas fa-align-left"></i>
+            <h3>Descripción</h3>
+          </div>
+          <div class="description-content">
+            <p>{{ selectedAlert.descripcion || 'Sin descripción' }}</p>
+          </div>
+        </div>
+        
+        <div class="description-section" v-if="selectedAlert.observaciones">
+          <div class="section-title">
+            <i class="fas fa-sticky-note"></i>
+            <h3>Observaciones</h3>
+          </div>
+          <div class="description-content">
+            <p>{{ selectedAlert.observaciones }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="modal-actions">
+          <va-button @click="showViewModal = false" preset="secondary" class="action-btn">
+            <i class="fas fa-times"></i> Cerrar
+          </va-button>
+          <va-button @click="editCurrentAlert" color="primary" class="action-btn">
+            <i class="fas fa-edit"></i> Editar
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
+
+    <!-- Modal para Nueva/Editar Alerta - MEJORADO -->
+    <va-modal v-model="showEditModal" :title="isEditing ? 'Editar Alerta' : 'Nueva Alerta'" size="large" :close-button="true" class="edit-modal">
+      <va-form ref="alertForm" @submit.prevent="saveAlert">
+        <div class="form-grid">
+          <div class="form-section">
+            <h3 class="section-title"><i class="fas fa-info-circle"></i> Información Básica</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Herramienta <span class="required">*</span></label>
+              <va-select
+                v-model="alertForm.herramienta_id"
+                :options="herramientaOptions"
+                placeholder="Seleccionar herramienta"
+                :rules="[required]"
+                text-by="nombre"
+                value-by="id"
+                class="form-input"
+              >
+                <template #prependInner>
+                  <i class="fas fa-tools"></i>
+                </template>
+              </va-select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Tipo de Alerta <span class="required">*</span></label>
+              <va-select
+                v-model="alertForm.tipo_alerta_id"
+                :options="tipoAlertaOptions"
+                placeholder="Seleccionar tipo"
+                :rules="[required]"
+                text-by="nombre_alertas"
+                value-by="id"
+                class="form-input"
+              >
+                <template #prependInner>
+                  <i class="fas fa-exclamation-circle"></i>
+                </template>
+              </va-select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Prioridad <span class="required">*</span></label>
+              <va-select
+                v-model="alertForm.prioridad_id"
+                :options="prioridadOptions"
+                placeholder="Seleccionar prioridad"
+                :rules="[required]"
+                class="form-input"
+              >
+                <template #prependInner>
+                  <i class="fas fa-flag"></i>
+                </template>
+              </va-select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Estado <span class="required">*</span></label>
+              <va-select
+                v-model="alertForm.estado_reparacion"
+                :options="estadoOptions"
+                placeholder="Seleccionar estado"
+                :rules="[required]"
+                class="form-input"
+              >
+                <template #prependInner>
+                  <i class="fas fa-status"></i>
+                </template>
+              </va-select>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <h3 class="section-title"><i class="fas fa-calendar-alt"></i> Fechas</h3>
+            
+            <div class="form-group">
+              <label class="form-label">Fecha de Generación <span class="required">*</span></label>
+              <va-date-input
+                v-model="alertForm.fecha_generacion"
+                :rules="[required]"
+                class="form-input"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Fecha Límite <span class="required">*</span></label>
+              <va-date-input
+                v-model="alertForm.fecha_limite"
+                :rules="[required]"
+                class="form-input"
+              />
+            </div>
+            
+            <div class="form-group" v-if="alertForm.estado_reparacion === '5'">
+              <label class="form-label">Fecha de Resolución</label>
+              <va-date-input
+                v-model="alertForm.fecha_resolucion"
+                class="form-input"
+              />
+            </div>
+            
+            <div class="form-group" v-if="alertForm.estado_reparacion === '5'">
+              <label class="form-label">Resuelta por</label>
+              <va-select
+                v-model="alertForm.resuelta_por"
+                :options="usuarioOptions"
+                placeholder="Seleccionar usuario"
+                text-by="nombre_completo"
+                value-by="id"
+                class="form-input"
+              >
+                <template #prependInner>
+                  <i class="fas fa-user"></i>
+                </template>
+              </va-select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section full-width">
+          <h3 class="section-title"><i class="fas fa-align-left"></i> Descripción y Observaciones</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Descripción <span class="required">*</span></label>
+            <va-textarea
+              v-model="alertForm.descripcion"
+              placeholder="Descripción detallada de la alerta"
+              :rules="[required]"
+              class="form-textarea"
+              :min-rows="3"
+            />
+          </div>
+        </div>
+      </va-form>
+      
+      <template #footer>
+        <div class="modal-actions">
+          <va-button @click="cancelEdit" preset="secondary" class="action-btn">
+            <i class="fas fa-times"></i> Cancelar
+          </va-button>
+          <va-button @click="saveAlert" color="primary" :loading="saving" class="action-btn">
+            <i class="fas fa-save"></i> {{ isEditing ? 'Actualizar' : 'Crear' }}
+          </va-button>
+        </div>
+      </template>
+    </va-modal>
   </div>
 </template>
 
 <style src="src/assets/EstiloBase.css" scoped></style>
-<script>
-import api from '@/api.js'
+<style src="../VistasAdmin/ComponentesAdmin/styles/reportsStye.css" scoped></style>
+<script src="../VistasAdmin/ComponentesAdmin/Script/Reports.js"></script>
 
-export default {
-  name: 'AlertaReparacion',
-  data() {
-    return {
-      loading: false,
-      searchQuery: '',
-      showNewAlertModal: false,
-      selectedAlert: null,
-      alertas: [],
-      herramientas: [],
-      tiposAlertas: [],
-      usuarios: [],
-
-      tableColumns: [
-        {
-          label: 'ID',
-          field: 'id',
-          type: 'number',
-          width: '80px'
-        },
-        {
-          label: 'Herramienta',
-          field: 'herramienta',
-          sortable: false
-        },
-        {
-          label: 'Tipo de Alerta',
-          field: 'tipo_alerta',
-          sortable: false
-        },
-        {
-          label: 'Fecha Generación',
-          field: 'fecha_generacion_formatted',
-          sortable: true
-        },
-        {
-          label: 'Fecha Límite',
-          field: 'fecha_limite_formatted',
-          sortable: true
-        },
-        {
-          label: 'Prioridad',
-          field: 'prioridad_id'
-        },
-        {
-          label: 'Estado',
-          field: 'estado_reparacion'
-        },
-        {
-          label: 'Resuelta por',
-          field: 'resuelta_por'
-        },
-        {
-          label: 'Fecha Resolución',
-          field: 'fecha_resolucion_formatted',
-          sortable: true
-        },
-        {
-          label: 'Acciones',
-          field: 'actions',
-          sortable: false,
-          width: '150px'
-        }
-      ]
-    }
-  },
-
-  computed: {
-    filteredAlertas() {
-      // Transform the data to include formatted dates
-      return this.alertas.map(alert => ({
-        ...alert,
-        fecha_generacion_formatted: this.formatDate(alert.fecha_generacion),
-        fecha_limite_formatted: this.formatDate(alert.fecha_limite),
-        fecha_resolucion_formatted: this.formatDate(alert.fecha_resolucion)
-      }))
-    },
-
-    totalAlertas() {
-      return this.alertas.length
-    },
-
-    alertasPendientes() {
-      return this.alertas.filter(alert => alert.estado_reparacion === '1').length
-    },
-
-    alertasEnReparacion() {
-      return this.alertas.filter(alert => alert.estado_reparacion === '2').length
-    },
-
-    alertasResueltas() {
-      return this.alertas.filter(alert => alert.estado_reparacion === '5').length
-    }
-  },
-
-  async mounted() {
-    await this.loadData()
-  },
-
-  methods: {
-    // Método helper para mostrar notificaciones
-    showToast(message, color = 'info') {
-      // Verificar si $va está disponible
-      if (this.$va && this.$va.toast) {
-        this.$va.toast({
-          message,
-          color
-        })
-      } else {
-        // Fallback a console.log si $va no está disponible
-        console.log(`[${color.toUpperCase()}] ${message}`)
-      }
-    },
-
-    // Método helper para confirmar acciones
-    async showConfirm(title, message, okText = 'Confirmar', cancelText = 'Cancelar') {
-      if (this.$va && this.$va.confirm) {
-        return await this.$va.confirm({
-          title,
-          message,
-          okText,
-          cancelText
-        })
-      } else {
-        // Fallback a confirm nativo del navegador
-        return confirm(`${title}\n\n${message}`)
-      }
-    },
-
-    async loadData() {
-      this.loading = true
-      try {
-        await Promise.all([
-          this.loadAlertas(),
-          this.loadHerramientas(),
-          this.loadTiposAlertas(),
-          this.loadUsuarios()
-        ])
-      } catch (error) {
-        console.error('Error cargando datos:', error)
-        this.showToast('Error al cargar los datos', 'danger')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async loadAlertas() {
-      try {
-        this.alertas = await api.get('/AlertaReparacion')
-      } catch (error) {
-        console.error('Error cargando alertas:', error)
-        this.showToast(`Error al cargar las alertas: ${error.message}`, 'danger')
-      }
-    },
-
-    async loadHerramientas() {
-      try {
-        this.herramientas = await api.get('/Herramienta')
-      } catch (error) {
-        console.error('Error cargando herramientas:', error)
-        this.showToast(`Error al cargar las herramientas: ${error.message}`, 'danger')
-      }
-    },
-
-    async loadTiposAlertas() {
-      try {
-        this.tiposAlertas = await api.get('/Tipos_Alertas')
-      } catch (error) {
-        console.error('Error cargando tipos de alertas:', error)
-        this.showToast(`Error al cargar los tipos de alertas: ${error.message}`, 'danger')
-      }
-    },
-
-    async loadUsuarios() {
-      try {
-        this.usuarios = await api.get('/usuario')
-      } catch (error) {
-        console.error('Error cargando usuarios:', error)
-        this.showToast(`Error al cargar los usuarios: ${error.message}`, 'danger')
-      }
-    },
-
-    getUsuarioNombre(id) {
-      const usuario = this.usuarios.find(u => u.id === id)
-      return usuario ? `${usuario.nombre} ${usuario.apellido}` : '-'
-    },
-
-    // Métodos de formateo
-    getTipoAlerta(id) {
-      const tipo = this.tiposAlertas.find(t => t.id === id)
-      return tipo ? tipo.nombre_alertas : `Tipo ${id}`
-    },
-
-    getHerramientaNombre(id) {
-      const herramienta = this.herramientas.find(h => h.id === id)
-      return herramienta ? herramienta.nombre : `Herramienta ${id}`
-    },
-
-    getEstadoText(estado) {
-      const estados = {
-        '1': 'Pendiente',
-        '2': 'En Progreso',
-        '3': 'En Revisión',
-        '4': 'Pausado',
-        '5': 'Resuelto'
-      }
-      return estados[estado] || `Estado ${estado}`
-    },
-
-    getEstadoClass(estado) {
-      const classes = {
-        '1': 'badge-warning',
-        '2': 'badge-info',
-        '3': 'badge-primary',
-        '4': 'badge-secondary',
-        '5': 'badge-success'
-      }
-      return classes[estado] || 'badge-secondary'
-    },
-
-    getPrioridadText(prioridad) {
-      const prioridades = {
-        '1': 'Muy Baja',
-        '2': 'Baja',
-        '3': 'Media',
-        '4': 'Alta',
-        '5': 'Muy Alta',
-        '6': 'Crítica'
-      }
-      return prioridades[prioridad] || `Prioridad ${prioridad}`
-    },
-
-    getPrioridadClass(prioridad) {
-      const classes = {
-        '1': 'badge-secondary',
-        '2': 'badge-info',
-        '3': 'badge-warning',
-        '4': 'badge-danger',
-        '5': 'badge-danger',
-        '6': 'badge-dark'
-      }
-      return classes[prioridad] || 'badge-secondary'
-    },
-
-    formatDate(date) {
-      if (!date) return '-'
-      try {
-        return new Date(date).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      } catch (error) {
-        console.error('Error formateando fecha:', error)
-        return date
-      }
-    },
-
-    getDaysLeft(fechaLimite) {
-      if (!fechaLimite) return ''
-      try {
-        const today = new Date()
-        const limite = new Date(fechaLimite)
-        const diffTime = limite - today
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays < 0) return `Vencido hace ${Math.abs(diffDays)} días`
-        if (diffDays === 0) return 'Vence hoy'
-        if (diffDays === 1) return 'Vence mañana'
-        return `${diffDays} días restantes`
-      } catch (error) {
-        console.error('Error calculando días restantes:', error)
-        return ''
-      }
-    },
-
-    getDaysLeftClass(fechaLimite) {
-      if (!fechaLimite) return ''
-      try {
-        const today = new Date()
-        const limite = new Date(fechaLimite)
-        const diffTime = limite - today
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays < 0) return 'text-danger'
-        if (diffDays <= 2) return 'text-warning'
-        return 'text-success'
-      } catch (error) {
-        console.error('Error obteniendo clase de días restantes:', error)
-        return ''
-      }
-    },
-
-    // Métodos de acciones simplificados
-    viewAlert(alert) {
-      this.selectedAlert = alert
-      this.showToast(`Viendo detalles de alerta ${alert.id}`, 'info')
-      // Aquí podrías abrir un modal o navegar a una vista de detalles
-    },
-
-    editAlert(alert) {
-      this.selectedAlert = alert
-      this.showToast(`Editando alerta ${alert.id}`, 'primary')
-      // Aquí podrías abrir un modal de edición o navegar a una vista de edición
-    },
-
-    async deleteAlert(alertId) {
-      try {
-        const confirmed = await this.showConfirm(
-          'Eliminar Alerta',
-          '¿Está seguro de que desea eliminar esta alerta? Esta acción no se puede deshacer.',
-          'Sí, eliminar',
-          'Cancelar'
-        )
-
-        if (confirmed) {
-          // Llamada a la API para eliminar la alerta
-          await api.delete(`/AlertaReparacion/${alertId}`)
-
-          // Actualizar la lista local
-          this.alertas = this.alertas.filter(alert => alert.id !== alertId)
-          this.showToast('Alerta eliminada correctamente', 'success')
-        }
-      } catch (error) {
-        console.error('Error eliminando alerta:', error)
-        this.showToast('Error al eliminar la alerta', 'danger')
-      }
-    },
-
-    exportToCSV() {
-      try {
-        // Lógica básica para exportar a CSV
-        const headers = ['ID', 'Herramienta', 'Tipo', 'Fecha Generación', 'Estado', 'Prioridad']
-        const data = this.alertas.map(alert => [
-          alert.id,
-          this.getHerramientaNombre(alert.herramienta_id),
-          this.getTipoAlerta(alert.tipo_alerta_id),
-          this.formatDate(alert.fecha_generacion),
-          this.getEstadoText(alert.estado_reparacion),
-          this.getPrioridadText(alert.prioridad_id)
-        ])
-
-        let csvContent = "data:text/csv;charset=utf-8,"
-        csvContent += headers.join(",") + "\n"
-        data.forEach(row => {
-          csvContent += row.join(",") + "\n"
-        })
-
-        const encodedUri = encodeURI(csvContent)
-        const link = document.createElement("a")
-        link.setAttribute("href", encodedUri)
-        link.setAttribute("download", "alertas_reparacion.csv")
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
-        this.showToast('Alertas exportadas a CSV exitosamente', 'success')
-      } catch (error) {
-        console.error('Error exportando CSV:', error)
-        this.showToast('Error al exportar las alertas', 'danger')
-      }
-    }
-  }
-}
-</script>

@@ -100,11 +100,9 @@ const currentSidebar = computed(() => {
   console.log('🔋 [App.vue] Rol del usuario:', userRole);
   console.log('🔋 [App.vue] Ruta actual:', route.path);
 
-  // Si no hay puesto_id válido, intentar mapear por role como fallback
   if (!puestoId || isNaN(puestoId)) {
     console.log('🔋 [App.vue] ⚠️ No se encontró puesto_id válido, usando role como fallback');
 
-    // Mapeo role -> sidebar como fallback
     const roleToSidebar = {
       'jefe_taller': AdminSidebar,
       'coordinador': SidebarCoordinator,
@@ -118,7 +116,6 @@ const currentSidebar = computed(() => {
       return fallbackSidebar;
     }
 
-    // Si tampoco hay role válido, usar sidebar por defecto
     console.log('🔋 [App.vue] ⚠️ No se encontró role válido, usando sidebar por defecto');
     return AdminSidebar;
   }

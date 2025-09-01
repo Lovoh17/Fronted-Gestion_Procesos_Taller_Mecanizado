@@ -52,7 +52,7 @@
         <VaDropdown v-model="showUserMenu" placement="bottom-end" :close-on-content-click="false" class="user-dropdown">
           <template #anchor>
             <VaButton preset="secondary" class="user-profile-button" @click="toggleUserMenu">
-              <VaAvatar :src="user.avatar || 'https://www.svgrepo.com/show/507442/user-circle.svg'" :alt="user.name"
+              <VaAvatar :src="user.avatar || '/src/stores/images/Rafa Note 20 - 2025-08-15 03.37.46.jpg'" :alt="user.name"
                 size="small" />
               <span class="user-name">{{ user.name || 'Usuario' }}</span>
               <VaIcon name="arrow_drop_down" />
@@ -61,7 +61,7 @@
 
           <VaCard class="user-menu-card">
             <VaCardHeader class="user-info">
-              <VaAvatar :src="user.avatar || 'https://www.svgrepo.com/show/507442/user-circle.svg'" :alt="user.name"
+              <VaAvatar :src="user.avatar || '/src/stores/images/Rafa Note 20 - 2025-08-15 03.37.46.jpg'" :alt="user.name"
                 size="medium" />
               <div class="user-details">
                 <p class="user-name-dropdown">{{ user.name || 'Usuario' }}</p>

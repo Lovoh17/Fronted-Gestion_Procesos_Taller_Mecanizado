@@ -1,0 +1,330 @@
+/* Estilos para el modal de detalles */
+.details-modal :deep(.va-modal__inner) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.details-modal :deep(.va-modal__header) {
+  background: linear-gradient(135deg, #003366 0%, #004080 100%);
+  color: white;
+  padding: 1.2rem 1.5rem;
+}
+
+.details-modal :deep(.va-modal__title) {
+  color: white;
+  font-weight: 600;
+}
+
+.details-modal :deep(.va-modal__close) {
+  color: white;
+}
+
+.alert-details {
+  padding: 0;
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.alert-id {
+  font-weight: 600;
+  color: #003366;
+  font-size: 1.1rem;
+}
+
+.status-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.detail-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.detail-card-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-card-header i {
+  margin-right: 0.5rem;
+  color: #003366;
+  width: 20px;
+  text-align: center;
+}
+
+.detail-card-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #003366;
+  font-weight: 600;
+}
+
+.detail-card-body {
+  padding: 1rem;
+}
+
+.detail-item {
+  margin-bottom: 0.8rem;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  color: #212529;
+  font-size: 0.95rem;
+}
+
+.days-left {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.description-section {
+  margin: 1rem 1.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid #e9ecef;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-title i {
+  margin-right: 0.5rem;
+  color: #003366;
+  width: 20px;
+  text-align: center;
+}
+
+.section-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #003366;
+  font-weight: 600;
+}
+
+.description-content {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #003366;
+}
+
+.description-content p {
+  margin: 0;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.badge-type, .badge-priority {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-type i {
+  margin-right: 0.4rem;
+}
+
+/* Estilos para el modal de edición */
+.edit-modal :deep(.va-modal__inner) {
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 900px;
+}
+
+.edit-modal :deep(.va-modal__header) {
+  background: linear-gradient(135deg, #003366 0%, #004080 100%);
+  color: white;
+  padding: 1.2rem 1.5rem;
+}
+
+.edit-modal :deep(.va-modal__title) {
+  color: white;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.form-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.form-section.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-section h3 {
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+  color: #003366;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.form-section h3 i {
+  margin-right: 0.5rem;
+  color: #003366;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.required {
+  color: #dc3545;
+}
+
+.form-input :deep(.va-input-wrapper__field) {
+  border-radius: 6px;
+}
+
+.form-input :deep(.va-input-wrapper__text) {
+  padding-left: 0.5rem;
+}
+
+.form-textarea :deep(.va-input-wrapper__field) {
+  border-radius: 6px;
+}
+
+/* Estilos para los badges de estado */
+.badge-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.badge-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge-primary {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.badge-secondary {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.badge-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Estilos para los botones de acción */
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.action-btn {
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+}
+
+.action-btn i {
+  margin-right: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+}
