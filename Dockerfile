@@ -12,10 +12,20 @@ COPY index.html ./
 COPY src/ ./src/
 COPY public/ ./public/
 
-# SOLUCIÓN CRÍTICA: Eliminar completamente el archivo CSS problemático
+# Asegurar que el archivo CSS existe y es válido
+RUN if [ ! -f "src/assets/EstiloBase.css" ]; then \
+    echo "Creando archivo CSS básico..." && \
+    mkdir -p src/assets && \
+    echo '/* Estilos base */ body { margin: 0; padding: 0; font-family: sans-serif; }' > src/assets/EstiloBase.css; \
+    fi
+
+# Limpiar el archivo CSS de posibles problemas
 RUN if [ -f "src/assets/EstiloBase.css" ]; then \
-    echo "Eliminando archivo CSS problemático temporalmente..." && \
-    rm src/assets/EstiloBase.css; \
+    echo "Limpiando archivo CSS..." && \
+    sed -i '/<style/d' src/assets/EstiloBase.css && \
+    sed -i '/<\/style/d' src/assets/EstiloBase.css && \
+    sed -i '/scoped/d' src/assets/EstiloBase.css && \
+    sed -i '/lang/d' src/assets/EstiloBase.css; \
     fi
 
 RUN npm run build
