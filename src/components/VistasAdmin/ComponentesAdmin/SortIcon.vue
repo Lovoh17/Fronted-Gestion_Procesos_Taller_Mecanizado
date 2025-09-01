@@ -18,7 +18,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .sort-icon {
   margin-left: 5px;
   display: inline-block;

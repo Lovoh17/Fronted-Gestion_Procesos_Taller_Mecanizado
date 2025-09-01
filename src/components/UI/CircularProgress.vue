@@ -74,7 +74,7 @@
   }))
   </script>
   
-  <style scoped>
+  <style >
   .circular-progress {
     position: relative;
     display: inline-flex;

@@ -199,4 +199,4 @@
 
 <script src="../scripts/AsinacionTrabajadores.js"></script>
 
-<style src="../styles/AsignacionModalStyle.css" scoped></style>
+<style src="../styles/AsignacionModalStyle.css" ></style>

@@ -246,4 +246,4 @@ export default defineComponent({
 });
 </script>
 
-<style src="src/assets/StyleOperario/DashboardOperarioStyle.css" scoped></style>
+<style src="src/assets/StyleOperario/DashboardOperarioStyle.css" ></style>

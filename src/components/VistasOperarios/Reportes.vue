@@ -106,4 +106,4 @@
 </template>
 
 <script src="./scripts/Reportes.js"></script>
-<style src="./styles/Reportes.css" scoped></style>
+<style src="./styles/Reportes.css" ></style>

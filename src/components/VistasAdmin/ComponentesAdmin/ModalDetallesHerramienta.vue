@@ -165,7 +165,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .herramienta-details {
   max-width: 100%;
 }

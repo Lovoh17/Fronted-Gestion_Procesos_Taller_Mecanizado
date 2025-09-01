@@ -259,4 +259,4 @@
 </template>
 
 <script src="./ComponentesAdmin/Script/Ordenes.js"></script>
-<style src="src/assets/EstiloBase.css" scoped></style>
+<style src="src/assets/EstiloBase.css" ></style>

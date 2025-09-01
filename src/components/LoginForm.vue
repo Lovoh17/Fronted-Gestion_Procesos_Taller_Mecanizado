@@ -345,4 +345,4 @@ export default {
 }
 </script>
 
-<style src="src/assets/LoginForm.css" scoped></style>
+<style src="src/assets/LoginForm.css" ></style>

@@ -699,9 +699,9 @@ export default {
 }
 </script>
 
-<style src="/src/assets/StyleCoordinador/NewWorkOrderStyle.css" scoped></style>
+<style src="/src/assets/StyleCoordinador/NewWorkOrderStyle.css" ></style>
 
-<style scoped>
+<style >
 
   .work-order-template {
   padding: 24px;

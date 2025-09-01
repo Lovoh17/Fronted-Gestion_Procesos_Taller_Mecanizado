@@ -67,9 +67,9 @@
 
 <script src="./scripts/Settings.js"></script>
 <style src="@/assets/EstiloBase.css"></style>
-<style src="../assets/settings.css" scoped></style>
+<style src="../assets/settings.css" ></style>
 
-<style scoped>
+<style >
 /* Espaciado para las secciones de contenido */
 .tipos-section,
 .alertas-section,

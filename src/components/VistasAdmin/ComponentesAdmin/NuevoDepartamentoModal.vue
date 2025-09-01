@@ -101,7 +101,7 @@ const closeModal = () => {
 }
 </script>
 
-<style scoped>
+<style >
 /* Estilos para el formulario de nuevo departamento */
 .department-form {
   display: flex;

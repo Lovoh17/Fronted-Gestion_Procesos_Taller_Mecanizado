@@ -167,7 +167,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .order-details {
   display: flex;
   flex-direction: column;

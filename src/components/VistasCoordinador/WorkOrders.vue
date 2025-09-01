@@ -199,5 +199,5 @@
 </template>
 
 <script src="./scripts/WorkOrders.js"></script>
-<style src="./styles/WorkOrdersView.css" scoped></style>
+<style src="./styles/WorkOrdersView.css" ></style>
 <style src="src/assets/EstiloBase.css"></style>

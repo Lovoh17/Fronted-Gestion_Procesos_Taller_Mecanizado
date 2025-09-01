@@ -64,7 +64,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .loading-container {
   display: flex;
   flex-direction: column;

@@ -120,7 +120,7 @@ const orderColor = (priority) => {
 }
 </script>
 
-<style scoped>
+<style >
 .gantt-container {
   border: 1px solid #e0e0e0;
   border-radius: 8px;

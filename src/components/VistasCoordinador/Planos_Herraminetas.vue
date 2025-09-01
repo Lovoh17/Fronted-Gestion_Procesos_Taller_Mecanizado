@@ -117,6 +117,6 @@
 
 
 <script src="./scripts/ToolBlueprintsView.js"></script>
-<style src="./styles/ToolBlueprintsView.css" scoped></style>
+<style src="./styles/ToolBlueprintsView.css" ></style>
 <style src="src/assets/Herramientas.css"></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
+<style src="src/assets/EstiloBase.css" ></style>

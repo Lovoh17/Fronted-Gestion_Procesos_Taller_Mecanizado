@@ -229,4 +229,4 @@
 </template>
 
 <script src="./script/MaintenanceDetailsModal.js"></script>
-<style scoped src="../../assets/MaintenanceDetailsModal.css"></style>
+<style  src="../../assets/MaintenanceDetailsModal.css"></style>

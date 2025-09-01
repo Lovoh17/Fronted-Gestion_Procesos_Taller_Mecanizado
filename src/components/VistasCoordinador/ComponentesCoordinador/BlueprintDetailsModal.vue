@@ -237,7 +237,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 /* ========== ESTILOS BASE DEL MODAL ========== */
 .modal-header {
   padding: 1.25rem 1.5rem;

@@ -228,4 +228,4 @@
 
 <script src="./scripts/Maintenance.js"></script>
 <style src="./styles/Maintenance.css"></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
+<style src="src/assets/EstiloBase.css" ></style>

@@ -91,5 +91,5 @@
 </template>
 
 <script src="./script/Programacion.js"></script>
-<style src="src/assets/Programacion.css" scoped></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
+<style src="src/assets/Programacion.css" ></style>
+<style src="src/assets/EstiloBase.css" ></style>

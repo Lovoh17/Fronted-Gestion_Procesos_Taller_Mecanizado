@@ -189,7 +189,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .blueprint-details {
   max-width: 100%;
 }

@@ -108,5 +108,5 @@
 </template>
 
 <script src="./ComponentesAdmin/Script/Departamentos.js"></script>
-<style src="src/assets/EstiloBase.css" scoped></style>
-<style src="src/assets/Departamentos.css" scoped></style>
+<style src="src/assets/EstiloBase.css" ></style>
+<style src="src/assets/Departamentos.css" ></style>

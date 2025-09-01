@@ -84,7 +84,7 @@
   }
   </script>
   
-  <style scoped>
+  <style >
   .trend-chart-container {
     position: relative;
     height: 300px;

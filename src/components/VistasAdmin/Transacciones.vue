@@ -384,5 +384,5 @@
 export { default } from './scripts/transacciones.js'
 </script>
 
-<style scoped src="@/assets/transacciones.css"></style>
-<style scoped src="../../assets/EstiloBase.css"></style>
+<style  src="@/assets/transacciones.css"></style>
+<style  src="../../assets/EstiloBase.css"></style>

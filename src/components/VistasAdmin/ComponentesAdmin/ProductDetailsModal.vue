@@ -194,4 +194,4 @@
 </template>
 
 <script src="./Script/ProductDetailsModal.js"></script>
-<style src="src/assets/ProductDetailsModal.css" scoped></style>
+<style src="src/assets/ProductDetailsModal.css" ></style>

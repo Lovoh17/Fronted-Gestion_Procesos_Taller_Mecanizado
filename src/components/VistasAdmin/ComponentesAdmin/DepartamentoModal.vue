@@ -134,7 +134,7 @@ const resetForm = () => {
 }
 </script>
 
-<style scoped>
+<style >
 /* Estilos para el formulario de departamento */
 .department-form {
   display: flex;

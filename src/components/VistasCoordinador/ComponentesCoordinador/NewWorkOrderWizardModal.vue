@@ -796,4 +796,4 @@ async loadCatalogs() {
 }
 </script>
 
-<style src="/src/assets/StyleCoordinador/NewWorkOrderStyle.css" scoped></style>
+<style src="/src/assets/StyleCoordinador/NewWorkOrderStyle.css" ></style>

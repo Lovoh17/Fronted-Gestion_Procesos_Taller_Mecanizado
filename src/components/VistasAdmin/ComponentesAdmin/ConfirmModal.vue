@@ -91,7 +91,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .confirm-header {
   display: flex;
   align-items: center;

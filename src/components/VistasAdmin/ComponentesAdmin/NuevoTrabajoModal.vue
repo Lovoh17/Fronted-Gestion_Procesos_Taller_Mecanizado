@@ -393,7 +393,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style >
 .modal-title {
   margin: 0;
   font-size: 1.5rem;

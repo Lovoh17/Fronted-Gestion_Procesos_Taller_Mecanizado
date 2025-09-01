@@ -179,4 +179,4 @@
 
 
 <script src="./scripts/FullCalendarComponent.vue.js"></script>
-<style src="src/assets/Componentes_Style/FullCalendarComponent.css" scoped></style>
+<style src="src/assets/Componentes_Style/FullCalendarComponent.css" ></style>

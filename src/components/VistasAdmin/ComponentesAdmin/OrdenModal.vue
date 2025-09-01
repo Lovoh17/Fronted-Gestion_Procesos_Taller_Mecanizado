@@ -204,7 +204,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .form-section {
   margin-bottom: 1.5rem;
 }

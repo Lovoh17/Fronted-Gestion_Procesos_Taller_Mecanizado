@@ -420,7 +420,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .pedidos-chart-container {
   width: 100%;
   padding: 1.5rem;

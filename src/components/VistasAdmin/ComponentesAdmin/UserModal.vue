@@ -84,7 +84,7 @@
 
 <script src="./Script/UserModal.js"></script>
 
-<style scoped>
+<style >
 .user-form {
   max-width: 100%;
 }

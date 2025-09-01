@@ -210,8 +210,8 @@
 </template>
 
 <style ></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
-<style src="src/assets/StyleTecnico/DashboardTecnicoStyle.css" scoped></style>
+<style src="src/assets/EstiloBase.css" ></style>
+<style src="src/assets/StyleTecnico/DashboardTecnicoStyle.css" ></style>
 <script>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 

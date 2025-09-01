@@ -154,7 +154,7 @@ const currentSidebar = computed(() => {
 });
 </script>
 
-<style scoped>
+<style >
 .holy-grail-app {
   display: flex;
   flex-direction: column;

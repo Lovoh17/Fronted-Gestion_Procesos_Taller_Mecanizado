@@ -29,4 +29,4 @@
   
 <script src="./scripts/Unauthorized.js"></script>
   
-<style scoped src="../assets/Unauthorized.css"></style>
+<style  src="../assets/Unauthorized.css"></style>

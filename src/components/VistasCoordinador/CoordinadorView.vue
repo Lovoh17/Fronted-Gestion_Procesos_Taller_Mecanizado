@@ -573,10 +573,10 @@ export default {
 };
 </script>
 
-<style src="./styles/Dashboard.css" scoped></style>
-<style src="../../assets/EstiloBase.css" scoped></style>
+<style src="./styles/Dashboard.css" ></style>
+<style src="../../assets/EstiloBase.css" ></style>
 
-<style scoped>
+<style >
 .loading-container {
   display: flex;
   flex-direction: column;

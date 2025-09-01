@@ -257,7 +257,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .crud-table {
   margin-top: 15px;
 }

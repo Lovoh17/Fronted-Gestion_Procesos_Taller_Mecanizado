@@ -345,7 +345,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style >
 .section-header {
   display: flex;
   align-items: center;

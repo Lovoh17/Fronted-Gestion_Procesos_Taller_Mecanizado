@@ -287,5 +287,5 @@
 </template>
 
 <script src="./scripts/ProductInventory.js"></script>
-<style src="src/assets/ProductInventory.css" scoped></style>
-<style src="src/assets/EstiloBase.css" scoped></style>
+<style src="src/assets/ProductInventory.css" ></style>
+<style src="src/assets/EstiloBase.css" ></style>

@@ -224,5 +224,5 @@
 </template>
 
 <script src="./scripts/Trabajos.js"></script>
-<style src="./styles/Trabajos.css" scoped></style>
-<style src="../../assets/EstiloBase.css" scoped></style>
+<style src="./styles/Trabajos.css" ></style>
+<style src="../../assets/EstiloBase.css" ></style>

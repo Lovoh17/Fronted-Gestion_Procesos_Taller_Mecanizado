@@ -432,7 +432,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 /* Estilos base simplificados */
 .asignaciones-container {
   padding: 20px;

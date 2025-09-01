@@ -340,7 +340,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style >
 .alert-form {
   max-width: 100%;
 }

@@ -185,4 +185,4 @@
 </template>
 
 <script src="./Script/InventoryMovementDetailsModal.js"></script>
-<style src="../../../assets/InventoryMovementDetailsModal.css" scoped></style>
+<style src="../../../assets/InventoryMovementDetailsModal.css" ></style>
