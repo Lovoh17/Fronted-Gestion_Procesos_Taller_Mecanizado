@@ -87,4 +87,4 @@
 
 <script src="./scripts/RegisterForm.js"></script>
 
-<style src="../assets/RegisterForm.css" scoped></style>
+<style src="../assets/RegisterForm.css"></style>
