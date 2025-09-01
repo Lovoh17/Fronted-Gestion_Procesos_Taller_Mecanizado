@@ -3,6 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import './assets/variables.css'
 import LoadingSpinner from './components/GlobalComponents/LoadingSpinner.vue'
+import '@/assets/EstiloBase.css'
 
 import { createApp } from 'vue'
 import App from './App.vue'
