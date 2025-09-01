@@ -200,4 +200,4 @@
 
 <script src="./scripts/WorkOrders.js"></script>
 <style src="./styles/WorkOrdersView.css" ></style>
-<style src="/src/assets/EstiloBase.css"></style>
+<style src="./src/assets/EstiloBase.css"></style>

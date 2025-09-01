@@ -574,7 +574,7 @@ export default {
 </script>
 
 <style src="./styles/Dashboard.css" ></style>
-<style src="/src/assets/EstiloBase.css" ></style>
+<style src="./src/assets/EstiloBase.css" ></style>
 
 <style >
 .loading-container {

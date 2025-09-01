@@ -225,4 +225,4 @@
 
 <script src="./scripts/Trabajos.js"></script>
 <style src="./styles/Trabajos.css" ></style>
-<style src="/src/assets/EstiloBase.css" ></style>
+<style src="./src/assets/EstiloBase.css" ></style>

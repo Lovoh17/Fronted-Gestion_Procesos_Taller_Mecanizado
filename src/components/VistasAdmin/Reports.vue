@@ -444,6 +444,6 @@
   </div>
 </template>
 
-<style src="/src/assets/EstiloBase.css" ></style>
+<style src="./src/assets/EstiloBase.css" ></style>
 <style src="../VistasAdmin/ComponentesAdmin/styles/reportsStye.css" ></style>
 <script src="../VistasAdmin/ComponentesAdmin/Script/Reports.js"></script>
