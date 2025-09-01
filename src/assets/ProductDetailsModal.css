@@ -682,11 +682,10 @@
 
 .info-item .value {
   word-break: break-word;
-  hyphens: auto;
 }
 
 .characteristic-value,
 .characteristic-label {
   word-break: break-word;
-  hyphens: auto;
+  
 }
