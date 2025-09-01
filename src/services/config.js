@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configuración base de la API
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:3000', // Cambiar en producción
+  BASE_URL: 'https://gestionprocesostallermecanizado-production-d0de.up.railway.app', // Cambiar en producción
   TIMEOUT: 10000, // 10 segundos
   HEADERS: {
     'Content-Type': 'application/json',

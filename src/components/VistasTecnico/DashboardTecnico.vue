@@ -271,7 +271,7 @@ export default {
       try {
         console.log('Fetching data from API...')
         
-        const response = await fetch('http://localhost:3000/dashboard/tecnico', {
+        const response = await fetch('https://gestionprocesostallermecanizado-production-d0de.up.railway.app/dashboard/tecnico', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

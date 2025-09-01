@@ -45,7 +45,7 @@ export default function useDashboard() {
         throw new Error('No se encontró ID del operario');
       }
 
-      const response = await fetch(`http://localhost:3000/dashboard/operario/${operarioId}`);
+      const response = await fetch(`https://gestionprocesostallermecanizado-production-d0de.up.railway.app/dashboard/operario/${operarioId}`);
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -65,7 +65,7 @@ export default function useDashboard() {
 
   const iniciarPedido = async (pedido) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/asignaciones/${pedido.asignacionId}/iniciar`, {
+      const response = await fetch(`https://gestionprocesostallermecanizado-production-d0de.up.railway.app/api/asignaciones/${pedido.asignacionId}/iniciar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -83,7 +83,7 @@ export default function useDashboard() {
 
   const completarPedido = async (pedido) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/asignaciones/${pedido.asignacionId}/completar`, {
+      const response = await fetch(`https://gestionprocesostallermecanizado-production-d0de.up.railway.app/api/asignaciones/${pedido.asignacionId}/completar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });
