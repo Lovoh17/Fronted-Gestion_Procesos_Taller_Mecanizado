@@ -31,51 +31,53 @@
   </div>
 
   <!-- Dashboard Cards -->
-  <div class="dashboard-overview" v-if="!loading">
-    <div class="overview-card income-card">
-      <div class="card-icon">
-        <i class="fas fa-arrow-up"></i>
-      </div>
-      <div class="card-content">
-        <div class="card-title">Total Ingresos</div>
-        <div class="card-amount positive">{{ formatCurrency(totalIngresos) }}</div>
-        <div class="card-subtitle">{{ ingresosCount }} transacciones</div>
-      </div>
-    </div>
+  <!-- Reemplaza la sección dashboard-overview con esta versión corregida -->
 
-    <div class="overview-card expense-card">
-      <div class="card-icon">
-        <i class="fas fa-arrow-down"></i>
-      </div>
-      <div class="card-content">
-        <div class="card-title">Total Egresos</div>
-        <div class="card-amount negative">{{ formatCurrency(totalEgresos) }}</div>
-        <div class="card-subtitle">{{ egresosCount }} transacciones</div>
-      </div>
+<div class="dashboard-overview" v-if="!loading">
+  <div class="overview-card income-card">
+    <div class="card-icon">
+      <i class="fas fa-arrow-up"></i>
     </div>
-
-    <div class="overview-card balance-card">
-      <div class="card-icon">
-        <i class="fas fa-balance-scale"></i>
-      </div>
-      <div class="card-content">
-        <div class="card-title">Balance Neto</div>
-        <div class="card-amount" :class="balanceClass">{{ formatCurrency(balanceTotal) }}</div>
-        <div class="card-subtitle">Diferencia total</div>
-      </div>
-    </div>
-
-    <div class="overview-card transactions-card">
-      <div class="card-icon">
-        <i class="fas fa-receipt"></i>
-      </div>
-      <div class="card-content">
-        <div class="card-title">Total Transacciones</div>
-        <div class="card-amount neutral">{{ filteredTransacciones.length }}</div>
-        <div class="card-subtitle">En el período actual</div>
-      </div>
+    <div class="card-content">
+      <div class="card-title">Total Ingresos</div>
+      <div class="card-amount positive">{{ formatCurrency(totalIngresosGeneral) }}</div>
+      <div class="card-subtitle">{{ ingresosCountGeneral }} transacciones</div>
     </div>
   </div>
+
+  <div class="overview-card expense-card">
+    <div class="card-icon">
+      <i class="fas fa-arrow-down"></i>
+    </div>
+    <div class="card-content">
+      <div class="card-title">Total Egresos</div>
+      <div class="card-amount negative">{{ formatCurrency(totalEgresosGeneral) }}</div>
+      <div class="card-subtitle">{{ egresosCountGeneral }} transacciones</div>
+    </div>
+  </div>
+
+  <div class="overview-card balance-card">
+    <div class="card-icon">
+      <i class="fas fa-balance-scale"></i>
+    </div>
+    <div class="card-content">
+      <div class="card-title">Balance Neto</div>
+      <div class="card-amount" :class="balanceClass">{{ formatCurrency(balanceTotalGeneral) }}</div>
+      <div class="card-subtitle">Diferencia total</div>
+    </div>
+  </div>
+
+  <div class="overview-card transactions-card">
+    <div class="card-icon">
+      <i class="fas fa-receipt"></i>
+    </div>
+    <div class="card-content">
+      <div class="card-title">Total Transacciones</div>
+      <div class="card-amount neutral">{{ transaccionesTotalCount }}</div>
+      <div class="card-subtitle">Registradas en total</div>
+    </div>
+  </div>
+</div>
 
   <!-- Advanced Filters Panel -->
   <div class="filters-panel" v-if="!loading">
@@ -199,7 +201,7 @@
           <va-button :class="{ active: viewMode === 'table' }" @click="viewMode = 'table'" icon="table">
             Tabla
           </va-button>
-          <va-button :class="{ active: viewMode === 'cards' }" @click="viewMode = 'cards'" icon="th-large">
+          <va-button :class="{ active: viewMode === 'cards' }" @click="viewMode = 'cards'">
             Tarjetas
           </va-button>
         </div>
@@ -259,8 +261,8 @@
           </span>
 
           <!-- Columna de Categoría -->
-          <span v-else-if="props.column.field === 'categoria'">
-            <span class="category-tag">{{ props.row.categoria }}</span>
+          <span v-else-if="props.column.field === 'tipo_pago'">
+            <span class="category-tag">{{ props.row.metodo_pago_id }}</span>
           </span>
 
           <!-- Columna de Monto -->

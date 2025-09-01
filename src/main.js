@@ -32,7 +32,6 @@ const vuetify = createVuetify({
   directives,
 })
 
-// Configura Chart.js
 Chart.register(...registerables)
 
 // Crea y configura la aplicación
@@ -40,20 +39,17 @@ const app = createApp(App)
 const pinia = createPinia()
 
 // Instala los plugins en el orden correcto
-app.use(pinia) // Pinia debe instalarse primero
+app.use(pinia) 
 app.use(router)
 app.use(vuetify)
-app.use(createVuestic()) // Agrega Vuestic UI
-app.use(VueGoodTablePlugin) // Agrega vue-good-table-next
+app.use(createVuestic())
+app.use(VueGoodTablePlugin) 
 
-// Registra el componente LoadingSpinner globalmente
 app.component('LoadingSpinner', LoadingSpinner)
 
 // Monta la aplicación
 app.mount('#app')
 
-// DESPUÉS de montar la app, inicializar el store de autenticación
-// Esto debe hacerse después del mount para asegurar que Pinia esté completamente configurado
 import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 authStore.initializeAuth()

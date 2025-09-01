@@ -10,7 +10,7 @@
               <i class="fas fa-tachometer-alt"></i>
             </div>
             <div class="header-text">
-              <h1 class="header-title">Dashboard Administrativo/</h1>
+              <h1 class="header-title">Dashboard Administrativo</h1>
               <p class="header-subtitle">Panel de control y gestión del taller de mecanizado</p>
             </div>
           </div>
