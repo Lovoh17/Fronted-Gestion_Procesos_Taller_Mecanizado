@@ -94,20 +94,6 @@ export default {
         badge: pendingIssues.value,
         badgeType: 'danger'
       },
-      { 
-        icon: 'description', 
-        text: 'Mis Reportes', 
-        path: '/operario/mis-reportes',
-        badge: null,
-        badgeType: null
-      },
-      { 
-        icon: 'settings', 
-        text: 'Configuración', 
-        path: '/settings',
-        badge: null,
-        badgeType: null
-      }
     ])
 
     const isRouteActive = (path) => {

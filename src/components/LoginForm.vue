@@ -18,10 +18,6 @@
           <div class="univo-password-container">
             <input :type="showPassword ? 'text' : 'password'" class="univo-input" v-model="password" required
               @input="watchFormChanges" @blur="clearError">
-            <button type="button" class="univo-password-toggle" @click="togglePasswordVisibility"
-              :title="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-              <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-            </button>
           </div>
         </div>
 
@@ -43,131 +39,6 @@
         </va-button>
       </form>
 
-      <!-- Sección de acceso directo -->
-      <div class="univo-quick-access">
-        <h3 class="univo-quick-access-title">Acceso Directo</h3>
-        <div class="univo-quick-access-grid">
-          <!-- Enlaces de Jefe de Taller (Admin) -->
-          <div class="univo-role-section">
-            <h4 class="univo-role-title">Jefe de Taller</h4>
-            <div class="univo-role-links">
-              <router-link to="/admin-dashboard" class="univo-quick-link admin">
-                <i class="fas fa-tachometer-alt"></i>
-                Dashboard Admin
-              </router-link>
-              <router-link to="/admin/users" class="univo-quick-link admin">
-                <i class="fas fa-users"></i>
-                Usuarios
-              </router-link>
-              <router-link to="/admin/departments" class="univo-quick-link admin">
-                <i class="fas fa-building"></i>
-                Departamentos
-              </router-link>
-              <router-link to="/admin/orders" class="univo-quick-link admin">
-                <i class="fas fa-clipboard-list"></i>
-                Órdenes
-              </router-link>
-              <router-link to="/admin/reports" class="univo-quick-link admin">
-                <i class="fas fa-chart-bar"></i>
-                Reportes
-              </router-link>
-              <router-link to="/admin/transacciones" class="univo-quick-link admin">
-                <i class="fas fa-exchange-alt"></i>
-                Transacciones
-              </router-link>
-            </div>
-          </div>
-
-          <!-- Enlaces de Coordinador -->
-          <div class="univo-role-section">
-            <h4 class="univo-role-title">Coordinador</h4>
-            <div class="univo-role-links">
-              <router-link to="/dashboard-coordinador" class="univo-quick-link coordinator">
-                <i class="fas fa-clipboard-list"></i>
-                Dashboard Coordinador
-              </router-link>
-              <router-link to="/control-calidad" class="univo-quick-link coordinator">
-                <i class="fas fa-check-circle"></i>
-                Control de Calidad
-              </router-link>
-              <router-link to="/coordinator/planning" class="univo-quick-link coordinator">
-                <i class="fas fa-calendar"></i>
-                Planificación
-              </router-link>
-              <router-link to="/coordinator/orders" class="univo-quick-link coordinator">
-                <i class="fas fa-tasks"></i>
-                Órdenes de Trabajo
-              </router-link>
-              <router-link to="/coordinator/maintenance" class="univo-quick-link coordinator">
-                <i class="fas fa-wrench"></i>
-                Mantenimiento
-              </router-link>
-              <router-link to="/coordinator/movimientos" class="univo-quick-link coordinator">
-                <i class="fas fa-arrows-alt"></i>
-                Movimientos
-              </router-link>
-              <router-link to="/coordinator/planos-tools" class="univo-quick-link coordinator">
-                <i class="fas fa-tools"></i>
-                Planos y Herramientas
-              </router-link>
-            </div>
-          </div>
-
-          <!-- Enlaces de Operario -->
-          <div class="univo-role-section">
-            <h4 class="univo-role-title">Operario</h4>
-            <div class="univo-role-links">
-              <router-link to="/dashboard-operario" class="univo-quick-link operator">
-                <i class="fas fa-user-hard-hat"></i>
-                Dashboard Operario
-              </router-link>
-              <router-link to="/operario/trabajos" class="univo-quick-link operator">
-                <i class="fas fa-hammer"></i>
-                Trabajos
-              </router-link>
-              <router-link to="/operario/reportes" class="univo-quick-link operator">
-                <i class="fas fa-file-alt"></i>
-                Reportes
-              </router-link>
-            </div>
-          </div>
-
-          <!-- Enlaces de Técnico -->
-          <div class="univo-role-section">
-            <h4 class="univo-role-title">Técnico</h4>
-            <div class="univo-role-links">
-              <router-link to="/tech-dashboard" class="univo-quick-link technician">
-                <i class="fas fa-cogs"></i>
-                Dashboard Técnico
-              </router-link>
-              <router-link to="/tech/schedule" class="univo-quick-link technician">
-                <i class="fas fa-calendar-alt"></i>
-                Programación
-              </router-link>
-            </div>
-          </div>
-        </div>
-
-        <!-- Enlaces Compartidos -->
-        <div class="univo-shared-section">
-          <h4 class="univo-role-title">Herramientas Compartidas</h4>
-          <div class="univo-shared-links">
-            <router-link to="/herramientas" class="univo-quick-link shared">
-              <i class="fas fa-toolbox"></i>
-              Herramientas
-            </router-link>
-            <router-link to="/inventory" class="univo-quick-link shared">
-              <i class="fas fa-warehouse"></i>
-              Inventario
-            </router-link>
-            <router-link to="/settings" class="univo-quick-link shared">
-              <i class="fas fa-cog"></i>
-              Configuración
-            </router-link>
-          </div>
-        </div>
-      </div>
-
       <div class="univo-links">
         <a href="#" class="univo-link" @click.prevent="handleForgotPassword">
           ¿Olvidó su contraseña?
@@ -180,14 +51,6 @@
       <div class="univo-footer">
         <span class="univo-language">Español - Internacional (es) ✔</span>
         <span class="univo-cookies">Aviso de Cookies</span>
-      </div>
-
-      <!-- Ayuda de teclado -->
-      <div class="univo-keyboard-help">
-        <small>
-          <i class="fas fa-keyboard"></i>
-          Ctrl+Enter: Acceder | Esc: Limpiar
-        </small>
       </div>
     </div>
   </div>
